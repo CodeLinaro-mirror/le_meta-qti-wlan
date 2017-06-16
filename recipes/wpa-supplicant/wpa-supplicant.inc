@@ -5,12 +5,10 @@ LICENSE = "BSD"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/\
 ${LICENSE};md5=3775480a712fc46a69647678acb234cb"
 
-FILES_${PN} += "${sbindir}/*"
-FILES_${PN} += "${libdir}/lib*.so"
+SOLIBS='*.so'
+FILES_SOLIBSDEV=""
 
-PACKAGES = "${PN}"
-
-INC_PR = "r4"
+INC_PR = "r5"
 
 DEPENDS = "openssl libnl"
 
