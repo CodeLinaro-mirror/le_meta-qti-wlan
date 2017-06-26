@@ -39,6 +39,11 @@ do_install () {
     install -d ${FIRMWARE_PATH}
     install -d ${D}${includedir}/qcacld/
     install -m 0644 ${S}/core/utils/nlink/inc/wlan_nlink_common.h ${D}${includedir}/qcacld/
+
+    #copying wlan.ko to STAGING_DIR_TARGET
+    WLAN_KO=${@base_conditional('PERF_BUILD', '1', '${STAGING_DIR_TARGET}-perf', '${STAGING_DIR_TARGET}', d)}
+    install -d ${WLAN_KO}/wlan
+    install -m 0644 ${S}/wlan.ko ${WLAN_KO}/wlan/
 }
 
 do_module_signing() {
