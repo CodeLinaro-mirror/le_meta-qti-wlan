@@ -14,6 +14,9 @@ python __anonymous () {
      elif d.getVar('BASEMACHINE', True) == 'sdx20':
          d.setVar('WLAN_MODULE_NAME', 'wlan_sdio')
          d.setVar('CHIP_NAME', 'qca9377')
+     elif d.getVar('BASEMACHINE', True) == 'sdxpoorwills':
+         d.setVar('WLAN_MODULE_NAME', 'wlan_sdio')
+         d.setVar('CHIP_NAME', 'qca9377')
      else:
          d.setVar('WLAN_MODULE_NAME', 'wlan')
          d.setVar('CHIP_NAME', '')
@@ -24,8 +27,8 @@ FILES_${PN}     += "${base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE
 # The inherit of module.bbclass will automatically name module packages with
 # kernel-module-" prefix as required by the oe-core build environment. Also it
 # replaces '_' with '-' in the module name.
-RPROVIDES_${PN} += "${@'kernel-module-${WLAN_MODULE_NAME}'.replace('_', '-')}"
-PROVIDES_NAME   = "kernel-module-${WLAN_MODULE_NAME}"
+RPROVIDES_${PN} += "${@'kernel-module-${WLAN_MODULE_NAME}-${KERNEL_VERSION}'.replace('_', '-')}"
+PROVIDES_NAME   = "kernel-module-${WLAN_MODULE_NAME}-${KERNEL_VERSION}"
 
 do_unpack[deptask] = "do_populate_sysroot"
 PR = "r0"
