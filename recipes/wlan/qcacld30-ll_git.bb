@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5
 FILES_${PN}     += "lib/firmware/wlan/*"
 FILES_${PN}     += "${base_libdir}/modules/${KERNEL_VERSION}/extra/wlan.ko"
 PROVIDES_NAME   = "kernel-module-wlan"
-RPROVIDES_${PN} += "${PROVIDES_NAME}"
+RPROVIDES_${PN} += "${PROVIDES_NAME}-${KERNEL_VERSION}"
 
 do_unpack[deptask] = "do_populate_sysroot"
 PR = "r8"
