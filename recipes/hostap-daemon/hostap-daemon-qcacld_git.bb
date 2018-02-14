@@ -1,3 +1,5 @@
+inherit pkgconfig
+
 include hostap-daemon.inc
 inherit pkgconfig
 
