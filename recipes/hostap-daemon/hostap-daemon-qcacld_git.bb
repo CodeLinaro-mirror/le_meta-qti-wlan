@@ -1,10 +1,12 @@
 include hostap-daemon.inc
+inherit pkgconfig
 
 PR = "${INC_PR}.2"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://external/wpa_supplicant_8/"
 SRC_URI += "file://defconfig-qcacld"
+DEPENDS = "pkgconfig libnl openssl"
 
 S = "${WORKDIR}/external/wpa_supplicant_8/hostapd/"
 
