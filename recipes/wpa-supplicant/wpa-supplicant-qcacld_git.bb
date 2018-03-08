@@ -1,3 +1,4 @@
+inherit pkgconfig
 include wpa-supplicant.inc
 
 PR = "${INC_PR}.2"
