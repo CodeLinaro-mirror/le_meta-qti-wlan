@@ -13,3 +13,8 @@ IMAGE_INSTALL += "${@base_conditional('PRODUCT','qsap', 'qcacld-hl', '', d)}"
 IMAGE_INSTALL_remove = "${@base_conditional('PRODUCT','qsap', 'wlan-opensource', '', d)}"
 IMAGE_INSTALL += "${@base_conditional('PRODUCT','qsap', 'wlan-services', '', d)}"
 IMAGE_INSTALL_remove = "${@base_conditional('PRODUCT','qsap', 'wcnss', '', d)}"
+
+IMAGE_INSTALL += "${@base_conditional('DISTRO','robot-som', 'qcacld-hl', '', d)}"
+IMAGE_INSTALL_remove = "${@base_conditional('DISTRO','robot-som', 'wlan-opensource', '', d)}"
+IMAGE_INSTALL += "${@base_conditional('DISTRO','robot-som', 'wlan-services', '', d)}"
+IMAGE_INSTALL_remove = "${@base_conditional('DISTRO','robot-som', 'wcnss', '', d)}"
