@@ -1,4 +1,4 @@
-inherit autotools-brokensep linux-kernel-base
+inherit autotools-brokensep linux-kernel-base pkgconfig
 
 DESCRIPTION = "Hostap Daemon"
 LICENSE = "BSD"
