@@ -18,3 +18,7 @@ IMAGE_INSTALL += "${@base_conditional('DISTRO','robot-som', 'qcacld-hl', '', d)}
 IMAGE_INSTALL_remove = "${@base_conditional('DISTRO','robot-som', 'wlan-opensource', '', d)}"
 IMAGE_INSTALL += "${@base_conditional('DISTRO','robot-som', 'wlan-services', '', d)}"
 IMAGE_INSTALL_remove = "${@base_conditional('DISTRO','robot-som', 'wcnss', '', d)}"
+IMAGE_INSTALL += "${@base_conditional('DISTRO','robot-som-ros', 'qcacld-hl', '', d)}"
+IMAGE_INSTALL_remove = "${@base_conditional('DISTRO','robot-som-ros', 'wlan-opensource', '', d)}"
+IMAGE_INSTALL += "${@base_conditional('DISTRO','robot-som-ros', 'wlan-services', '', d)}"
+IMAGE_INSTALL_remove = "${@base_conditional('DISTRO','robot-som-ros', 'wcnss', '', d)}"
