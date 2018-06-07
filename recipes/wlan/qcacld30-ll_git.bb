@@ -50,6 +50,8 @@ do_module_signing() {
     if [ -f ${STAGING_KERNEL_BUILDDIR}/signing_key.priv ]; then
         bbnote "Signing ${PN} module"
         ${STAGING_KERNEL_DIR}/scripts/sign-file sha512 ${STAGING_KERNEL_BUILDDIR}/signing_key.priv ${STAGING_KERNEL_BUILDDIR}/signing_key.x509 ${PKGDEST}/${PROVIDES_NAME}/lib/modules/${KERNEL_VERSION}/extra/wlan.ko
+    elif [ -f ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.pem ]; then
+            ${STAGING_KERNEL_BUILDDIR}/scripts/sign-file sha512 ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.pem ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.x509 ${PKGDEST}/qcacld30-ll/lib/modules/${KERNEL_VERSION}/extra/wlan.ko
     else
         bbnote "${PN} module is not being signed"
     fi
