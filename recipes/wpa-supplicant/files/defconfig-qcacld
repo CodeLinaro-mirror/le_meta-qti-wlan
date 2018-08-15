@@ -286,6 +286,10 @@ CONFIG_BACKEND=file
 # about 3.5 kB.
 #CONFIG_NO_CONFIG_WRITE=y
 
+# For the filesystem with RW permission but no permission to create file dynamically
+# Create temp configuration file in tempfs directory which is specific to each system
+CONFIG_SYSTEM_RW_TEMP_CONFIG=y
+
 # Remove support for configuration blobs to reduce code size by about 1.5 kB.
 #CONFIG_NO_CONFIG_BLOBS=y
 
