@@ -14,10 +14,10 @@ DEPENDS = "virtual/kernel wireless-tools"
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://qcom-opensource/wlan/prima"
 
-S = "${WORKDIR}/qcom-opensource/prima"
+S = "${WORKDIR}/qcom-opensource/wlan/prima"
 
 EXTRA_OEMAKE += "CONFIG_PRONTO_WLAN=m \
-                 KERNEL_BUILD=1"
+                 KERNEL_BUILD=0"
 
 PACKAGES += "kernel-module-wlan"
 
@@ -27,7 +27,6 @@ do_compile () {
         'KERNEL_SOURCE="${STAGING_KERNEL_DIR}"' \
         'KDIR="${STAGING_KERNEL_DIR}"' \
         'CC="${KERNEL_CC}"' \
-        'LD="${KERNEL_LD}"' \
         'WLAN_DIR="${S}"'
 }
 
@@ -47,6 +46,8 @@ python split_kernel_module_packages_append() {
 do_module_signing() {
     if [ -f ${STAGING_KERNEL_BUILDDIR}/signing_key.priv ]; then
 	${STAGING_KERNEL_DIR}/scripts/sign-file sha512 ${STAGING_KERNEL_BUILDDIR}/signing_key.priv ${STAGING_KERNEL_BUILDDIR}/signing_key.x509 ${PKGDEST}/${PN}/${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/wlan.ko
+    elif [ -f ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.pem ]; then
+        ${STAGING_KERNEL_BUILDDIR}/scripts/sign-file sha512 ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.pem ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.x509 ${PKGDEST}/${PN}/lib/modules/${KERNEL_VERSION}/extra/wlan.ko
     fi
 }
 
