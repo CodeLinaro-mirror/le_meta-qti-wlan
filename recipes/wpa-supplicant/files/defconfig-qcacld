@@ -506,6 +506,7 @@ CONFIG_BUILD_WPA_CLIENT_SO=y
 
 # Enable P2P in wpa_supplicant
 CONFIG_P2P=y
+CONFIG_TDLS=y
 CONFIG_AP=y
 
 # Enable QMI EAP PROXY
