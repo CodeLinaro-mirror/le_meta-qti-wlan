@@ -16,7 +16,7 @@ IMAGE_INSTALL_remove_robot-rome += "qcacld-hl"
 IMAGE_INSTALL_append_robot-rome += "qcacld-hl-rome"
 
 # robot-som is base distro of robot, need to remove what base had first
-#IMAGE_INSTALL_remove_robot += "qcacld-hl"
-#IMAGE_INSTALL_remove_robot += "wlan-services"
-#IMAGE_INSTALL_append_robot += "wcnss"
-#IMAGE_INSTALL_append_robot += "wlan-opensource"
+IMAGE_INSTALL_remove_robot-pronto += "qcacld-hl"
+IMAGE_INSTALL_remove_robot-pronto += "wlan-services"
+IMAGE_INSTALL_append_robot-pronto += "wcnss"
+IMAGE_INSTALL_append_robot-pronto += "wlan-opensource"
