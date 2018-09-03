@@ -10,6 +10,8 @@ SRC_URI += "file://p2p_tmp_config.patch"
 
 DEPENDS += "qmi"
 DEPENDS += "qmi-framework"
+DEPENDS += "diag configdb dsutils common glib-2.0 time-genoff xmllib"
+
 FILES_${PN} += "/usr/include/*"
 
 S = "${WORKDIR}/external/wpa_supplicant_8/wpa_supplicant"
