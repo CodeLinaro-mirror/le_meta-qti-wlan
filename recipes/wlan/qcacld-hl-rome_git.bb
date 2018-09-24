@@ -6,4 +6,8 @@ python __anonymous () {
      if d.getVar('BASEMACHINE', True) == 'mdm9650':
          d.setVar('WLAN_MODULE_NAME', 'wlan_sdio_rome')
          d.setVar('CHIP_NAME', 'qca6574')
+
+     if d.getVar('BASEMACHINE', True) == 'apq8009':
+         d.setVar('WLAN_MODULE_NAME', 'wlan_rome')
+         d.setVar('CHIP_NAME', 'qca6174')
 }
