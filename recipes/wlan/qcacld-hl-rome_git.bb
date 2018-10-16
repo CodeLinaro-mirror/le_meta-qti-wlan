@@ -10,4 +10,5 @@ python __anonymous () {
      if d.getVar('BASEMACHINE', True) == 'apq8009':
          d.setVar('WLAN_MODULE_NAME', 'wlan_rome')
          d.setVar('CHIP_NAME', 'qca6174')
+         d.setVar('FAKE_MULTI_IF_NAME', 'y')
 }
