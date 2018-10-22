@@ -200,3 +200,15 @@ CONFIG_ACS=y
 # This can be used to enable functionality to improve interworking with
 # external networks.
 CONFIG_INTERWORKING=y
+
+#
+# Opportunistic Wireless Encryption (OWE)
+# Experimental implementation of draft-harkins-owe-07.txt
+CONFIG_OWE=y
+
+# SuiteB
+CONFIG_SUITEB=y
+CONFIG_SUITEB192=y
+
+# SAE
+CONFIG_SAE=y

@@ -514,6 +514,18 @@ CONFIG_TDLS=y
 CONFIG_AP=y
 
 # Enable QMI EAP PROXY
-CONFIG_EAP_PROXY=qmi
-CONFIG_EAP_PROXY_DUAL_SIM := true
-CONFIG_EAP_PROXY_AKA_PRIME := true
+#CONFIG_EAP_PROXY=qmi
+#CONFIG_EAP_PROXY_DUAL_SIM := true
+#CONFIG_EAP_PROXY_AKA_PRIME := true
+
+#
+# Opportunistic Wireless Encryption (OWE)
+# Experimental implementation of draft-harkins-owe-07.txt
+CONFIG_OWE=y
+
+# SuiteB
+CONFIG_SUITEB=y
+CONFIG_SUITEB192=y
+
+# SAE
+CONFIG_SAE=y
