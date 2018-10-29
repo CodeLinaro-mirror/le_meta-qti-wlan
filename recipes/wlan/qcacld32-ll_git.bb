@@ -14,6 +14,7 @@ PR = "r8"
 
 # This DEPENDS is to serialize kernel module builds
 DEPENDS = "rtsp-alg"
+DEPENDS_remove_automotive = "rtsp-alg"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/qcacld-3.0/"
@@ -33,6 +34,11 @@ EXTRA_OEMAKE += "CONFIG_CLD_HL_SDIO_CORE=n CONFIG_CNSS_SDIO=n"
 # qcacld recipes too. To suppress the duplicate detection error, add it to
 # SSTATE_DUPWHITELIST.
 SSTATE_DUPWHITELIST += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wlan_nlink_common.h"
+
+#Add gnu99 for compiler compatible issues
+do_compile_prepend_automotive() {
+    sed -i '$a\ccflags-y += -std=gnu99' ${S}/Kbuild
+}
 
 do_install () {
     module_do_install
