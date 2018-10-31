@@ -20,6 +20,7 @@ FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/qcacld-3.0/"
 SRC_URI += "file://wlan/qca-wifi-host-cmn/"
 SRC_URI += "file://wlan/fw-api/"
+SRC_URI_append_automotive = " file://device/qcom/wlan/romelv/WCNSS_qcom_cfg.ini"
 
 S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn/"
 S = "${WORKDIR}/wlan/qcacld-3.0/"
@@ -51,6 +52,10 @@ do_install () {
     WLAN_KO=${@base_conditional('PERF_BUILD', '1', '${STAGING_DIR_TARGET}-perf', '${STAGING_DIR_TARGET}', d)}
     install -d ${WLAN_KO}/wlan
     install -m 0644 ${S}/wlan.ko ${WLAN_KO}/wlan/
+}
+
+do_install_append_automotive() {
+    install -D -m 0644 ${WORKDIR}/device/qcom/wlan/romelv/WCNSS_qcom_cfg.ini ${FIRMWARE_PATH}
 }
 
 do_module_signing() {
