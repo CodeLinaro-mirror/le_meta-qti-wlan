@@ -36,6 +36,11 @@ EXTRA_OEMAKE += "CONFIG_CLD_HL_SDIO_CORE=n CONFIG_CNSS_SDIO=n"
 # SSTATE_DUPWHITELIST.
 SSTATE_DUPWHITELIST += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wlan_nlink_common.h"
 
+inherit systemd
+SRC_URI_append_automotive = " file://init_qti_wlan.service"
+SYSTEMD_SERVICE_${PN}_automotive = "init_qti_wlan.service"
+SYSTEMD_AUTO_ENABLE_${PN}_automotive = "enable"
+
 #Add gnu99 for compiler compatible issues
 do_compile_prepend_automotive() {
     sed -i '$a\ccflags-y += -std=gnu99' ${S}/Kbuild
@@ -56,6 +61,10 @@ do_install () {
 
 do_install_append_automotive() {
     install -D -m 0644 ${WORKDIR}/device/qcom/wlan/romelv/WCNSS_qcom_cfg.ini ${FIRMWARE_PATH}
+    # Install systemd service file
+    if ${@base_contains('DISTRO_FEATURES','systemd','true','false',d)}; then
+        install -m 0644 ${WORKDIR}/init_qti_wlan.service -D ${D}${systemd_unitdir}/system/init_qti_wlan.service
+    fi
 }
 
 do_module_signing() {
