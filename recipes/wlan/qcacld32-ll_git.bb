@@ -1,5 +1,8 @@
 inherit autotools-brokensep module qperf
 
+# if is TARGET_KERNEL_ARCH is set inherit qtikernel-arch to compile for that arch.
+inherit ${@bb.utils.contains('TARGET_KERNEL_ARCH', 'aarch64', 'qtikernel-arch', '', d)}
+
 DESCRIPTION = "Qualcomm Atheros WLAN CLD3.0 low latency driver"
 LICENSE = "ISC"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=f3b90e78ea0cffb20bf5cca7947a896d"
@@ -14,6 +17,8 @@ PR = "r8"
 
 # This DEPENDS is to serialize kernel module builds
 DEPENDS = "rtsp-alg"
+DEPENDS_append_sdmsteppe = " virtual/kernel"
+DEPENDS_remove_sdmsteppe = "rtsp-alg"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/qcacld-3.0/"
