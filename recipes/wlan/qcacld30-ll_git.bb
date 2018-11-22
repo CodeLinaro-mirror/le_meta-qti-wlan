@@ -58,3 +58,4 @@ do_module_signing() {
 }
 
 addtask module_signing after do_package before do_package_write_ipk
+do_configure[depends] += "virtual/kernel:do_shared_workdir"
