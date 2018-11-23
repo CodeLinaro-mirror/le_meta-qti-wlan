@@ -7,4 +7,4 @@ IMAGE_INSTALL += "wireless-tools"
 IMAGE_INSTALL += "sigma-dut"
 IMAGE_INSTALL += "ath6kl-utils"
 IMAGE_INSTALL += "qcacld-utils"
-
+IMAGE_INSTALL += "ftm"
