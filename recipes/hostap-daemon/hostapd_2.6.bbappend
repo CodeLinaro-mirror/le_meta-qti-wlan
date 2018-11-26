@@ -8,6 +8,7 @@ FILESEXTRAPATHS_prepend := "${WORKSPACE}:"
 SRC_URI = "file://external/wpa_supplicant_8/ \
            file://defconfig \
            file://init \
+           file://hostapd.service \
           "
 S = "${WORKDIR}/external/wpa_supplicant_8/hostapd"
 B = "${WORKDIR}/external/wpa_supplicant_8/hostapd"
