@@ -14,11 +14,13 @@ PR = "r8"
 
 # This DEPENDS is to serialize kernel module builds
 DEPENDS = "rtsp-alg"
+DEPENDS_remove_automotive = "rtsp-alg"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/qcacld-3.0/"
 SRC_URI += "file://wlan/qca-wifi-host-cmn/"
 SRC_URI += "file://wlan/fw-api/"
+SRC_URI_append_automotive = " file://device/qcom/wlan/romelv/WCNSS_qcom_cfg.ini"
 
 S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn/"
 S = "${WORKDIR}/wlan/qcacld-3.0/"
@@ -34,6 +36,11 @@ EXTRA_OEMAKE += "CONFIG_CLD_HL_SDIO_CORE=n CONFIG_CNSS_SDIO=n"
 # SSTATE_DUPWHITELIST.
 SSTATE_DUPWHITELIST += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wlan_nlink_common.h"
 
+#Add gnu99 for compiler compatible issues
+do_compile_prepend_automotive() {
+    sed -i '$a\ccflags-y += -std=gnu99' ${S}/Kbuild
+}
+
 do_install () {
     module_do_install
 
@@ -42,9 +49,13 @@ do_install () {
     install -m 0644 ${S1}/utils/nlink/inc/wlan_nlink_common.h ${D}${includedir}/qcacld/
 
     #copying wlan.ko to STAGING_DIR_TARGET
-    WLAN_KO=${@base_conditional('PERF_BUILD', '1', '${STAGING_DIR_TARGET}-perf', '${STAGING_DIR_TARGET}', d)}
+    WLAN_KO=${@oe.utils.conditional('PERF_BUILD', '1', '${STAGING_DIR_TARGET}-perf', '${STAGING_DIR_TARGET}', d)}
     install -d ${WLAN_KO}/wlan
     install -m 0644 ${S}/wlan.ko ${WLAN_KO}/wlan/
+}
+
+do_install_append_automotive() {
+    install -D -m 0644 ${WORKDIR}/device/qcom/wlan/romelv/WCNSS_qcom_cfg.ini ${FIRMWARE_PATH}
 }
 
 do_module_signing() {
