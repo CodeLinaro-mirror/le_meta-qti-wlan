@@ -15,6 +15,7 @@ DEPENDS += "diag configdb dsutils common glib-2.0 time-genoff xmllib"
 FILES_${PN} += "/usr/include/*"
 
 S = "${WORKDIR}/external/wpa_supplicant_8/wpa_supplicant"
+
 PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"
 
 do_configure() {
@@ -26,3 +27,5 @@ do_patch() {
     patch -p1 < ${WORKDIR}/p2p_tmp_config.patch
 }
 
+INCSUFFIX = "${@base_conditional('DISTRO', 'automotive', 'wpa-supplicant_auto', 'none',d)}"
+include ${INCSUFFIX}.inc
