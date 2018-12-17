@@ -44,7 +44,12 @@ SYSTEMD_AUTO_ENABLE_${PN}_automotive = "enable"
 #Add gnu99 for compiler compatible issues
 do_compile_prepend_automotive() {
     sed -i '$a\ccflags-y += -std=gnu99' ${S}/Kbuild
+    #disable build tag because of the build issue in the shell script in Kbuild
+    if [ "${MACHINE}" == "sa8155" ] || [ "${MACHINE}" == "sa8155qdrive" ]; then
+        sed -i -e 's/^CONFIG_BUILD_TAG := y/CONFIG_BUILD_TAG := n/g' ${S}/configs/default_defconfig
+    fi
 }
+
 
 do_install () {
     module_do_install
