@@ -17,5 +17,7 @@ do_configure() {
     install -m 0644 ${WORKDIR}/defconfig-qcacld .config
     echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
 }
-INCSUFFIX = "${@base_conditional('DISTRO', 'automotive', 'wpa-supplicant_auto', 'none',d)}"
+
+INCSUFFIX ?= "none"
+INCSUFFIX_automotive = "wpa-supplicant_auto"
 include ${INCSUFFIX}.inc
