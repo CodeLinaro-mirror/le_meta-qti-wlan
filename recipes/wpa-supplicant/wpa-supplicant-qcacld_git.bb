@@ -27,5 +27,6 @@ do_patch() {
     patch -p1 < ${WORKDIR}/p2p_tmp_config.patch
 }
 
-INCSUFFIX = "${@base_conditional('DISTRO', 'automotive', 'wpa-supplicant_auto', 'none',d)}"
+INCSUFFIX ?= "none"
+INCSUFFIX_automotive = "wpa-supplicant_auto"
 include ${INCSUFFIX}.inc
