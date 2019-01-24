@@ -15,6 +15,7 @@ PR = "r8"
 # This DEPENDS is to serialize kernel module builds
 DEPENDS = "rtsp-alg"
 DEPENDS_remove_automotive = "rtsp-alg"
+DEPENDS_automotive += "virtual/kernel"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/qcacld-3.0/"
@@ -90,3 +91,5 @@ do_module_signing() {
 }
 
 addtask module_signing after do_package before do_package_write_ipk
+
+do_compile[depends_automotive] += "virtual/kernel:do_shared_workdir"
