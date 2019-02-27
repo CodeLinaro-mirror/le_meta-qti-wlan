@@ -15,6 +15,7 @@ PR = "r8"
 # This DEPENDS is to serialize kernel module builds
 DEPENDS = "rtsp-alg"
 DEPENDS_remove_automotive = "rtsp-alg"
+DEPENDS_automotive += "llvm-arm-toolchain-native"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/qcacld-3.0/"
@@ -30,6 +31,8 @@ FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld"
 # Explicitly disable HL to enable LL as current WLAN driver is not having
 # simultaneous support of HL and LL.
 EXTRA_OEMAKE += "CONFIG_CLD_HL_SDIO_CORE=n CONFIG_CNSS_SDIO=n"
+
+LDFLAGS_aarch64_automotive = "-O1 --hash-style=gnu --as-needed"
 
 # The common header file, 'wlan_nlink_common.h' can be installed from other
 # qcacld recipes too. To suppress the duplicate detection error, add it to
@@ -90,4 +93,20 @@ do_module_signing() {
 }
 
 addtask module_signing after do_package before do_package_write_ipk
-do_configure[depends] += "virtual/kernel:do_shared_workdir"
+
+do_compile_automotive() {
+    if [ -e Makefile -o -e makefile -o -e GNUmakefile ]; then
+        qoe_runmake CROSS_COMPILE=${CROSS_COMPILE} ${KERNEL_EXTRA_ARGS}|| die "make failed"
+    else
+        bbnote "nothing to compile"
+    fi
+}
+
+qoe_runmake() {
+    qoe_runmake_call "$@" || die "oe_runmake failed"
+}
+
+qoe_runmake_call() {
+    bbnote make ${EXTRA_OEMAKE} CC="${STAGING_BINDIR_NATIVE}/llvm-arm-toolchain/bin/clang" "$@"
+    make ${EXTRA_OEMAKE} CC="${STAGING_BINDIR_NATIVE}/llvm-arm-toolchain/bin/clang" "$@"
+}
