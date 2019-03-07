@@ -15,6 +15,7 @@ PR = "r8"
 # This DEPENDS is to serialize kernel module builds
 DEPENDS = "rtsp-alg"
 DEPENDS_remove_automotive = "rtsp-alg"
+DEPENDS_automotive += "virtual/kernel"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/qcacld-3.0/"
@@ -36,10 +37,26 @@ EXTRA_OEMAKE += "CONFIG_CLD_HL_SDIO_CORE=n CONFIG_CNSS_SDIO=n"
 # SSTATE_DUPWHITELIST.
 SSTATE_DUPWHITELIST += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wlan_nlink_common.h"
 
-#Add gnu99 for compiler compatible issues
+inherit systemd
+SRC_URI_append_automotive = " file://init_qti_wlan.service"
+SYSTEMD_SERVICE_${PN}_automotive = "init_qti_wlan.service"
+SYSTEMD_AUTO_ENABLE_${PN}_automotive = "enable"
+
 do_compile_prepend_automotive() {
+    #Add gnu99 for compiler compatible issues
     sed -i '$a\ccflags-y += -std=gnu99' ${S}/Kbuild
+    #In yocto system, get build tag by 'git log' in wlan src dir instead of 'git reflog' in work dir
+    sed -i -e '/^ifeq ($(CONFIG_BUILD_TAG), y)/,/^endif/{/^ifeq ($(CONFIG_BUILD_TAG), y)/!{/^endif/!d}}' ${S}/Kbuild
+    sed -i -e '/^ifeq ($(CONFIG_BUILD_TAG), y)/a\
+WLAN_ROOT_LV = ${WORKSPACE}/wlan/qcacld-3.0\
+WLAN_CMN_LV = ${WORKSPACE}/wlan/qca-wifi-host-cmn\
+CLD_IDS = $(shell cd "$(WLAN_ROOT_LV)" && git log -1 | sed -nE '\''s/^\\s*Change-Id: (I[0-f]{10})[0-f]{30}\\s*\$\$/\\1/p'\'')\
+CMN_IDS = $(shell cd "$(WLAN_CMN_LV)" && git log -1 | sed -nE '\''s/^\\s*Change-Id: (I[0-f]{10})[0-f]{30}\\s*\$\$/\\1/p'\'')\
+TIMESTAMP = $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')\
+BUILD_TAG = "$(TIMESTAMP); cld:$(CLD_IDS); cmn:$(CMN_IDS);"\
+CFLAGS_wlan_hdd_main.o += -DBUILD_TAG=\\"$(BUILD_TAG)\\"' ${S}/Kbuild
 }
+
 
 do_install () {
     module_do_install
@@ -56,6 +73,10 @@ do_install () {
 
 do_install_append_automotive() {
     install -D -m 0644 ${WORKDIR}/device/qcom/wlan/romelv/WCNSS_qcom_cfg.ini ${FIRMWARE_PATH}
+    # Install systemd service file
+    if ${@base_contains('DISTRO_FEATURES','systemd','true','false',d)}; then
+        install -m 0644 ${WORKDIR}/init_qti_wlan.service -D ${D}${systemd_unitdir}/system/init_qti_wlan.service
+    fi
 }
 
 do_module_signing() {
@@ -70,3 +91,5 @@ do_module_signing() {
 }
 
 addtask module_signing after do_package before do_package_write_ipk
+
+do_compile[depends_automotive] += "virtual/kernel:do_shared_workdir"
