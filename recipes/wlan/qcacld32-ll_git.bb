@@ -40,11 +40,11 @@ EXTRA_OEMAKE += "CONFIG_CLD_HL_SDIO_CORE=n CONFIG_CNSS_SDIO=n"
 SSTATE_DUPWHITELIST += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wlan_nlink_common.h"
 
 # NF perf image select WLAN perf config
-NF_PERF = "${@base_conditional('MACHINE', 'qcs403-som2', base_conditional('PERF_BUILD', '1', '1', '0', d), '0', d)}"
+NF_PERF = "${@oe.utils.conditional('MACHINE', 'qcs403-som2', oe.utils.conditional('PERF_BUILD', '1', '1', '0', d), '0', d)}"
 
 do_install () {
     module_do_install
-    if ${@base_conditional('NF_PERF', '1', 'true', 'false', d)}; then
+    if ${@oe.utils.conditional('NF_PERF', '1', 'true', 'false', d)}; then
         if [ -f ${S}/build_1 ]; then
             cp ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/wlan.ko ${S}/wlan_debug.ko
         fi
@@ -58,7 +58,7 @@ do_install () {
     install -m 0644 ${S1}/utils/nlink/inc/wlan_nlink_common.h ${D}${includedir}/qcacld/
 
     #copying wlan.ko to STAGING_DIR_TARGET
-    WLAN_KO=${@base_conditional('PERF_BUILD', '1', '${STAGING_DIR_TARGET}-perf', '${STAGING_DIR_TARGET}', d)}
+    WLAN_KO=${@oe.utils.conditional('PERF_BUILD', '1', '${STAGING_DIR_TARGET}-perf', '${STAGING_DIR_TARGET}', d)}
     install -d ${WLAN_KO}/wlan
     install -m 0644 ${S}/wlan.ko ${WLAN_KO}/wlan/
 }
@@ -85,7 +85,7 @@ do_compile() {
         KBUILD_EXTRA_SYMBOLS="${KBUILD_EXTRA_SYMBOLS}" \
         ${MAKE_TARGETS}
     # NF perf build, make another perf WLAN build as default wlan.ko
-    if ${@base_conditional('NF_PERF', '1', 'true', 'false', d)}; then
+    if ${@oe.utils.conditional('NF_PERF', '1', 'true', 'false', d)}; then
         touch ${S}/build_1
         do_install
         mv ${S}/build_1 ${S}/build_2
