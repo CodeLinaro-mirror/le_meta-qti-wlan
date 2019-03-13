@@ -8,9 +8,11 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5
 # Other targets : modulename = wlan.ko, chip name -
 
 python __anonymous () {
+     d.setVar('DYNAMIC_POWER_CONTROL', 'n')
      if d.getVar('BASEMACHINE', True) == 'mdm9650':
          d.setVar('WLAN_MODULE_NAME', 'wlan_sdio')
          d.setVar('CHIP_NAME', 'qca9377')
+         d.setVar('DYNAMIC_POWER_CONTROL', 'y')
      elif d.getVar('BASEMACHINE', True) == 'sdx20':
          d.setVar('WLAN_MODULE_NAME', 'wlan_sdio')
          d.setVar('CHIP_NAME', 'qca9377')
@@ -46,6 +48,7 @@ FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld${CHIP_NAME_APPEND}"
 # Explicitly disable LL to enable HL as current WLAN driver is not having
 # simultaneous support of HL and LL.
 EXTRA_OEMAKE += "CONFIG_CLD_LL_CORE=n CONFIG_CNSS_PCI=n MODNAME=${WLAN_MODULE_NAME} CHIP_NAME=${CHIP_NAME}"
+EXTRA_OEMAKE += "CONFIG_WLAN_DYNAMIC_POWER_CONTROL=${DYNAMIC_POWER_CONTROL}"
 
 # The common header file, 'wlan_nlink_common.h' can be installed from other
 # qcacld recipes too. To suppress the duplicate detection error, add it to
