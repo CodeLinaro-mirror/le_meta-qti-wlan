@@ -428,6 +428,9 @@ CONFIG_DEBUG_FILE=y
 # output
 #CONFIG_ANDROID_LOG=y
 
+# LE platform build with wpa_cli "driver" command
+CONFIG_LINUX_EMBEDDED=y
+
 # Enable privilege separation (see README 'Privilege separation' for details)
 #CONFIG_PRIVSEP=y
 
