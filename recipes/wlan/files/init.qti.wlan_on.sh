@@ -27,6 +27,24 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #
+echo "########Prepare for the WLAN firmware & bdf file########"
+mkdir -p /lib/firmware/qca6174
+mkdir -p /lib/firmware/qcn7605
+mkdir -p /lib/firmware/qca6390
+
+ln -sf /firmware/image/bdwlan30.* /lib/firmware/qca6174/
+ln -sf /firmware/image/qwlan30.bin  /lib/firmware/qca6174/
+ln -sf /firmware/image/utf30.bin  /lib/firmware/qca6174/
+ln -sf /firmware/image/otp30.bin  /lib/firmware/qca6174/
+
+ln -sf /firmware/image/SBL_RDDM_RAM_MERGED_6390.wlanfw.eval_v1_TO.mbn  /lib/firmware/qca6390/amss.bin
+ln -sf /firmware/image/bdwlan02.e01 /lib/firmware/qca6390/
+ln -sf /firmware/image/bdwlan.elf /lib/firmware/qca6390/
+ln -sf /firmware/image/m3.bin /lib/firmware/qca6390/
+
+ln -sf /firmware/image/SBL_RDDM_RAM_MERGED_7605.wlanfw.eval_v1_TO_ll.mbn  /lib/firmware/qcn7605/amss.bin
+ln -sf /firmware/image/bdwlan03.b01 /lib/firmware/qcn7605/bdwlan.bin
+
 echo "##########Trying to load wlanhost driver ##########"
 if (lspci -k|grep cnss_pci);then
 	if (lspci -k|grep 1102);then
