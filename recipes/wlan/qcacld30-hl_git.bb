@@ -1,4 +1,4 @@
-inherit autotools-brokensep module qperf
+inherit autotools-brokensep module
 
 DESCRIPTION = "Qualcomm Atheros WLAN CLD3.0 high latency driver"
 LICENSE = "ISC"
@@ -44,7 +44,7 @@ SRC_URI += "file://wlan/fw-api/"
 S = "${WORKDIR}/wlan/qcacld-3.0/"
 
 # Append the chip name to firmware installation path
-CHIP_NAME_APPEND = "${@base_conditional('CHIP_NAME', '', '', '/${CHIP_NAME}', d)}"
+CHIP_NAME_APPEND = "${@oe.utils.conditional('CHIP_NAME', '', '', '/${CHIP_NAME}', d)}"
 FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld${CHIP_NAME_APPEND}"
 
 # Explicitly disable LL to enable HL as current WLAN driver is not having
@@ -65,7 +65,7 @@ do_install () {
     install -m 0644 ${S}/core/utils/nlink/inc/wlan_nlink_common.h ${D}${includedir}/qcacld/
 
     #copying wlan_sdio.ko to STAGING_DIR_TARGET
-    WLAN_KO=${@base_conditional('PERF_BUILD', '1', '${STAGING_DIR_TARGET}-perf', '${STAGING_DIR_TARGET}', d)}
+    WLAN_KO=${@oe.utils.conditional('PERF_BUILD', '1', '${STAGING_DIR_TARGET}-perf', '${STAGING_DIR_TARGET}', d)}
     install -d ${WLAN_KO}/wlan
     install -m 0644 ${S}/wlan_sdio.ko ${WLAN_KO}/wlan/
 }
