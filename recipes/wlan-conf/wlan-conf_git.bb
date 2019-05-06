@@ -13,8 +13,8 @@ SRC_URI += "file://wlan_daemon.service"
 S = "${WORKDIR}/mdm-init/"
 
 do_install_append_mdm(){
-	install -m 0664 -o root -g 1001 ${S}/wlan/WCNSS_qcom_cfg.ini \
-		${D}/lib/firmware/wlan/qca_cld/WCNSS_qcom_cfg.ini
+	chown -Rh root:1001 ${D}/lib/firmware/wlan/qca_cld/*
+	chmod -R 0664 ${D}/lib/firmware/wlan/qca_cld/*
 }
 
 do_install_append_msm(){
