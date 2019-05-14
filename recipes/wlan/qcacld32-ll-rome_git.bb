@@ -18,12 +18,15 @@ PR = "r8"
 DEPENDS = "rtsp-alg"
 DEPENDS_remove_automotive = "rtsp-alg"
 DEPENDS_automotive += "llvm-arm-toolchain-native"
+DEPENDS_remove_auto = "rtsp-alg"
+DEPENDS_auto += "llvm-arm-toolchain-native"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/qcacld-3.0/"
 SRC_URI += "file://wlan/qca-wifi-host-cmn/"
 SRC_URI += "file://wlan/fw-api/"
 SRC_URI_append_automotive = " file://device/qcom/wlan/msm_auto/WCNSS_qcom_cfg_qca6174.ini"
+SRC_URI_append_auto = " file://device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6174.ini"
 
 S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn/"
 S = "${WORKDIR}/wlan/qcacld-3.0/"
@@ -38,6 +41,7 @@ EXTRA_OEMAKE += "DYNAMIC_SINGLE_CHIP=${_MODNAME}"
 EXTRA_OEMAKE += "MODNAME=${_MODNAME}"
 
 LDFLAGS_aarch64_automotive = "-O1 --hash-style=gnu --as-needed"
+LDFLAGS_aarch64_auto = "-O1 --hash-style=gnu --as-needed"
 
 # The common header file, 'wlan_nlink_common.h' can be installed from other
 # qcacld recipes too. To suppress the duplicate detection error, add it to
@@ -53,21 +57,42 @@ SRC_URI_append_automotive = " file://init.qti.wlan_off.sh"
 FILES_${PN}     += "usr/bin/init.qti.wlan_on.sh"
 FILES_${PN}     += "usr/bin/init.qti.wlan_off.sh"
 
+SRC_URI_append_auto = " file://init_qti_wlan_auto.service"
+SYSTEMD_SERVICE_${PN}_auto = "init_qti_wlan_auto.service"
+SYSTEMD_AUTO_ENABLE_${PN}_auto = "enable"
+SRC_URI_append_auto = " file://init.qti.wlan_on.sh"
+SRC_URI_append_auto = " file://init.qti.wlan_off.sh"
+
+
 do_compile_prepend_automotive() {
     #Add gnu99 for compiler compatible issues
     sed -i '$a\ccflags-y += -std=gnu99' ${S}/Kbuild
     #In yocto system, get build tag by 'git log' in wlan src dir instead of 'git reflog' in work dir
     sed -i -e '/^ifeq ($(CONFIG_BUILD_TAG), y)/,/^endif/{/^ifeq ($(CONFIG_BUILD_TAG), y)/!{/^endif/!d}}' ${S}/Kbuild
     sed -i -e '/^ifeq ($(CONFIG_BUILD_TAG), y)/a\
-WLAN_ROOT_LV = ${WORKSPACE}/wlan/qcacld-3.0\
-WLAN_CMN_LV = ${WORKSPACE}/wlan/qca-wifi-host-cmn\
-CLD_IDS = $(shell cd "$(WLAN_ROOT_LV)" && git log -1 | sed -nE '\''s/^\\s*Change-Id: (I[0-f]{10})[0-f]{30}\\s*\$\$/\\1/p'\'')\
-CMN_IDS = $(shell cd "$(WLAN_CMN_LV)" && git log -1 | sed -nE '\''s/^\\s*Change-Id: (I[0-f]{10})[0-f]{30}\\s*\$\$/\\1/p'\'')\
-TIMESTAMP = $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')\
-BUILD_TAG = "$(TIMESTAMP); cld:$(CLD_IDS); cmn:$(CMN_IDS);"\
-CFLAGS_wlan_hdd_main.o += -DBUILD_TAG=\\"$(BUILD_TAG)\\"' ${S}/Kbuild
+    WLAN_ROOT_LV = ${WORKSPACE}/wlan/qcacld-3.0\
+    WLAN_CMN_LV = ${WORKSPACE}/wlan/qca-wifi-host-cmn\
+    CLD_IDS = $(shell cd "$(WLAN_ROOT_LV)" && git log -1 | sed -nE '\''s/^\\s*Change-Id: (I[0-f]{10})[0-f]{30}\\s*\$\$/\\1/p'\'')\
+    CMN_IDS = $(shell cd "$(WLAN_CMN_LV)" && git log -1 | sed -nE '\''s/^\\s*Change-Id: (I[0-f]{10})[0-f]{30}\\s*\$\$/\\1/p'\'')\
+    TIMESTAMP = $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')\
+    BUILD_TAG = "$(TIMESTAMP); cld:$(CLD_IDS); cmn:$(CMN_IDS);"\
+    CFLAGS_wlan_hdd_main.o += -DBUILD_TAG=\\"$(BUILD_TAG)\\"' ${S}/Kbuild
 }
 
+do_compile_prepend_auto() {
+    #Add gnu99 for compiler compatible issues
+    sed -i '$a\ccflags-y += -std=gnu99' ${S}/Kbuild
+    #In yocto system, get build tag by 'git log' in wlan src dir instead of 'git reflog' in work dir
+    sed -i -e '/^ifeq ($(CONFIG_BUILD_TAG), y)/,/^endif/{/^ifeq ($(CONFIG_BUILD_TAG), y)/!{/^endif/!d}}' ${S}/Kbuild
+    sed -i -e '/^ifeq ($(CONFIG_BUILD_TAG), y)/a\
+    WLAN_ROOT_LV = ${WORKSPACE}/wlan/qcacld-3.0\
+    WLAN_CMN_LV = ${WORKSPACE}/wlan/qca-wifi-host-cmn\
+    CLD_IDS = $(shell cd "$(WLAN_ROOT_LV)" && git log -1 | sed -nE '\''s/^\\s*Change-Id: (I[0-f]{10})[0-f]{30}\\s*\$\$/\\1/p'\'')\
+    CMN_IDS = $(shell cd "$(WLAN_CMN_LV)" && git log -1 | sed -nE '\''s/^\\s*Change-Id: (I[0-f]{10})[0-f]{30}\\s*\$\$/\\1/p'\'')\
+    TIMESTAMP = $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')\
+    BUILD_TAG = "$(TIMESTAMP); cld:$(CLD_IDS); cmn:$(CMN_IDS);"\
+    CFLAGS_wlan_hdd_main.o += -DBUILD_TAG=\\"$(BUILD_TAG)\\"' ${S}/Kbuild
+}
 
 do_install () {
     module_do_install
@@ -88,7 +113,18 @@ do_install_append_automotive() {
     install -D -m 0755 ${WORKDIR}/init.qti.wlan_on.sh ${D}${bindir}/init.qti.wlan_on.sh
     install -D -m 0755 ${WORKDIR}/init.qti.wlan_off.sh ${D}${bindir}/init.qti.wlan_off.sh
     # Install systemd service file
-    if ${@base_contains('DISTRO_FEATURES','systemd','true','false',d)}; then
+    if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}; then
+        install -m 0644 ${WORKDIR}/init_qti_wlan_auto.service -D ${D}${systemd_unitdir}/system/init_qti_wlan_auto.service
+    fi
+}
+
+do_install_append_auto() {
+    install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6174.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
+    install -d ${D}${bindir}
+    install -D -m 0755 ${WORKDIR}/init.qti.wlan_on.sh ${D}${bindir}/init.qti.wlan_on.sh
+    install -D -m 0755 ${WORKDIR}/init.qti.wlan_off.sh ${D}${bindir}/init.qti.wlan_off.sh
+    # Install systemd service file
+    if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}; then
         install -m 0644 ${WORKDIR}/init_qti_wlan_auto.service -D ${D}${systemd_unitdir}/system/init_qti_wlan_auto.service
     fi
 }
