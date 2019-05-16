@@ -28,6 +28,13 @@
 #
 #
 echo "########Prepare for the WLAN firmware & bdf file########"
+mount=0
+if (mount | grep rootfs | grep ro,); then
+    echo "Root fs read only, remount for r/w"
+    mount -o remount,rw /
+    mount=1
+fi
+
 mkdir -p /lib/firmware/qca6174
 mkdir -p /lib/firmware/qcn7605
 mkdir -p /lib/firmware/qca6390
@@ -47,6 +54,11 @@ ln -sf /firmware/image/SBL_RDDM_RAM_MERGED_7605.wlanfw.eval_v1_TO_ll.mbn  /lib/f
 ln -sf /firmware/image/bdwlan03.b01 /lib/firmware/qcn7605/bdwlan.bin
 #For GNA04.1 boardid = 0x301
 ln -sf /firmware/image/bdwlan03.b01 /lib/firmware/qcn7605/bdwlan.b0301
+
+if [ $mount -eq 1 ];then
+    echo "Remount root fs to ready only"
+    mount -o remount,ro /
+fi
 
 echo "##########Trying to load wlanhost driver ##########"
 if (lspci -k|grep cnss_pci);then
