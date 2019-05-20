@@ -1,4 +1,4 @@
-inherit autotools-brokensep module qperf
+inherit autotools-brokensep module
 
 DESCRIPTION = "Qualcomm Atheros WLAN CLD3.0 high latency driver"
 LICENSE = "ISC"
