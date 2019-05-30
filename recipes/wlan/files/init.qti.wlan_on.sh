@@ -44,16 +44,17 @@ ln -sf /firmware/image/qwlan30.bin  /lib/firmware/qca6174/
 ln -sf /firmware/image/utf30.bin  /lib/firmware/qca6174/
 ln -sf /firmware/image/otp30.bin  /lib/firmware/qca6174/
 
-ln -sf /firmware/image/SBL_RDDM_RAM_MERGED_6390.wlanfw.eval_v1_TO.mbn  /lib/firmware/qca6390/amss.bin
-ln -sf /firmware/image/bdwlan02.e01 /lib/firmware/qca6390/
-ln -sf /firmware/image/bdwlan.elf /lib/firmware/qca6390/
-ln -sf /firmware/image/m3.bin /lib/firmware/qca6390/
+ln -sf /firmware/image/qca6390/amss.bin  /lib/firmware/qca6390/amss.bin
+ln -sf /firmware/image/qca6390/amss20.bin  /lib/firmware/qca6390/amss20.bin
+ln -sf /firmware/image/qca6390/bdwlan02.e01 /lib/firmware/qca6390/
+ln -sf /firmware/image/qca6390/bdwlan.elf /lib/firmware/qca6390/
+ln -sf /firmware/image/qca6390/m3.bin /lib/firmware/qca6390/
 
-ln -sf /firmware/image/SBL_RDDM_RAM_MERGED_7605.wlanfw.eval_v1_TO_ll.mbn  /lib/firmware/qcn7605/amss.bin
+ln -sf /firmware/image/qcn7605/sbl_rddm.mbn /lib/firmware/qcn7605/amss.bin
 #For GNA04.1 boardid = 0xff
-ln -sf /firmware/image/bdwlan03.b01 /lib/firmware/qcn7605/bdwlan.bin
+ln -sf /firmware/image/qcn7605/bdwlan03.b01 /lib/firmware/qcn7605/bdwlan.bin
 #For GNA04.1 boardid = 0x301
-ln -sf /firmware/image/bdwlan03.b01 /lib/firmware/qcn7605/bdwlan.b0301
+ln -sf /firmware/image/qcn7605/bdwlan03.b01 /lib/firmware/qcn7605/bdwlan.b0301
 
 if [ $mount -eq 1 ];then
     echo "Remount root fs to ready only"
