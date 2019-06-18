@@ -18,11 +18,12 @@ do_install_append_msm(){
       cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
       install -d ${D}/etc/systemd/system/
       install -d ${D}/etc/systemd/system/multi-user.target.wants/
-      if ${@oe.utils.conditional('MACHINE', 'qcs403-som2', 'true', 'false', d)}; then
+      if ${@oe.utils.conditional('DISTRO_FEATURES', 'no-test-bundle', 'true', 'false', d)}; then
           sed "s/^gEnable2x2\s*=.*/gEnable2x2=0/" -i ${D}/lib/firmware/wlan/qca_cld/WCNSS_qcom_cfg.ini
           mkdir -p ${D}/lib/firmware/wlan/qca_cld/wlan_debug
           ln -sf /lib/firmware/wlan/qca_cld/WCNSS_qcom_cfg.ini ${D}/lib/firmware/wlan/qca_cld/wlan_debug/WCNSS_qcom_cfg.ini
       fi
+
     if ${@oe.utils.conditional('BASEMACHINE', 'apq8009', oe.utils.conditional('BASEPRODUCT', 'qsap', 'false', 'true', d), 'true', d)}; then
         if ${@oe.utils.conditional('BASEMACHINE', 'qcs40x', 'false', 'true', d)}; then
             install -m 0644 ${WORKDIR}/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
