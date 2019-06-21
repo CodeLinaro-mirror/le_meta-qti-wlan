@@ -12,6 +12,11 @@ SRC_URI += "file://wlan_daemon.service"
 # Update for each machine
 S = "${WORKDIR}/mdm-init/"
 
+do_install_append_mdm(){
+	chown -Rh root:1001 ${D}/lib/firmware/wlan/qca_cld/*
+	chmod -R 0664 ${D}/lib/firmware/wlan/qca_cld/*
+}
+
 do_install_append_msm(){
   if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
       install -d ${D}/etc/initscripts
