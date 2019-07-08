@@ -34,7 +34,7 @@ FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld"
 # simultaneous support of HL and LL.
 EXTRA_OEMAKE += "CONFIG_CLD_HL_SDIO_CORE=n CONFIG_CNSS_SDIO=n"
 
-WLAN_CONFIG = "${@bb.utils.contains('DISTRO_FEATURES', 'no-test-bundle','qcs40x.snoc.perf','default',d)}"
+WLAN_CONFIG = "${@bb.utils.contains('DISTRO_FEATURES', 'wlan-perf', 'qcs40x.snoc.perf', 'default', d)}"
 EXTRA_OEMAKE += "CONFIG_QCA_CLD_WLAN_PROFILE=${WLAN_CONFIG}"
 # The common header file, 'wlan_nlink_common.h' can be installed from other
 # qcacld recipes too. To suppress the duplicate detection error, add it to

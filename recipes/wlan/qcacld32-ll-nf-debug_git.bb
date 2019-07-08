@@ -34,10 +34,7 @@ FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld"
 # simultaneous support of HL and LL.
 EXTRA_OEMAKE += "CONFIG_CLD_HL_SDIO_CORE=n CONFIG_CNSS_SDIO=n"
 
-# build debug WLAN for NF
-WLAN_CONFIG = "default"
-WLAN_CONFIG_qcs403-som2 = "default"
-EXTRA_OEMAKE += "CONFIG_QCA_CLD_WLAN_PROFILE=${WLAN_CONFIG} MODNAME=wlan_debug KERNEL_BUILD=y"
+EXTRA_OEMAKE += "CONFIG_QCA_CLD_WLAN_PROFILE=default MODNAME=wlan_debug KERNEL_BUILD=y"
 # The common header file, 'wlan_nlink_common.h' can be installed from other
 # qcacld recipes too. To suppress the duplicate detection error, add it to
 # SSTATE_DUPWHITELIST.
