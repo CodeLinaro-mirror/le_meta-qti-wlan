@@ -515,3 +515,9 @@ CONFIG_AP=y
 CONFIG_EAP_PROXY=qmi
 CONFIG_EAP_PROXY_DUAL_SIM := true
 CONFIG_EAP_PROXY_AKA_PRIME := true
+
+# IEEE 802.11ax HE support
+# Note: This is experimental and work in progress. The definitions are still
+# subject to change and this should not be expected to interoperate with the
+# final IEEE 802.11ax version.
+CONFIG_IEEE80211AX=y
