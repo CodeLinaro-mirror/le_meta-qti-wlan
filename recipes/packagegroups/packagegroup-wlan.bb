@@ -16,6 +16,7 @@ RDEPENDS_packagegroup-wlan = " \
     wpa-supplicant-8-lib \
     cld80211-lib \
     wlan-conf \
+    wireless-tools \
     "
 RDEPENDS_packagegroup-wlan-debug = " \
     qcacld32-ll-nf-debug \
