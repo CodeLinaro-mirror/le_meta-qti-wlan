@@ -52,6 +52,7 @@ do_install () {
     WLAN_KO=${@oe.utils.conditional('PERF_BUILD', '1', '${STAGING_DIR_TARGET}-perf', '${STAGING_DIR_TARGET}', d)}
     install -d ${WLAN_KO}/wlan
     install -m 0644 ${S}/wlan.ko ${WLAN_KO}/wlan/
+    ln -s /persist/wlan_mac.bin ${FIRMWARE_PATH}/wlan_mac.bin
 }
 
 do_module_signing() {
