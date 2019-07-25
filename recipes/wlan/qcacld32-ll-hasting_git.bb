@@ -51,9 +51,14 @@ inherit systemd
 SRC_URI_append_automotive = " file://init_qti_wlan_auto.service"
 SYSTEMD_SERVICE_${PN}_automotive = "init_qti_wlan_auto.service"
 SYSTEMD_AUTO_ENABLE_${PN}_automotive = "enable"
+SRC_URI_append_auto = " file://init_qti_wlan_auto.service"
+SYSTEMD_SERVICE_${PN}_auto = "init_qti_wlan_auto.service"
+SYSTEMD_AUTO_ENABLE_${PN}_auto = "enable"
 
 SRC_URI_append_automotive = " file://init.qti.wlan_on.sh"
 SRC_URI_append_automotive = " file://init.qti.wlan_off.sh"
+SRC_URI_append_auto = " file://init.qti.wlan_on.sh"
+SRC_URI_append_auto = " file://init.qti.wlan_off.sh"
 FILES_${PN}     += "usr/bin/init.qti.wlan_on.sh"
 FILES_${PN}     += "usr/bin/init.qti.wlan_off.sh"
 
@@ -112,6 +117,13 @@ do_install_append_automotive() {
 
 do_install_append_auto() {
     install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6390.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
+    install -d ${D}${bindir}
+    install -D -m 0755 ${WORKDIR}/init.qti.wlan_on.sh ${D}${bindir}/init.qti.wlan_on.sh
+    install -D -m 0755 ${WORKDIR}/init.qti.wlan_off.sh ${D}${bindir}/init.qti.wlan_off.sh
+    # Install systemd service file
+    if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}; then
+        install -m 0644 ${WORKDIR}/init_qti_wlan_auto.service -D ${D}${systemd_unitdir}/system/init_qti_wlan_auto.service
+    fi
 }
 
 do_module_signing() {
