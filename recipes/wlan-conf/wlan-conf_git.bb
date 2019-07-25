@@ -13,8 +13,6 @@ SRC_URI += "file://wlan_daemon.service"
 S = "${WORKDIR}/mdm-init/"
 
 do_install_append_mdm(){
-	chown -Rh root:1001 ${D}/lib/firmware/wlan/qca_cld/*
-	chmod -R 0664 ${D}/lib/firmware/wlan/qca_cld/*
 	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
 		rm ${D}/etc/init.d/wlan
 	fi
