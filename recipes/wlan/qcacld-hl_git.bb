@@ -3,6 +3,7 @@ inherit autotools-brokensep module qperf
 DESCRIPTION = "Qualcomm Atheros WLAN CLD high latency driver"
 LICENSE = "ISC"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=f3b90e78ea0cffb20bf5cca7947a896d"
+MK_CONF = ""
 
 # Targets - mdm9650 and sdx20: modulename = wlan_sdio.ko, chip name - qca9377
 # Other targets : modulename = wlan.ko, chip name -
@@ -15,18 +16,25 @@ python __anonymous () {
          d.setVar('WLAN_MODULE_NAME', 'wlan_sdio')
          d.setVar('CHIP_NAME', 'qca9377')
          d.setVar('WLAN_MODULE_TARGET_NAME', 'wlan_sdio_cld20')
+     elif d.getVar('BASEMACHINE', True) == 'sdm845':
+         d.setVar('WLAN_MODULE_NAME', 'wlan_sdio')
+         d.setVar('CHIP_NAME', 'qca6174')
+         d.appendVar('MK_CONF', ' CONFIG_CNSS_GENL=n CONFIG_MULTI_IF_LOG=y')
+         d.appendVar('MK_CONF', ' CONFIG_SUB_20_MHZ=y CONFIG_RX_HOLE_DETCTION=y')
+         d.appendVar('MK_CONF', ' CONFIG_MAC_NOTIFICATION=y CONFIG_ACS_FW_REPORT_PARAM=y')
+         d.appendVar('MK_CONF', ' CONFIG_CHAN_HOPPING_ALL_BAND=y')
      else:
          d.setVar('WLAN_MODULE_NAME', 'wlan')
          d.setVar('CHIP_NAME', '')
 }
 
 FILES_${PN}     += "lib/firmware/wlan/*"
-FILES_${PN}     += "${base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko"
+FILES_${PN}     += "lib/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko"
 # The inherit of module.bbclass will automatically name module packages with
 # kernel-module-" prefix as required by the oe-core build environment. Also it
 # replaces '_' with '-' in the module name.
+PROVIDES_NAME   = "kernel-module-${WLAN_MODULE_NAME}"
 RPROVIDES_${PN} += "${@'kernel-module-${WLAN_MODULE_NAME}-${KERNEL_VERSION}'.replace('_', '-')}"
-PROVIDES_NAME   = "kernel-module-${WLAN_MODULE_NAME}-${KERNEL_VERSION}"
 
 do_unpack[deptask] = "do_populate_sysroot"
 PR = "r0"
@@ -45,7 +53,7 @@ FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld${CHIP_NAME_APPEND}"
 
 # Explicitly disable LL to enable HL as current WLAN driver is not having
 # simultaneous support of HL and LL.
-EXTRA_OEMAKE += "CONFIG_CLD_LL_CORE=n CONFIG_CNSS_PCI=n MODNAME=${WLAN_MODULE_NAME} CHIP_NAME=${CHIP_NAME}"
+EXTRA_OEMAKE += "CONFIG_CLD_LL_CORE=n CONFIG_CNSS_PCI=n MODNAME=${WLAN_MODULE_NAME} CHIP_NAME=${CHIP_NAME} ${MK_CONF}"
 
 # The common header file, 'wlan_nlink_common.h' can be installed from other
 # qcacld recipes too. To suppress the duplicate detection error, add it to
