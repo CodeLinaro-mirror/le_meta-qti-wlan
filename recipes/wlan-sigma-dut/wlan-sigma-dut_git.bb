@@ -9,6 +9,8 @@ PR = "r0"
 
 SRC_DIR = "${WORKSPACE}/wlan/utils/sigma-dut/"
 
+CFLAGS += "-DLINUX_EMBEDDED"
+
 S = "${WORKDIR}/wlan/utils/sigma-dut"
 
 do_install() {
