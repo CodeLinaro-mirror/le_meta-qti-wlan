@@ -39,6 +39,10 @@ EXTRA_OEMAKE += "CONFIG_QCA_CLD_WLAN_PROFILE=qca6390"
 EXTRA_OEMAKE += "DYNAMIC_SINGLE_CHIP=${_MODNAME}"
 EXTRA_OEMAKE += "MODNAME=${_MODNAME}"
 
+#Enable/Disable IPA by MACHINE name
+EXTRA_OEMAKE_append_sdxprairie = " CONFIG_ENABLE_IPA=y"
+EXTRA_OEMAKE_append_sa8155 = " CONFIG_ENABLE_IPA=n"
+
 LDFLAGS_aarch64_automotive = "-O1 --hash-style=gnu --as-needed"
 LDFLAGS_aarch64_auto = "-O1 --hash-style=gnu --as-needed"
 
