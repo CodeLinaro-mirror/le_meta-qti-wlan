@@ -121,8 +121,17 @@ do_install_append_automotive() {
 
 do_install_append_auto() {
     install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6390.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
+    chown -RH root:1001 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
+    chmod -R 0664 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
     install -d ${D}${bindir}
     install -D -m 0755 ${WORKDIR}/init.qti.wlan_on.sh ${D}${bindir}/init.qti.wlan_on.sh
+    install -d ${D}/lib/firmware/${_MODNAME}/
+    ln -sf /firmware/image/${_MODNAME}/amss.bin ${D}/lib/firmware/${_MODNAME}/
+    ln -sf /firmware/image/${_MODNAME}/amss20.bin ${D}/lib/firmware/${_MODNAME}/
+    ln -sf /firmware/image/${_MODNAME}/bdwlan02.e01 ${D}/lib/firmware/${_MODNAME}/
+    ln -sf /firmware/image/${_MODNAME}/bdwlan02.e02 ${D}/lib/firmware/${_MODNAME}/
+    ln -sf /firmware/image/${_MODNAME}/bdwlan.elf ${D}/lib/firmware/${_MODNAME}/
+    ln -sf /firmware/image/${_MODNAME}/m3.bin ${D}/lib/firmware/${_MODNAME}/
     install -D -m 0755 ${WORKDIR}/init.qti.wlan_off.sh ${D}${bindir}/init.qti.wlan_off.sh
     # Install systemd service file
     if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}; then

@@ -27,39 +27,11 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #
-echo "########Prepare for the WLAN firmware & bdf file########"
-mount=0
-if (mount | grep rootfs | grep ro,); then
-    echo "Root fs read only, remount for r/w"
-    mount -o remount,rw /
-    mount=1
-fi
 
-mkdir -p /lib/firmware/qca6174
-mkdir -p /lib/firmware/qcn7605
-mkdir -p /lib/firmware/qca6390
 
-ln -sf /firmware/image/bdwlan30.* /lib/firmware/qca6174/
-ln -sf /firmware/image/qwlan30.bin  /lib/firmware/qca6174/
-ln -sf /firmware/image/utf30.bin  /lib/firmware/qca6174/
-ln -sf /firmware/image/otp30.bin  /lib/firmware/qca6174/
 
-ln -sf /firmware/image/qca6390/amss.bin  /lib/firmware/qca6390/amss.bin
-ln -sf /firmware/image/qca6390/amss20.bin  /lib/firmware/qca6390/amss20.bin
-ln -sf /firmware/image/qca6390/bdwlan02.e01 /lib/firmware/qca6390/
-ln -sf /firmware/image/qca6390/bdwlan.elf /lib/firmware/qca6390/
-ln -sf /firmware/image/qca6390/m3.bin /lib/firmware/qca6390/
 
-ln -sf /firmware/image/qcn7605/sbl_rddm.mbn /lib/firmware/qcn7605/amss.bin
-#For GNA04.1 boardid = 0xff
-ln -sf /firmware/image/qcn7605/bdwlan03.b01 /lib/firmware/qcn7605/bdwlan.bin
-#For GNA04.1 boardid = 0x301
-ln -sf /firmware/image/qcn7605/bdwlan03.b01 /lib/firmware/qcn7605/bdwlan.b0301
 
-if [ $mount -eq 1 ];then
-    echo "Remount root fs to ready only"
-    mount -o remount,ro /
-fi
 
 echo "##########Trying to load wlanhost driver ##########"
 if (lspci -k|grep cnss_pci);then
