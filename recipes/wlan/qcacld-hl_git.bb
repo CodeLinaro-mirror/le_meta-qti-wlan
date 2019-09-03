@@ -15,13 +15,16 @@ python __anonymous () {
          d.setVar('WLAN_MODULE_NAME', 'wlan_sdio')
          d.setVar('CHIP_NAME', 'qca9377')
          d.setVar('WLAN_MODULE_TARGET_NAME', 'wlan_sdio_cld20')
+     elif d.getVar('BASEMACHINE', True) == 'qcs40x':
+         d.setVar('WLAN_MODULE_NAME', 'wlan_sdio')
+         d.setVar('CHIP_NAME', 'wlan_sdio')
      else:
          d.setVar('WLAN_MODULE_NAME', 'wlan')
          d.setVar('CHIP_NAME', '')
 }
 
 FILES_${PN}     += "lib/firmware/wlan/*"
-FILES_${PN}     += "${base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko"
+FILES_${PN}     += "lib/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko"
 # The inherit of module.bbclass will automatically name module packages with
 # kernel-module-" prefix as required by the oe-core build environment. Also it
 # replaces '_' with '-' in the module name.
