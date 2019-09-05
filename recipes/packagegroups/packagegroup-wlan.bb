@@ -4,9 +4,11 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 inherit packagegroup
 
+PROVIDES = "${PACKAGES}"
 PACKAGES = " \
     packagegroup-wlan \
-    packagegroup-wlan-debug \
+    ${@bb.utils.contains('MACHINE_FEATURES', 'wlan-sdio', 'packagegroup-wlan-sdio', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'wlan-perf', 'packagegroup-wlan-debug', '', d)} \
     "
 
 RDEPENDS_packagegroup-wlan = " \
@@ -17,6 +19,9 @@ RDEPENDS_packagegroup-wlan = " \
     cld80211-lib \
     wlan-conf \
     wireless-tools \
+    "
+RDEPENDS_packagegroup-wlan-sdio = " \
+    qcacld-hl \
     "
 RDEPENDS_packagegroup-wlan-debug = " \
     qcacld32-ll-nf-debug \
