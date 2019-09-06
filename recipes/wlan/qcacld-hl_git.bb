@@ -35,7 +35,7 @@ do_unpack[deptask] = "do_populate_sysroot"
 PR = "r0"
 
 #This DEPENDS is to serialize kernel module builds
-DEPENDS = "rtsp-alg"
+DEPENDS = "rtsp-alg mod-signing-keys"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/qcacld-2.0/"
@@ -72,17 +72,7 @@ do_install_append_sdx20 () {
 }
 
 do_module_signing() {
-    if [ -f ${STAGING_KERNEL_BUILDDIR}/signing_key.priv ]; then
-        if [ ${BASEMACHINE} == "apq8017" ]; then
-            ${STAGING_KERNEL_DIR}/scripts/sign-file sha512 ${STAGING_KERNEL_BUILDDIR}/signing_key.priv ${STAGING_KERNEL_BUILDDIR}/signing_key.x509 ${PKGDEST}/${PROVIDES_NAME}/lib/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko
-        elif [ ${BASEMACHINE} == "sdx20" ]; then
-            ${STAGING_KERNEL_DIR}/scripts/sign-file sha512 ${STAGING_KERNEL_BUILDDIR}/signing_key.priv ${STAGING_KERNEL_BUILDDIR}/signing_key.x509 ${PKGDEST}/${PROVIDES_NAME}/lib/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_TARGET_NAME}.ko
-        else
-            ${STAGING_KERNEL_DIR}/scripts/sign-file sha512 ${STAGING_KERNEL_BUILDDIR}/signing_key.priv ${STAGING_KERNEL_BUILDDIR}/signing_key.x509 ${PKGDEST}/${PN}/lib/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko
-        fi
-    elif [ -f ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.pem ]; then
-            ${STAGING_KERNEL_BUILDDIR}/scripts/sign-file sha512 ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.pem ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.x509 ${PKGDEST}/${PN}/lib/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko
-    fi
+    ${STAGING_KERNEL_BUILDDIR}/scripts/sign-file sha512 ${STAGING_DIR_TARGET}/kernel-certs/signing_key.pem ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.x509 ${PKGDEST}/${PN}/lib/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko
 }
 
 addtask module_signing after do_package before do_package_write_ipk
