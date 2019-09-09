@@ -1,6 +1,10 @@
-inherit autotools qcommon qlicense qprebuilt
+inherit autotools pkgconfig
 
-DESCRIPTION = "CNSS"
+DESCRIPTION = "Wi-Fi Protected Access(WPA) Supplicant lib"
+LICENSE = "BSD"
+LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/\
+${LICENSE};md5=3775480a712fc46a69647678acb234cb"
+
 PR = "r2"
 
 DEPENDS = "libcutils libnl liblog"

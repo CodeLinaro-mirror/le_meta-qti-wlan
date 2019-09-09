@@ -18,8 +18,10 @@ do_install_append_msm(){
       cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
       install -d ${D}/etc/systemd/system/
       install -d ${D}/etc/systemd/system/multi-user.target.wants/
-      if ${@oe.utils.conditional('DISTRO_FEATURES', 'no-test-bundle', 'true', 'false', d)}; then
+      if ${@bb.utils.contains('MACHINE_FEATURES', 'wlan-1x1', 'true', 'false', d)}; then
           sed "s/^gEnable2x2\s*=.*/gEnable2x2=0/" -i ${D}/lib/firmware/wlan/qca_cld/WCNSS_qcom_cfg.ini
+      fi
+      if ${@bb.utils.contains('DISTRO_FEATURES', 'wlan-perf', 'true', 'false', d)}; then
           mkdir -p ${D}/lib/firmware/wlan/qca_cld/wlan_debug
           ln -sf /lib/firmware/wlan/qca_cld/WCNSS_qcom_cfg.ini ${D}/lib/firmware/wlan/qca_cld/wlan_debug/WCNSS_qcom_cfg.ini
       fi
