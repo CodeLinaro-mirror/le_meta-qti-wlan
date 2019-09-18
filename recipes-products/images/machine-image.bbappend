@@ -1,7 +1,7 @@
 # Additional non-open source packages to be put to the root filesystem.
 # If product is specified try to include product inc otherwise include base inc.
 def get_wlan_inc_file(d):
-    product     = d.getVar('PRODUCT', True)
+    product     = d.getVar('PRODUCT', True) or ""
     basemachine = d.getVar('BASEMACHINE', True)
     if product != 'base' or '':
         inc_file_name = basemachine + "-" + product + "-wlan-image.inc"
