@@ -210,3 +210,8 @@ CONFIG_INTERWORKING=y
 # subject to change and this should not be expected to interoperate with the
 # final IEEE 802.11ax version.
 CONFIG_IEEE80211AX=y
+
+# Opportunistic Wireless Encryption (OWE)
+# Experimental implementation of draft-harkins-owe-07.txt
+CONFIG_OWE=y
+CONFIG_SAE=y
