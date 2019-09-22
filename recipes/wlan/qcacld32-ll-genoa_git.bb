@@ -6,6 +6,7 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5
 
 _MODNAME = "qcn7605"
 FILES_${PN}     += "lib/firmware/wlan/*"
+FILES_${PN}     += "lib/firmware/*"
 FILES_${PN}     += "lib/modules/${KERNEL_VERSION}/extra/${_MODNAME}.ko"
 PROVIDES_NAME   = "kernel-module-${_MODNAME}"
 RPROVIDES_${PN} += "${PROVIDES_NAME}-${KERNEL_VERSION}"
@@ -23,6 +24,7 @@ SRC_URI = "file://wlan/qcacld-3.0/"
 SRC_URI += "file://wlan/qca-wifi-host-cmn/"
 SRC_URI += "file://wlan/fw-api/"
 SRC_URI_append_automotive = " file://device/qcom/wlan/msm_auto/WCNSS_qcom_cfg_qcn7605.ini"
+SRC_URI_append_auto = " file://device/qcom/wlan/msm_auto/WCNSS_qcom_cfg_qcn7605.ini"
 
 S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn/"
 S = "${WORKDIR}/wlan/qcacld-3.0/"
@@ -51,6 +53,7 @@ SYSTEMD_AUTO_ENABLE_${PN}_automotive = "enable"
 
 SRC_URI_append_automotive = " file://init.qti.wlan_on.sh"
 SRC_URI_append_automotive = " file://init.qti.wlan_off.sh"
+
 FILES_${PN}     += "usr/bin/init.qti.wlan_on.sh"
 FILES_${PN}     += "usr/bin/init.qti.wlan_off.sh"
 
@@ -91,6 +94,16 @@ do_install_append_automotive() {
     if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}; then
         install -m 0644 ${WORKDIR}/init_qti_wlan_auto.service -D ${D}${systemd_unitdir}/system/init_qti_wlan_auto.service
     fi
+}
+
+do_install_append_auto() {
+    install -D -m 0644 ${WORKDIR}/device/qcom/wlan/msm_auto/WCNSS_qcom_cfg_qcn7605.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
+    install -d ${D}/lib/firmware/${_MODNAME}/
+    ln -sf /firmware/image/${_MODNAME}/amss.bin ${D}/lib/firmware/${_MODNAME}/
+    ln -sf /firmware/image/${_MODNAME}/bdwlan02.b03 ${D}/lib/firmware/${_MODNAME}/
+    ln -sf /firmware/image/${_MODNAME}/bdwlan03.b02 ${D}/lib/firmware/${_MODNAME}/
+    ln -sf /firmware/image/${_MODNAME}/bdwlan03.b03 ${D}/lib/firmware/${_MODNAME}/
+    ln -sf /firmware/image/${_MODNAME}/genoaftm.bin ${D}/lib/firmware/${_MODNAME}/
 }
 
 do_module_signing() {
