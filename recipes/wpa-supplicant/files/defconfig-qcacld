@@ -428,6 +428,9 @@ CONFIG_DEBUG_FILE=y
 # output
 #CONFIG_ANDROID_LOG=y
 
+# LE platform build with wpa_cli "driver" command
+CONFIG_LINUX_EMBEDDED=y
+
 # Enable privilege separation (see README 'Privilege separation' for details)
 #CONFIG_PRIVSEP=y
 
@@ -540,3 +543,6 @@ CONFIG_DRIVER_NL80211_QCA=y
 
 # 11v
 CONFIG_WNM=y
+
+# Multiband Operations
+CONFIG_MBO=y

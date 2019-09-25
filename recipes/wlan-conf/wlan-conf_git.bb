@@ -8,12 +8,25 @@ FILESPATH =+ "${WORKSPACE}:"
 # Provide a baseline
 SRC_URI = "file://mdm-init/"
 SRC_URI += "file://wlan_daemon.service"
+SRC_URI += "file://cnss.service"
 
 # Update for each machine
 S = "${WORKDIR}/mdm-init/"
 
 do_install_append_mdm(){
 	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
+		if grep -q "CONFIG_CNSS2=m" ${STAGING_KERNEL_BUILDDIR}/.config
+		then
+			install -d ${D}/etc/initscripts
+			cp ${D}/etc/init.d/start_cnss_le ${D}/etc/initscripts/start_cnss_le
+			install -d ${D}/etc/systemd/system/
+			install -m 0644 ${WORKDIR}/cnss.service -D ${D}/etc/systemd/system/cnss.service
+			install -d ${D}/etc/systemd/system/multi-user.target.wants/
+			ln -sf /etc/systemd/system/cnss.service \
+                                      ${D}/etc/systemd/system/multi-user.target.wants/cnss.service
+			rm -rf ${D}/etc/init.d/start_cnss_le
+		fi
+
 		rm ${D}/etc/init.d/wlan
 	fi
 }
