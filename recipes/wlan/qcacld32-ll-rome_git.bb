@@ -28,6 +28,7 @@ SRC_URI += "file://wlan/qca-wifi-host-cmn/"
 SRC_URI += "file://wlan/fw-api/"
 SRC_URI_append_automotive = " file://device/qcom/wlan/msm_auto/WCNSS_qcom_cfg_qca6174.ini"
 SRC_URI_append_auto = " file://device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6174.ini"
+SRC_URI_append_auto = " file://device/qcom/wlan/sdx_auto/wlan_mac.bin"
 
 S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn/"
 S = "${WORKDIR}/wlan/qcacld-3.0/"
