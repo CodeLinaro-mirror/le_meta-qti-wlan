@@ -48,7 +48,7 @@ FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld${CHIP_NAME_APPEND}"
 
 # Explicitly disable LL to enable HL as current WLAN driver is not having
 # simultaneous support of HL and LL.
-EXTRA_OEMAKE += "CONFIG_CLD_LL_CORE=n CONFIG_CNSS_PCI=n MODNAME=${WLAN_MODULE_NAME} CHIP_NAME=${CHIP_NAME} CONFIG_CNSS_GENL=n CONFIG_MULTI_IF_LOG=y"
+EXTRA_OEMAKE += "CONFIG_CLD_LL_CORE=n CONFIG_CNSS_PCI=n MODNAME=${WLAN_MODULE_NAME} CHIP_NAME=${CHIP_NAME} CONFIG_CNSS_GENL=n CONFIG_MULTI_IF_LOG=y CONFIG_SUB_20_MHZ=y"
 
 # The common header file, 'wlan_nlink_common.h' can be installed from other
 # qcacld recipes too. To suppress the duplicate detection error, add it to
