@@ -42,6 +42,9 @@ EXTRA_OEMAKE += "CONFIG_QCA_CLD_WLAN_PROFILE=qca6174"
 EXTRA_OEMAKE += "DYNAMIC_SINGLE_CHIP=${_MODNAME}"
 EXTRA_OEMAKE += "MODNAME=${_MODNAME}"
 
+# Rome IPA on sa515m is not supported, disable it
+EXTRA_OEMAKE_append_sa515m = " WLAN_CFG_OVERRIDE="CONFIG_IPA_OFFLOAD=n""
+
 LDFLAGS_aarch64_automotive = "-O1 --hash-style=gnu --as-needed"
 LDFLAGS_aarch64_auto = "-O1 --hash-style=gnu --as-needed"
 
