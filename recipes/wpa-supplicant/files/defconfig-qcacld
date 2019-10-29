@@ -546,3 +546,7 @@ CONFIG_WNM=y
 
 # Multiband Operations
 CONFIG_MBO=y
+
+# FILS
+CONFIG_FILS=y
+CONFIG_ERP=y
