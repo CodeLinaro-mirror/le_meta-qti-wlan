@@ -29,3 +29,7 @@ RDEPENDS_packagegroup-qti-wifi-tools = " \
     wlan-conf \
     wireless-tools \
     "
+
+RRECOMMENDS_packagegroup-qti-wifi-tools = " \
+    sigma-dut \
+    "
