@@ -12,6 +12,7 @@ FILES_${PN}     += "lib/modules/${KERNEL_VERSION}/extra/wlan_debug.ko"
 PROVIDES_NAME   = "kernel-module-wlan"
 RPROVIDES_${PN} += "${PROVIDES_NAME}-debug-${KERNEL_VERSION}"
 
+do_fetch[depends] += " ${@bb.utils.contains('MACHINE_FEATURES', 'wlan-sdio', 'qcacld32-ll:do_package qcacld-hl:do_package', 'qcacld32-ll:do_package', d)}"
 do_unpack[deptask] = "do_populate_sysroot"
 PR = "r8"
 
