@@ -24,5 +24,5 @@ RDEPENDS_packagegroup-wlan-sdio = " \
     qcacld-hl \
     "
 RDEPENDS_packagegroup-wlan-debug = " \
-    qcacld32-ll-debug \
+    qcacld32-ll-nf-debug \
     "
