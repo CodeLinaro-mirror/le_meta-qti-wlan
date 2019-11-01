@@ -34,6 +34,15 @@
 
 
 echo "##########Trying to load wlanhost driver ##########"
+
+if (lsmod|grep cnss2);then
+	echo "##########cnss2 already exist######"
+else
+	echo "##########loading cnss2############"
+	modprobe cnss2
+fi
+echo "##########load cnss2 done############"
+
 if (lspci -k|grep cnss_pci);then
 	if (lspci -k|grep 1102);then
 		echo "##########load qcn7605#############"
