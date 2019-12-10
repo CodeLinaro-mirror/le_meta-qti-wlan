@@ -5,7 +5,8 @@ DESCRIPTION = "Qualcomm Atheros WLAN CLD3.0 low latency driver"
 LICENSE = "ISC"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=f3b90e78ea0cffb20bf5cca7947a896d"
 
-_MODNAME = "qca6174"
+_MODNAME = "qca6574"
+FW_PATH_NAME = "qca6174"
 FILES_${PN}     += "lib/firmware/wlan/*"
 FILES_${PN}     += "lib/firmware/*"
 FILES_${PN}     += "lib/modules/${KERNEL_VERSION}/extra/${_MODNAME}.ko"
@@ -137,8 +138,27 @@ do_install_append_auto() {
     install -D -m 0755 ${WORKDIR}/init.qti.wlan_on.sh ${D}${bindir}/init.qti.wlan_on.sh
     install -D -m 0755 ${WORKDIR}/init.qti.wlan_off.sh ${D}${bindir}/init.qti.wlan_off.sh
     install -d ${D}/lib/firmware/${_MODNAME}/
-    ln -sf /firmware/image/bdwlan30.bin ${D}/lib/firmware/${_MODNAME}/
-    ln -sf /firmware/image/bdwlan30.b31 ${D}/lib/firmware/${_MODNAME}/
+
+    #for sa515 platform
+    ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan30.b00 ${D}/lib/firmware/${_MODNAME}/
+    ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan30.bin ${D}/lib/firmware/${_MODNAME}/
+    mv ${D}/lib/firmware/${_MODNAME}/bdwlan30.bin ${D}/lib/firmware/${_MODNAME}/utfbd30.bin
+    ln -sf /firmware/image/${FW_PATH_NAME}/qwlan30.bin ${D}/lib/firmware/${_MODNAME}/
+    ln -sf /firmware/image/${FW_PATH_NAME}/utf30.bin ${D}/lib/firmware/${_MODNAME}/
+    ln -sf /firmware/image/${FW_PATH_NAME}/otp30.bin ${D}/lib/firmware/${_MODNAME}/
+    ln -sf /firmware/image/${FW_PATH_NAME}/data.msc ${D}/lib/firmware/${_MODNAME}/
+    ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan30.b31 ${D}/lib/firmware/${_MODNAME}/
+    mv ${D}/lib/firmware/${_MODNAME}/bdwlan30.b31 ${D}/lib/firmware/${_MODNAME}/utfbd30.b31
+    ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan30.bin ${D}/lib/firmware/${_MODNAME}/
+    ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan30.b31 ${D}/lib/firmware/${_MODNAME}/
+
+    # Install systemd service file
+    if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}; then
+        install -m 0644 ${WORKDIR}/init_qti_wlan_auto.service -D ${D}${systemd_unitdir}/system/init_qti_wlan_auto.service
+    fi
+}
+do_install_append_sa415m_auto() {
+    #for sa415 platform
     ln -sf /firmware/image/bdwlan30.b00 ${D}/lib/firmware/${_MODNAME}/
     ln -sf /firmware/image/bdwlan30.bin ${D}/lib/firmware/${_MODNAME}/
     mv ${D}/lib/firmware/${_MODNAME}/bdwlan30.bin ${D}/lib/firmware/${_MODNAME}/utfbd30.bin
@@ -146,13 +166,11 @@ do_install_append_auto() {
     ln -sf /firmware/image/utf30.bin ${D}/lib/firmware/${_MODNAME}/
     ln -sf /firmware/image/otp30.bin ${D}/lib/firmware/${_MODNAME}/
     ln -sf /firmware/image/data.msc ${D}/lib/firmware/${_MODNAME}/
-
-    # Install systemd service file
-    if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}; then
-        install -m 0644 ${WORKDIR}/init_qti_wlan_auto.service -D ${D}${systemd_unitdir}/system/init_qti_wlan_auto.service
-    fi
+    ln -sf /firmware/image/bdwlan30.b31 ${D}/lib/firmware/${_MODNAME}/
+    mv ${D}/lib/firmware/${_MODNAME}/bdwlan30.b31 ${D}/lib/firmware/${_MODNAME}/utfbd30.b31
+    ln -sf /firmware/image/bdwlan30.bin ${D}/lib/firmware/${_MODNAME}/
+    ln -sf /firmware/image/bdwlan30.b31 ${D}/lib/firmware/${_MODNAME}/
 }
-
 do_module_signing() {
     if [ -f ${STAGING_KERNEL_BUILDDIR}/signing_key.priv ]; then
         bbnote "Signing ${PN} module"

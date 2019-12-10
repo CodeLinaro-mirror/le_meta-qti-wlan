@@ -45,14 +45,14 @@ echo "##########load cnss2 done############"
 
 if (lspci -k|grep cnss_pci);then
 	if (lspci -k|grep 1102);then
-		echo "##########load qcn7605#############"
-		modprobe qcn7605
+		echo "##########load qca6595#############"
+		modprobe qca6595
 	elif ((lspci -k|grep 003e) || (lspci -k|grep QCA6174));then
-		echo "##########load qca6174#############"
-		modprobe qca6174
+		echo "##########load qca6574#############"
+		modprobe qca6574
 	elif (lspci -k|grep 1101);then
-		echo "##########load qca6390#############"
-		modprobe qca6390
+		echo "##########load qca6696#############"
+		modprobe qca6696
 	else
 		echo "##########load default wlan########"
 		modprobe wlan
