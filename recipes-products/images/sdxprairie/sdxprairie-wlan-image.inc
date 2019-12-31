@@ -7,4 +7,4 @@ IMAGE_INSTALL += "wpa-supplicant-qcacld"
 IMAGE_INSTALL += "wlan-sigma-dut"
 IMAGE_INSTALL += "iperf"
 IMAGE_INSTALL += "wlan-conf"
-
+IMAGE_INSTALL += "wireless-tools"
