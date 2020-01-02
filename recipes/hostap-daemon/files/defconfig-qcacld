@@ -226,3 +226,6 @@ CONFIG_WNM=y
 
 # Multiband Operations
 CONFIG_MBO=y
+
+# LE platform
+CONFIG_LINUX_EMBEDDED=y
