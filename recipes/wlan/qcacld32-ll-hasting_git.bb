@@ -4,7 +4,8 @@ DESCRIPTION = "Qualcomm Atheros WLAN CLD3.0 low latency driver"
 LICENSE = "ISC"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=f3b90e78ea0cffb20bf5cca7947a896d"
 
-_MODNAME = "qca6390"
+_MODNAME = "qca6696"
+FW_PATH_NAME = "qca6390"
 FILES_${PN}     += "lib/firmware/wlan/*"
 FILES_${PN}     += "lib/firmware/*"
 FILES_${PN}     += "lib/modules/${KERNEL_VERSION}/extra/${_MODNAME}.ko"
@@ -131,13 +132,13 @@ do_install_append_auto() {
     chmod -R 0664 ${FIRMWARE_PATH}/wlan_mac.bin
     install -d ${D}${bindir}
     install -D -m 0755 ${WORKDIR}/init.qti.wlan_on.sh ${D}${bindir}/init.qti.wlan_on.sh
-    install -d ${D}/lib/firmware/${_MODNAME}/
-    ln -sf /firmware/image/${_MODNAME}/amss.bin ${D}/lib/firmware/${_MODNAME}/
-    ln -sf /firmware/image/${_MODNAME}/amss20.bin ${D}/lib/firmware/${_MODNAME}/
-    ln -sf /firmware/image/${_MODNAME}/bdwlan02.e01 ${D}/lib/firmware/${_MODNAME}/
-    ln -sf /firmware/image/${_MODNAME}/bdwlan02.e02 ${D}/lib/firmware/${_MODNAME}/
-    ln -sf /firmware/image/${_MODNAME}/bdwlan.elf ${D}/lib/firmware/${_MODNAME}/
-    ln -sf /firmware/image/${_MODNAME}/m3.bin ${D}/lib/firmware/${_MODNAME}/
+    install -d ${D}/lib/firmware/${FW_PATH_NAME}/
+    ln -sf /firmware/image/${FW_PATH_NAME}/amss.bin ${D}/lib/firmware/${FW_PATH_NAME}/
+    ln -sf /firmware/image/${FW_PATH_NAME}/amss20.bin ${D}/lib/firmware/${FW_PATH_NAME}/
+    ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan02.e01 ${D}/lib/firmware/${FW_PATH_NAME}/
+    ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan02.e02 ${D}/lib/firmware/${FW_PATH_NAME}/
+    ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan.elf ${D}/lib/firmware/${FW_PATH_NAME}/
+    ln -sf /firmware/image/${FW_PATH_NAME}/m3.bin ${D}/lib/firmware/${FW_PATH_NAME}/
     install -D -m 0755 ${WORKDIR}/init.qti.wlan_off.sh ${D}${bindir}/init.qti.wlan_off.sh
     # Install systemd service file
     if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}; then

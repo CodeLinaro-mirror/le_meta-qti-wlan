@@ -30,14 +30,14 @@
 echo "##########Trying to unload wlanhost driver ##########"
 if (lspci -k|grep cnss_pci);then
 	if (lspci -k|grep 1102);then
-		echo "##########unload qcn7605#############"
-		modprobe -r qcn7605
+		echo "##########unload qca6595#############"
+		modprobe -r qca6595
 	elif ((lspci -k|grep 003e) || (lspci -k|grep QCA6174));then
-		echo "##########unload qca6174#############"
-		modprobe -r qca6174
+		echo "##########unload qca6574#############"
+		modprobe -r qca6574
 	elif (lspci -k|grep 1101);then
-		echo "##########unload qca6390#############"
-		modprobe -r qca6390
+		echo "##########unload qca6696#############"
+		modprobe -r qca6696
 	else
 		echo "##########unload default wlan########"
 		modprobe -r wlan

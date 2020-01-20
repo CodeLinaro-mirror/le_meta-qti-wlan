@@ -4,7 +4,8 @@ DESCRIPTION = "Qualcomm Atheros WLAN CLD3.0 low latency driver"
 LICENSE = "ISC"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=f3b90e78ea0cffb20bf5cca7947a896d"
 
-_MODNAME = "qcn7605"
+_MODNAME = "qca6595"
+FW_PATH_NAME = "qcn7605"
 FILES_${PN}     += "lib/firmware/wlan/*"
 FILES_${PN}     += "lib/firmware/*"
 FILES_${PN}     += "lib/modules/${KERNEL_VERSION}/extra/${_MODNAME}.ko"
@@ -98,12 +99,12 @@ do_install_append_automotive() {
 
 do_install_append_auto() {
     install -D -m 0644 ${WORKDIR}/device/qcom/wlan/msm_auto/WCNSS_qcom_cfg_qcn7605.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
-    install -d ${D}/lib/firmware/${_MODNAME}/
-    ln -sf /firmware/image/${_MODNAME}/amss.bin ${D}/lib/firmware/${_MODNAME}/
-    ln -sf /firmware/image/${_MODNAME}/bdwlan02.b03 ${D}/lib/firmware/${_MODNAME}/
-    ln -sf /firmware/image/${_MODNAME}/bdwlan03.b02 ${D}/lib/firmware/${_MODNAME}/
-    ln -sf /firmware/image/${_MODNAME}/bdwlan03.b03 ${D}/lib/firmware/${_MODNAME}/
-    ln -sf /firmware/image/${_MODNAME}/genoaftm.bin ${D}/lib/firmware/${_MODNAME}/
+    install -d ${D}/lib/firmware/${FW_PATH_NAME}/
+    ln -sf /firmware/image/${FW_PATH_NAME}/amss.bin ${D}/lib/firmware/${FW_PATH_NAME}/
+    ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan02.b03 ${D}/lib/firmware/${FW_PATH_NAME}/
+    ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan03.b02 ${D}/lib/firmware/${FW_PATH_NAME}/
+    ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan03.b03 ${D}/lib/firmware/${FW_PATH_NAME}/
+    ln -sf /firmware/image/${FW_PATH_NAME}/genoaftm.bin ${D}/lib/firmware/${FW_PATH_NAME}/
 }
 
 do_module_signing() {
