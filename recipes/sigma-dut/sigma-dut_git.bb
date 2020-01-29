@@ -8,10 +8,17 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5
 PR = "r0"
 
 SRC_DIR = "${WORKSPACE}/wlan/utils/sigma-dut/"
+SRC_URI += "file://updated-dhcpcd-dnsmasq-path-for-P2P-interf.patch"
 
 CFLAGS += "-DLINUX_EMBEDDED"
 
 S = "${WORKDIR}/wlan/utils/sigma-dut"
+PATCH_DIR = "${WORKDIR}/wlan/utils/sigma-dut"
+
+do_patch() {
+	cd ${PATCH_DIR}
+	patch -p1 < ${WORKDIR}/updated-dhcpcd-dnsmasq-path-for-P2P-interf.patch
+}
 
 do_install() {
     make install DESTDIR=${D} BINDIR=${sbindir}/

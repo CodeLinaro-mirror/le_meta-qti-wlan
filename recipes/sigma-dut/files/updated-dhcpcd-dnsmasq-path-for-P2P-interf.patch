@@ -1,0 +1,65 @@
+diff --git a/p2p.c b/p2p.c
+index 6d0fe3d..ba466a0 100644
+--- a/p2p.c
++++ b/p2p.c
+@@ -122,9 +122,19 @@ void start_dhcp(struct sigma_dut *dut, const char *group_ifname, int go)
+		snprintf(buf, sizeof(buf), "ifconfig %s %s", group_ifname,
+			 GO_IP_ADDR);
+		run_system(dut, buf);
+-		snprintf(buf, sizeof(buf),
+-			 "/system/bin/dnsmasq -x /data/dnsmasq.pid --no-resolv --no-poll --dhcp-range=%s,%s,1h",
+-			 START_IP_RANGE, END_IP_RANGE);
++			if (access("/system/bin/dnsmasq", F_OK) != -1) {
++				snprintf(buf, sizeof(buf),
++				"/system/bin/dnsmasq -x /data/dnsmasq.pid --no-resolv --no-poll --dhcp-range=%s,%s,1h",
++				START_IP_RANGE, END_IP_RANGE);
++			} else if (access("/usr/bin/dnsmasq", F_OK) != -1) {
++				snprintf(buf, sizeof(buf),
++				"/usr/bin/dnsmasq -x /data/dnsmasq.pid --no-resolv --no-poll --dhcp-range=%s,%s,1h",
++				START_IP_RANGE, END_IP_RANGE);
++			} else {
++				sigma_dut_print(dut, DUT_MSG_ERROR,
++						"DHCP client program missing");
++				return;
++			}
+	} else {
+ #ifdef ANDROID
+		if (access("/system/bin/dhcpcd", F_OK) != -1) {
+@@ -145,9 +155,18 @@ void start_dhcp(struct sigma_dut *dut, const char *group_ifname, int go)
+			return;
+		}
+ #else /* ANDROID */
+-		snprintf(buf, sizeof(buf),
+-			 "dhclient -nw -pf /var/run/dhclient-%s.pid %s",
+-			 group_ifname, group_ifname);
++		if (access("/system/bin/dhclient", F_OK) != -1) {
++			snprintf(buf, sizeof(buf),
++				"dhclient -nw -pf /var/run/dhclient-%s.pid %s",
++				group_ifname, group_ifname);
++		} else if (access("/usr/sbin/dhcpcd", F_OK) != -1) {
++			snprintf(buf, sizeof(buf), "/usr/sbin/dhcpcd %s",
++				group_ifname);
++		} else {
++			sigma_dut_print(dut, DUT_MSG_ERROR,
++					"DHCP client program missing");
++			return;
++		}
+ #endif /* ANDROID */
+	}
+
+@@ -185,8 +204,13 @@ void stop_dhcp(struct sigma_dut *dut, const char *group_ifname, int go)
+		snprintf(path, sizeof(path), "/data/misc/dhcp/dhcpcd-%s.pid",
+			 group_ifname);
+ #else /* ANDROID */
+-		snprintf(path, sizeof(path), "/var/run/dhclient-%s.pid",
+-			 group_ifname);
++		if (access("/system/bin/dhclient", F_OK) != -1) {
++			snprintf(path, sizeof(path), "/var/run/dhclient-%s.pid",
++				 group_ifname);
++		} else if (access("/usr/sbin/dhcpcd", F_OK) != -1) {
++			snprintf(path, sizeof(path),
++				 "/var/run/dhcpcd-%s.pid", group_ifname);
++		}
+ #endif /* ANDROID */
+		sigma_dut_print(dut, DUT_MSG_DEBUG,
+				"Kill previous DHCP client: %s", buf);
