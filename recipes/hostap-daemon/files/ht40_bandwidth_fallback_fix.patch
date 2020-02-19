@@ -6,7 +6,7 @@ index c4619d7..96adc1b 100644
 	if (!iface->conf->secondary_channel)
 		return 1;
 
-+	if (hostapd_is_usable_chan(iface, iface->freq +
++	if (hostapd_is_usable_chan(iface, iface->conf->channel +
 +				   iface->conf->secondary_channel * 4, 0))
 +		return 1;
 	if (!iface->conf->ht40_plus_minus_allowed)
