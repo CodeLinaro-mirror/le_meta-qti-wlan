@@ -34,3 +34,4 @@ EXTRA_OECONF += "--enable-target-${BASEMACHINE}=yes"
 
 EXTRA_OECONF += "${@bb.utils.contains("MACHINE_FEATURES", "naples", "--enable-naples-wlan=yes", "", d)}"
 EXTRA_OECONF += "${@bb.utils.contains("MACHINE_FEATURES", "pronto", "--enable-pronto-wlan=yes", "", d)}"
+EXTRA_OECONF += "${@bb.utils.contains("MACHINE_FEATURES", "qti-helium", "--enable-helium-wlan=yes", "", d)}"
