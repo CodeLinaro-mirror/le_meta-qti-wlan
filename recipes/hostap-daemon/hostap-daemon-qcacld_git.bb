@@ -8,6 +8,7 @@ FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://external/wpa_supplicant_8/"
 SRC_URI += "file://defconfig-qcacld"
 SRC_URI += "file://hostapd_driver_cmd.patch"
+SRC_URI += "file://ht40_bandwidth_fallback_fix.patch"
 DEPENDS = "pkgconfig libnl openssl wpa-supplicant-8-lib"
 
 S = "${WORKDIR}/external/wpa_supplicant_8/hostapd/"
@@ -20,5 +21,6 @@ do_configure() {
 do_patch() {
     cd ${PATCH_DIR}
     patch -p1 < ${WORKDIR}/hostapd_driver_cmd.patch
+    patch -p1 < ${WORKDIR}/ht40_bandwidth_fallback_fix.patch
 }
 
