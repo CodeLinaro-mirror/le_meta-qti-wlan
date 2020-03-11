@@ -24,8 +24,8 @@ FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/qcacld-3.0/"
 SRC_URI += "file://wlan/qca-wifi-host-cmn/"
 SRC_URI += "file://wlan/fw-api/"
-SRC_URI_append_automotive = " file://device/qcom/wlan/msm_auto/WCNSS_qcom_cfg_qcn7605.ini"
-SRC_URI_append_auto = " file://device/qcom/wlan/msm_auto/WCNSS_qcom_cfg_qcn7605.ini"
+SRC_URI_append_automotive = " file://device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qcn7605.ini"
+SRC_URI_append_auto = " file://device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qcn7605.ini"
 
 S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn/"
 S = "${WORKDIR}/wlan/qcacld-3.0/"
@@ -38,7 +38,7 @@ EXTRA_OEMAKE += "CONFIG_CLD_HL_SDIO_CORE=n CONFIG_CNSS_SDIO=n"
 EXTRA_OEMAKE += "CONFIG_QCA_CLD_WLAN_PROFILE=genoa.pci.debug"
 EXTRA_OEMAKE += "DYNAMIC_SINGLE_CHIP=${_MODNAME}"
 EXTRA_OEMAKE += "MODNAME=${_MODNAME}"
-EXTRA_OEMAKE_append_sdxprairie = " WLAN_CFG_OVERRIDE="CONFIG_WLAN_NAPI=n""
+EXTRA_OEMAKE_append_sdxprairie = " WLAN_CFG_OVERRIDE="CONFIG_WLAN_NAPI=n CONFIG_ENABLE_SMMU_S1_TRANSLATION=y CONFIG_WDI2_IPA_OVER_GSI=y""
 
 LDFLAGS_aarch64_automotive = "-O1 --hash-style=gnu --as-needed"
 
@@ -98,7 +98,7 @@ do_install_append_automotive() {
 }
 
 do_install_append_auto() {
-    install -D -m 0644 ${WORKDIR}/device/qcom/wlan/msm_auto/WCNSS_qcom_cfg_qcn7605.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
+    install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qcn7605.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
     install -d ${D}/lib/firmware/${FW_PATH_NAME}/
     ln -sf /firmware/image/${FW_PATH_NAME}/amss.bin ${D}/lib/firmware/${FW_PATH_NAME}/
     ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan02.b03 ${D}/lib/firmware/${FW_PATH_NAME}/
