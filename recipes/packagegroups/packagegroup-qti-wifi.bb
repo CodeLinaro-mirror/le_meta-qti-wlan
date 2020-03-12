@@ -10,13 +10,11 @@ PACKAGES = ' \
     packagegroup-qti-wifi \
     \
     ${@bb.utils.contains("COMBINED_FEATURES", "qti-wifi", bb.utils.contains("MACHINE_FEATURES", "naples", "packagegroup-qti-wifi-naples", "", d), "", d)} \
-    ${@bb.utils.contains("COMBINED_FEATURES", "qti-wifi", bb.utils.contains("MACHINE_FEATURES", "qti-helium", "packagegroup-qti-wifi-helium", "", d), "", d)} \
     ${@bb.utils.contains("COMBINED_FEATURES", "qti-wifi", "packagegroup-qti-wifi-tools", "", d)} \
     '
 
 RDEPENDS_packagegroup-qti-wifi = ' \
     ${@bb.utils.contains("COMBINED_FEATURES", "qti-wifi", bb.utils.contains("MACHINE_FEATURES", "naples", "packagegroup-qti-wifi-naples", "", d), "", d)} \
-    ${@bb.utils.contains("COMBINED_FEATURES", "qti-wifi", bb.utils.contains("MACHINE_FEATURES", "qti-helium", "packagegroup-qti-wifi-helium", "", d), "", d)} \
     ${@bb.utils.contains("COMBINED_FEATURES", "qti-wifi", "packagegroup-qti-wifi-tools", "", d)} \
     '
 
@@ -26,16 +24,8 @@ RDEPENDS_packagegroup-qti-wifi-naples = " \
     hostap-daemon-qcacld \
     "
 
-RDEPENDS_packagegroup-qti-wifi-helium = " \
-    qcacld32-ll \
-    wpa-supplicant-qcacld \
-    hostap-daemon-qcacld \
-    "
 RDEPENDS_packagegroup-qti-wifi-tools = " \
     iw \
     wlan-conf \
     wireless-tools \
-    "
-RRECOMMENDS_packagegroup-qti-wifi-tools = " \
-    sigma-dut \
     "
