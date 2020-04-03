@@ -50,6 +50,21 @@ do_install_append_msm(){
   fi
 }
 
+do_install_append(){
+  if [ "${BASEMACHINE}" == "qrb5165" ]; then
+  if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
+      install -d ${D}/etc/initscripts
+      cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
+      install -d ${D}/etc/systemd/system/
+      install -d ${D}/etc/systemd/system/multi-user.target.wants/
+      install -m 0644 ${WORKDIR}/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
+      ln -sf /etc/systemd/system/wlan_daemon.service ${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
+  else
+      install -m 0755 ${S}/wlan_daemon -D ${D}${sysconfdir}/init.d/wlan_daemon
+  fi
+  fi
+}
+
 FILES_${PN} += "${userfsdatadir}/misc/wifi/*"
 FILES_${PN} += "${base_libdir}/firmware/wlan/qca_cld/*"
 FILES_${PN} += "/lib/firmware/wlan/qca_cld/* ${sysconfdir}/init.d/* "
