@@ -47,7 +47,7 @@ EXTRA_OEMAKE_append_sdxprairie = " CONFIG_ENABLE_IPA=y"
 EXTRA_OEMAKE_append_sa8155 = " CONFIG_ENABLE_IPA=n"
 
 #Enable DFS channel in STA_AP_MODE for sdxprairie platform
-EXTRA_OEMAKE_append_sdxprairie = " WLAN_CFG_OVERRIDE="CONFIG_FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE=n""
+EXTRA_OEMAKE_append_sdxprairie = " WLAN_CFG_OVERRIDE="CONFIG_FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE=n CONFIG_SUPPORT_P2P_BY_ONE_INTF_WLAN=y""
 
 LDFLAGS_aarch64_automotive = "-O1 --hash-style=gnu --as-needed"
 LDFLAGS_aarch64_auto = "-O1 --hash-style=gnu --as-needed"
