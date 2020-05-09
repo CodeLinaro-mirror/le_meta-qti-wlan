@@ -22,7 +22,7 @@ python __anonymous () {
          d.appendVar('MK_CONF', ' CONFIG_CNSS_GENL=n CONFIG_MULTI_IF_LOG=y')
          d.appendVar('MK_CONF', ' CONFIG_SUB_20_MHZ=y CONFIG_RX_HOLE_DETCTION=y')
          d.appendVar('MK_CONF', ' CONFIG_MAC_NOTIFICATION=y CONFIG_ACS_FW_REPORT_PARAM=y')
-         d.appendVar('MK_CONF', ' CONFIG_CHAN_HOPPING_ALL_BAND=y')
+         d.appendVar('MK_CONF', ' CONFIG_CHAN_HOPPING_ALL_BAND=y CONFIG_FOR_MULTIRATE=y')
      else:
          d.setVar('WLAN_MODULE_NAME', 'wlan')
          d.setVar('CHIP_NAME', '')
