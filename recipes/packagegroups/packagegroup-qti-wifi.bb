@@ -32,6 +32,7 @@ RDEPENDS_packagegroup-qti-wifi-cherokee = " \
     qcacld32-ll \
     wpa-supplicant-qcacld-cherokee \
     hostap-daemon-qcacld \
+    qcacld32-ll-nf-debug \
     "
 
 RDEPENDS_packagegroup-qti-wifi-helium = " \
