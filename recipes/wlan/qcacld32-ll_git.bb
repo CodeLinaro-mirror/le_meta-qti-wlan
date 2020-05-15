@@ -35,6 +35,13 @@ FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld"
 EXTRA_OEMAKE += "CONFIG_CNSS=n CONFIG_CLD_HL_SDIO_CORE=n CONFIG_CNSS_SDIO=n"
 
 WLAN_CONFIG = "${@bb.utils.contains('DISTRO_FEATURES', 'wlan-perf', 'qcs40x.snoc.perf', 'default', d)}"
+
+# Force qcs40x use: ./qcacld-3.0/configs/qcs40x.snoc.perf_defconfig
+python __anonymous () {
+       if d.getVar('BASEMACHINE', True) == 'qcs40x':
+               d.setVar('WLAN_CONFIG', 'qcs40x.snoc.perf')
+}
+
 EXTRA_OEMAKE += "CONFIG_QCA_CLD_WLAN_PROFILE=${WLAN_CONFIG}"
 # The common header file, 'wlan_nlink_common.h' can be installed from other
 # qcacld recipes too. To suppress the duplicate detection error, add it to
