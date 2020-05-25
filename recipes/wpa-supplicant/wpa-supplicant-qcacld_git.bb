@@ -9,9 +9,7 @@ SRC_URI += "file://defconfig-qcacld"
 SRC_URI += "file://p2p_tmp_config.patch"
 SRC_URI += "file://driver_cmd.patch"
 
-DEPENDS += "qmi"
-DEPENDS += "qmi-framework"
-DEPENDS += "diag configdb dsutils common glib-2.0 time-genoff xmllib wpa-supplicant-8-lib"
+DEPENDS += "glib-2.0 wpa-supplicant-8-lib"
 
 FILES_${PN} += "/usr/include/*"
 
