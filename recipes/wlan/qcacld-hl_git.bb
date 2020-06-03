@@ -63,6 +63,7 @@ do_install () {
 
     install -d ${D}${includedir}/qcacld/
     install -m 0644 ${S}/CORE/SVC/external/wlan_nlink_common.h ${D}${includedir}/qcacld/
+    ln -s /persist/factory/${WLAN_MODULE_NAME}/wlan_mac.bin ${FIRMWARE_PATH}/wlan_mac.bin
 }
 
 do_install_append_sdx20 () {
