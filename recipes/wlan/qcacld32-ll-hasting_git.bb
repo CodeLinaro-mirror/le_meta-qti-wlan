@@ -18,9 +18,7 @@ PR = "r8"
 # This DEPENDS is to serialize kernel module builds
 DEPENDS = "rtsp-alg"
 DEPENDS_remove_automotive = "rtsp-alg"
-DEPENDS_automotive += "llvm-arm-toolchain-native"
 DEPENDS_remove_auto = "rtsp-alg"
-DEPENDS_auto += "llvm-arm-toolchain-native"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/qcacld-3.0/"
@@ -47,7 +45,7 @@ EXTRA_OEMAKE_append_sdxprairie = " CONFIG_ENABLE_IPA=y"
 EXTRA_OEMAKE_append_sa8155 = " CONFIG_ENABLE_IPA=n"
 
 #Enable DFS channel in STA_AP_MODE for sdxprairie platform
-EXTRA_OEMAKE_append_sdxprairie = " WLAN_CFG_OVERRIDE="CONFIG_FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE=n""
+EXTRA_OEMAKE_append_sdxprairie = " WLAN_CFG_OVERRIDE="CONFIG_FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE=n CONFIG_SUPPORT_P2P_BY_ONE_INTF_WLAN=y""
 
 LDFLAGS_aarch64_automotive = "-O1 --hash-style=gnu --as-needed"
 LDFLAGS_aarch64_auto = "-O1 --hash-style=gnu --as-needed"
@@ -161,17 +159,3 @@ do_module_signing() {
 }
 
 addtask module_signing after do_package before do_package_write_ipk
-do_compile_automotive() {
-    if [ -e Makefile -o -e makefile -o -e GNUmakefile ]; then
-        qoe_runmake CROSS_COMPILE=${CROSS_COMPILE} ${KERNEL_EXTRA_ARGS}|| die "make failed"
-    else
-        bbnote "nothing to compile"
-    fi
-}
-qoe_runmake() {
-    qoe_runmake_call "$@" || die "oe_runmake failed"
-}
-qoe_runmake_call() {
-    bbnote make ${EXTRA_OEMAKE} CC="${STAGING_BINDIR_NATIVE}/llvm-arm-toolchain/bin/clang" "$@"
-    make ${EXTRA_OEMAKE} CC="${STAGING_BINDIR_NATIVE}/llvm-arm-toolchain/bin/clang" "$@"
-}

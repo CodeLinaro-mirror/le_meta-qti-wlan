@@ -18,7 +18,6 @@ PR = "r8"
 # This DEPENDS is to serialize kernel module builds
 DEPENDS = "rtsp-alg"
 DEPENDS_remove_automotive = "rtsp-alg"
-DEPENDS_automotive += "llvm-arm-toolchain-native"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/qcacld-3.0/"
@@ -38,7 +37,7 @@ EXTRA_OEMAKE += "CONFIG_CLD_HL_SDIO_CORE=n CONFIG_CNSS_SDIO=n"
 EXTRA_OEMAKE += "CONFIG_QCA_CLD_WLAN_PROFILE=genoa.pci.debug"
 EXTRA_OEMAKE += "DYNAMIC_SINGLE_CHIP=${_MODNAME}"
 EXTRA_OEMAKE += "MODNAME=${_MODNAME}"
-EXTRA_OEMAKE_append_sdxprairie = " WLAN_CFG_OVERRIDE="CONFIG_WLAN_NAPI=n CONFIG_ENABLE_SMMU_S1_TRANSLATION=y CONFIG_WDI2_IPA_OVER_GSI=y CONFIG_WLAN_MAX_VDEVS=4""
+EXTRA_OEMAKE_append_sdxprairie = " WLAN_CFG_OVERRIDE="CONFIG_WLAN_NAPI=n CONFIG_ENABLE_SMMU_S1_TRANSLATION=y CONFIG_WDI2_IPA_OVER_GSI=y CONFIG_WLAN_MAX_VDEVS=4 CONFIG_SUPPORT_P2P_BY_ONE_INTF_WLAN=y""
 
 LDFLAGS_aarch64_automotive = "-O1 --hash-style=gnu --as-needed"
 
@@ -119,17 +118,3 @@ do_module_signing() {
 }
 
 addtask module_signing after do_package before do_package_write_ipk
-do_compile_automotive() {
-    if [ -e Makefile -o -e makefile -o -e GNUmakefile ]; then
-        qoe_runmake CROSS_COMPILE=${CROSS_COMPILE} ${KERNEL_EXTRA_ARGS}|| die "make failed"
-    else
-        bbnote "nothing to compile"
-    fi
-}
-qoe_runmake() {
-    qoe_runmake_call "$@" || die "oe_runmake failed"
-}
-qoe_runmake_call() {
-    bbnote make ${EXTRA_OEMAKE} CC="${STAGING_BINDIR_NATIVE}/llvm-arm-toolchain/bin/clang" "$@"
-    make ${EXTRA_OEMAKE} CC="${STAGING_BINDIR_NATIVE}/llvm-arm-toolchain/bin/clang" "$@"
-}
