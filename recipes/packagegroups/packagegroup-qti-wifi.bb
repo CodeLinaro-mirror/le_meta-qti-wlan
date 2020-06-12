@@ -12,14 +12,12 @@ PACKAGES = ' \
     ${@bb.utils.contains("COMBINED_FEATURES", "qti-wifi", bb.utils.contains("MACHINE_FEATURES", "naples", "packagegroup-qti-wifi-naples", "", d), "", d)} \
     ${@bb.utils.contains("COMBINED_FEATURES", "qti-wifi", bb.utils.contains("MACHINE_FEATURES", "qti-cherokee", "packagegroup-qti-wifi-cherokee", "", d), "", d)} \
     ${@bb.utils.contains("COMBINED_FEATURES", "qti-wifi", "packagegroup-qti-wifi-tools", "", d)} \
-    ${@bb.utils.contains("COMBINED_FEATURES", "qti-wifi", "packagegroup-wlan-debug", '', d)} \
     '
 
 RDEPENDS_packagegroup-qti-wifi = ' \
     ${@bb.utils.contains("COMBINED_FEATURES", "qti-wifi", bb.utils.contains("MACHINE_FEATURES", "naples", "packagegroup-qti-wifi-naples", "", d), "", d)} \
     ${@bb.utils.contains("COMBINED_FEATURES", "qti-wifi", bb.utils.contains("MACHINE_FEATURES", "qti-cherokee", "packagegroup-qti-wifi-cherokee", "", d), "", d)} \
     ${@bb.utils.contains("COMBINED_FEATURES", "qti-wifi", "packagegroup-qti-wifi-tools", "", d)} \
-    ${@bb.utils.contains("COMBINED_FEATURES", "qti-wifi", "packagegroup-wlan-debug", '', d)} \
     '
 
 RDEPENDS_packagegroup-qti-wifi-naples = " \
@@ -32,6 +30,7 @@ RDEPENDS_packagegroup-qti-wifi-cherokee = " \
     qcacld32-ll \
     wpa-supplicant-qcacld-cherokee \
     hostap-daemon-qcacld \
+    qcacld32-ll-nf-debug \
     "
 
 RDEPENDS_packagegroup-qti-wifi-tools = " \
@@ -42,8 +41,4 @@ RDEPENDS_packagegroup-qti-wifi-tools = " \
 
 RRECOMMENDS_packagegroup-qti-wifi-tools = " \
     sigma-dut \
-    "
-
-RDEPENDS_packagegroup-wlan-debug = " \
-    qcacld32-ll-nf-debug \
     "
