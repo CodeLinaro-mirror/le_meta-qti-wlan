@@ -131,7 +131,7 @@ index 15fefc2..0039fa9 100644
 +	}
 +#endif /* CONFIG_NO_CONFIG_BLOBS */
 +
-+	os_fsync(f);
++	os_fdatasync(f);
 +
 +	fclose(f);
 +
