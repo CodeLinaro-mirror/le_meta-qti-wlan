@@ -23,6 +23,10 @@ do_install_append(){
   else
       install -m 0755 ${S}/wlan_daemon -D ${D}${sysconfdir}/init.d/wlan_daemon
   fi
+  if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-helium', 'true', 'false', d)}; then
+      mkdir -p ${D}/lib/firmware/wlan/qca_cld/wlan_debug
+      ln -sf /lib/firmware/wlan/qca_cld/WCNSS_qcom_cfg.ini ${D}/lib/firmware/wlan/qca_cld/wlan_debug/WCNSS_qcom_cfg.ini
+  fi
 }
 FILES_${PN} += "${userfsdatadir}/misc/wifi/*"
 FILES_${PN} += "${base_libdir}/firmware/wlan/qca_cld/*"
