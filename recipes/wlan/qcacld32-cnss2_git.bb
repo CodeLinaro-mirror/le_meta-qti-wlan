@@ -25,6 +25,6 @@ do_install_append_auto() {
 	install -d ${D}${systemd_unitdir}/system
 	install -d ${D}${systemd_unitdir}/system/multi-user.target.wants
 	install -m 0644 ${WORKDIR}/init_qti_cnss2_auto.service ${D}${systemd_unitdir}/system/init_qti_cnss2_auto.service
-	ln -sf ${D}${systemd_unitdir}/system/init_qti_cnss2_auto.service \
+	ln -rsf ${D}${systemd_unitdir}/system/init_qti_cnss2_auto.service \
 	          ${D}${systemd_unitdir}/system/multi-user.target.wants/init_qti_cnss2_auto.service
 }
