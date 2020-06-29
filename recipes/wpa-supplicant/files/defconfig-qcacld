@@ -504,6 +504,14 @@ CONFIG_NEED_AP_MLME=y
 # Enable compiling libwpa_client as a dynamic library
 CONFIG_BUILD_WPA_CLIENT_SO=y
 
+#Enable SAE
+CONFIG_SAE=y
+
+#Enable OWE
+CONFIG_OWE=y
+
+CONFIG_DRIVER_NL80211_QCA=y
+
 # Enable P2P in wpa_supplicant
 CONFIG_P2P=y
 CONFIG_AP=y

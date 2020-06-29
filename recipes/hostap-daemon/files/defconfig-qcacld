@@ -194,8 +194,17 @@ CONFIG_OS=unix
 #LIBS_p += -lbfd -liberty -lz
 #LIBS_c += -lbfd -liberty -lz
 
+#Enable SAE
+CONFIG_SAE=y
+
+#Enable OWE
+CONFIG_OWE=y
+
 # Enable ACS to make host driver be capable of advertising ACS offload feature
 CONFIG_ACS=y
+
+CONFIG_DRIVER_NL80211_QCA=y
+
 # Interworking (IEEE 802.11u)
 # This can be used to enable functionality to improve interworking with
 # external networks.
