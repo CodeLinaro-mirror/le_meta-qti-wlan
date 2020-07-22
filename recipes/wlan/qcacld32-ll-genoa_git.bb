@@ -18,14 +18,16 @@ PR = "r8"
 # This DEPENDS is to serialize kernel module builds
 DEPENDS = "rtsp-alg"
 DEPENDS_remove_automotive = "rtsp-alg"
-DEPENDS_automotive += "llvm-arm-toolchain-native"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/qcacld-3.0/"
 SRC_URI += "file://wlan/qca-wifi-host-cmn/"
 SRC_URI += "file://wlan/fw-api/"
 SRC_URI_append_automotive = " file://device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qcn7605.ini"
-SRC_URI_append_auto = " file://device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qcn7605.ini"
+SRC_URI_append_sdxprairie = " file://device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qcn7605.ini"
+SRC_URI_append_sdxprairie = " file://device/qcom/wlan/sdx_auto/wlan_mac.bin"
+SRC_URI_append_sa415m = " file://device/qcom/wlan/sdx24_auto/WCNSS_qcom_cfg_qcn7605.ini"
+SRC_URI_append_sa415m = " file://device/qcom/wlan/sdx24_auto/wlan_mac.bin"
 
 S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn/"
 S = "${WORKDIR}/wlan/qcacld-3.0/"
@@ -39,6 +41,7 @@ EXTRA_OEMAKE += "CONFIG_QCA_CLD_WLAN_PROFILE=genoa.pci.debug"
 EXTRA_OEMAKE += "DYNAMIC_SINGLE_CHIP=${_MODNAME}"
 EXTRA_OEMAKE += "MODNAME=${_MODNAME}"
 EXTRA_OEMAKE_append_sdxprairie = " WLAN_CFG_OVERRIDE="CONFIG_WLAN_NAPI=n CONFIG_ENABLE_SMMU_S1_TRANSLATION=y CONFIG_WDI2_IPA_OVER_GSI=y CONFIG_WLAN_MAX_VDEVS=4 CONFIG_SUPPORT_P2P_BY_ONE_INTF_WLAN=y""
+EXTRA_OEMAKE_append_sa415m = " WLAN_CFG_OVERRIDE="CONFIG_WLAN_NAPI=n CONFIG_WLAN_MAX_VDEVS=4 CONFIG_SUPPORT_P2P_BY_ONE_INTF_WLAN=y CONFIG_IPA_OFFLOAD=n""
 
 LDFLAGS_aarch64_automotive = "-O1 --hash-style=gnu --as-needed"
 
@@ -51,10 +54,14 @@ inherit systemd
 SRC_URI_append_automotive = " file://init_qti_wlan_auto.service"
 SYSTEMD_SERVICE_${PN}_automotive = "init_qti_wlan_auto.service"
 SYSTEMD_AUTO_ENABLE_${PN}_automotive = "enable"
+SRC_URI_append_auto = " file://init_qti_wlan_auto.service"
+SYSTEMD_SERVICE_${PN}_auto = "init_qti_wlan_auto.service"
+SYSTEMD_AUTO_ENABLE_${PN}_auto = "disable"
 
 SRC_URI_append_automotive = " file://init.qti.wlan_on.sh"
 SRC_URI_append_automotive = " file://init.qti.wlan_off.sh"
-
+SRC_URI_append_auto = " file://init.qti.wlan_on.sh"
+SRC_URI_append_auto = " file://init.qti.wlan_off.sh"
 FILES_${PN}     += "usr/bin/init.qti.wlan_on.sh"
 FILES_${PN}     += "usr/bin/init.qti.wlan_off.sh"
 
@@ -86,6 +93,7 @@ do_install () {
     install -d ${WLAN_KO}/wlan
     install -m 0644 ${S}/${_MODNAME}.ko ${WLAN_KO}/wlan/
 }
+
 do_install_append_automotive() {
     install -D -m 0644 ${WORKDIR}/device/qcom/wlan/msm_auto/WCNSS_qcom_cfg_qcn7605.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
     install -d ${D}${bindir}
@@ -98,13 +106,36 @@ do_install_append_automotive() {
 }
 
 do_install_append_auto() {
-    install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qcn7605.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
     install -d ${D}/lib/firmware/${FW_PATH_NAME}/
     ln -sf /firmware/image/${FW_PATH_NAME}/amss.bin ${D}/lib/firmware/${FW_PATH_NAME}/
     ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan02.b03 ${D}/lib/firmware/${FW_PATH_NAME}/
     ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan03.b02 ${D}/lib/firmware/${FW_PATH_NAME}/
     ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan03.b03 ${D}/lib/firmware/${FW_PATH_NAME}/
+    ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan03.b04 ${D}/lib/firmware/${FW_PATH_NAME}/
+    ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan04.b01 ${D}/lib/firmware/${FW_PATH_NAME}/
     ln -sf /firmware/image/${FW_PATH_NAME}/genoaftm.bin ${D}/lib/firmware/${FW_PATH_NAME}/
+    install -d ${D}${bindir}
+    install -D -m 0755 ${WORKDIR}/init.qti.wlan_on.sh ${D}${bindir}/init.qti.wlan_on.sh
+    install -D -m 0755 ${WORKDIR}/init.qti.wlan_off.sh ${D}${bindir}/init.qti.wlan_off.sh
+    # Install systemd service file
+    if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}; then
+        install -m 0644 ${WORKDIR}/init_qti_wlan_auto.service -D ${D}${systemd_unitdir}/system/init_qti_wlan_auto.service
+    fi
+}
+
+do_install_append_sa515m_auto() {
+    install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qcn7605.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
+    chown -RH root:1001 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
+    chmod -R 0664 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
+}
+
+do_install_append_sa415m_auto() {
+    install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx24_auto/WCNSS_qcom_cfg_qcn7605.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
+    chown -RH root:1001 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
+    chmod -R 0664 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
+    install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx24_auto/wlan_mac.bin ${FIRMWARE_PATH}/wlan_mac.bin
+    chown -RH root:1001 ${FIRMWARE_PATH}/wlan_mac.bin
+    chmod -R 0664 ${FIRMWARE_PATH}/wlan_mac.bin
 }
 
 do_module_signing() {
@@ -119,17 +150,3 @@ do_module_signing() {
 }
 
 addtask module_signing after do_package before do_package_write_ipk
-do_compile_automotive() {
-    if [ -e Makefile -o -e makefile -o -e GNUmakefile ]; then
-        qoe_runmake CROSS_COMPILE=${CROSS_COMPILE} ${KERNEL_EXTRA_ARGS}|| die "make failed"
-    else
-        bbnote "nothing to compile"
-    fi
-}
-qoe_runmake() {
-    qoe_runmake_call "$@" || die "oe_runmake failed"
-}
-qoe_runmake_call() {
-    bbnote make ${EXTRA_OEMAKE} CC="${STAGING_BINDIR_NATIVE}/llvm-arm-toolchain/bin/clang" "$@"
-    make ${EXTRA_OEMAKE} CC="${STAGING_BINDIR_NATIVE}/llvm-arm-toolchain/bin/clang" "$@"
-}

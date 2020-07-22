@@ -19,9 +19,7 @@ PR = "r8"
 # This DEPENDS is to serialize kernel module builds
 DEPENDS = "rtsp-alg"
 DEPENDS_remove_automotive = "rtsp-alg"
-DEPENDS_automotive += "llvm-arm-toolchain-native"
 DEPENDS_remove_auto = "rtsp-alg"
-DEPENDS_auto += "llvm-arm-toolchain-native"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/qcacld-3.0/"
@@ -42,7 +40,7 @@ EXTRA_OEMAKE += "CONFIG_CLD_HL_SDIO_CORE=n CONFIG_CNSS_SDIO=n"
 EXTRA_OEMAKE += "CONFIG_QCA_CLD_WLAN_PROFILE=qca6174"
 EXTRA_OEMAKE += "DYNAMIC_SINGLE_CHIP=${_MODNAME}"
 EXTRA_OEMAKE += "MODNAME=${_MODNAME}"
-EXTRA_OEMAKE_append_sdxpoorwills = " WLAN_CFG_OVERRIDE=" CONFIG_MDM_PLATFORM=y""
+EXTRA_OEMAKE_append_sdxpoorwills = " WLAN_CFG_OVERRIDE="CONFIG_MDM_PLATFORM=y""
 
 # Rome IPA on sa515m is not supported, disable it
 EXTRA_OEMAKE_append_sa515m = " WLAN_CFG_OVERRIDE="CONFIG_IPA_OFFLOAD=n""
@@ -184,17 +182,3 @@ do_module_signing() {
 }
 
 addtask module_signing after do_package before do_package_write_ipk
-do_compile_automotive() {
-    if [ -e Makefile -o -e makefile -o -e GNUmakefile ]; then
-        qoe_runmake CROSS_COMPILE=${CROSS_COMPILE} ${KERNEL_EXTRA_ARGS}|| die "make failed"
-    else
-        bbnote "nothing to compile"
-    fi
-}
-qoe_runmake() {
-    qoe_runmake_call "$@" || die "oe_runmake failed"
-}
-qoe_runmake_call() {
-    bbnote make ${EXTRA_OEMAKE} CC="${STAGING_BINDIR_NATIVE}/llvm-arm-toolchain/bin/clang" "$@"
-    make ${EXTRA_OEMAKE} CC="${STAGING_BINDIR_NATIVE}/llvm-arm-toolchain/bin/clang" "$@"
-}
