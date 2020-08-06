@@ -41,7 +41,35 @@ else
             ;;
         cnss)
             echo -n "start to load cnss2 script from: $1" > /dev/kmsg
-            modprobe cnss2
+
+            if [ -f /sys/devices/soc0/hw_platform ]; then
+                soc_hwplatform=`cat /sys/devices/soc0/hw_platform`
+                soc_subtypeid=`cat /sys/devices/soc0/platform_subtype_id`
+                echo -n "hwplatform: $soc_hwplatform" > /dev/kmsg
+                echo -n "subtypeid: $soc_subtypeid" > /dev/kmsg
+            fi
+
+            if [ "$soc_hwplatform" == "ADP" ] || [ "$soc_hwplatform" == "TTP" ]; then
+                # Check if device is standalone ADP/TTP
+                if [ "$soc_subtypeid" == "0" ]; then
+                    echo -n "standalone ADP/TTP -> load cnss2 module" > /dev/kmsg
+                    modprobe cnss2
+                # Check if device is ADP/TTP with PCIe fusion
+                elif [ "$soc_subtypeid" == "1" ]; then
+                    echo -n "ADP/TTP with PCIe fusion -> skip loading cnss2 module" > /dev/kmsg
+                # Check if device is ADP/TTP with USB fusion
+                elif [ "$soc_subtypeid" == "2" ]; then
+                    echo -n "ADP/TTP with USB fusion -> load cnss2 module" > /dev/kmsg
+                    modprobe cnss2
+                # Check if device is ADP/TTP with Flashless PCIe fusion
+                elif [ "$soc_subtypeid" == "3" ]; then
+                    echo -n "ADP/TTP with Flashless PCIe fusion -> skip loading cnss2 module" > /dev/kmsg
+                else
+                    echo -n "Not supported CDT sub type id, QCMAP_CLI will load cnss2 in needed" > /dev/kmsg
+                fi
+            else
+                echo -n "Not supported platform from CDT, QCMAP_CLI will load cnss2 in needed" > /dev/kmsg
+            fi
             ;;
     esac
 fi
