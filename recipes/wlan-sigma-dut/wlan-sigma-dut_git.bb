@@ -1,4 +1,4 @@
-inherit autotools
+inherit autotools-brokensep pkgconfig
 
 DESCRIPTION = "WFA certification testing tool for QCA devices"
 HOMEPAGE = "https://github.com/qca/sigma-dut"
@@ -6,6 +6,10 @@ LICENSE = "BSD-3-Clause"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=550794465ba0ec5312d6919e203a55f9"
 
 PR = "r0"
+
+FILESPATH =+ "${WORKSPACE}:"
+SRC_URI = "file://wlan/utils/sigma-dut/"
+PACKAGE_ARCH ?= "${MACHINE_ARCH}"
 
 SRC_DIR = "${WORKSPACE}/wlan/utils/sigma-dut/"
 SRC_URI += "file://Makefile.patch"
