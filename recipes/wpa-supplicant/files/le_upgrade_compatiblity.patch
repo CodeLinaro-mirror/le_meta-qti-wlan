@@ -1,0 +1,49 @@
+diff --git a/wpa_supplicant/ctrl_iface.c b/wpa_supplicant/ctrl_iface.c
+index acde38c4a..1eaf029e0 100644
+--- a/wpa_supplicant/ctrl_iface.c
++++ b/wpa_supplicant/ctrl_iface.c
+@@ -21,6 +21,7 @@
+ #include "common/wpa_ctrl.h"
+ #ifdef CONFIG_DPP
+ #include "common/dpp.h"
++#include "dpp_supplicant.h"
+ #endif /* CONFIG_DPP */
+ #include "crypto/tls.h"
+ #include "ap/hostapd.h"
+@@ -54,7 +55,6 @@
+ #include "offchannel.h"
+ #include "drivers/driver.h"
+ #include "mesh.h"
+-#include "dpp_supplicant.h"
+ #include "sme.h"
+ 
+ #ifdef __NetBSD__
+diff --git a/wpa_supplicant/events.c b/wpa_supplicant/events.c
+index 70f849116..4a5a4a471 100644
+--- a/wpa_supplicant/events.c
++++ b/wpa_supplicant/events.c
+@@ -48,8 +48,9 @@
+ #include "mesh.h"
+ #include "mesh_mpm.h"
+ #include "wmm_ac.h"
++#ifdef CONFIG_DPP
+ #include "dpp_supplicant.h"
+-
++#endif /* CONFIG_DPP */
+ 
+ #define MAX_OWE_TRANSITION_BSS_SELECT_COUNT 5
+ 
+diff --git a/wpa_supplicant/wpa_supplicant.c b/wpa_supplicant/wpa_supplicant.c
+index 9dfb1fefd..71a38ca02 100644
+--- a/wpa_supplicant/wpa_supplicant.c
++++ b/wpa_supplicant/wpa_supplicant.c
+@@ -62,7 +62,9 @@
+ #include "wnm_sta.h"
+ #include "wpas_kay.h"
+ #include "mesh.h"
++#ifdef CONFIG_DPP
+ #include "dpp_supplicant.h"
++#endif /* CONFIG_DPP */
+ #ifdef CONFIG_MESH
+ #include "ap/ap_config.h"
+ #include "ap/hostapd.h"
