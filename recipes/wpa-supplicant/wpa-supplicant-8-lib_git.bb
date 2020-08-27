@@ -1,14 +1,13 @@
 inherit autotools-brokensep pkgconfig qprebuilt
 
-HOMEPAGE         = "http://support.cdmatech.com"
-LICENSE          = "Qualcomm-Technologies-Inc.-Proprietary"
-LIC_FILES_CHKSUM = "file://${COREBASE}/meta-qti-bsp-prop/files/qcom-licenses/\
-${LICENSE};md5=92b1d0ceea78229551577d4284669bb8"
-
 DESCRIPTION = "CNSS"
+LICENSE = "BSD-3-Clause"
+LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/\
+${LICENSE};md5=550794465ba0ec5312d6919e203a55f9"
+
 PR = "r2"
 
-DEPENDS = "libcutils libnl liblog"
+DEPENDS += "libcutils libnl liblog"
 
 FILESPATH =+ "${WORKSPACE}/hardware/qcom/:"
 WPA_SUPPLICANT_DIR = "${WORKSPACE}/external/wpa_supplicant_8/"
