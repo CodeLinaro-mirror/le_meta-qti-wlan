@@ -8,6 +8,7 @@ SRC_URI = "file://external/wpa_supplicant_8/"
 SRC_URI += "file://defconfig-qcacld"
 SRC_URI += "file://p2p_tmp_config.patch;patchdir=${WORKDIR}/external/wpa_supplicant_8/"
 SRC_URI += "file://driver_cmd.patch;patchdir=${WORKDIR}/external/wpa_supplicant_8/"
+SRC_URI += "file://le_upgrade_compatiblity.patch;patchdir=${WORKDIR}/external/wpa_supplicant_8/"
 
 DEPENDS += "qmi"
 DEPENDS += "qmi-framework"
