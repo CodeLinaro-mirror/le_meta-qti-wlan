@@ -35,8 +35,8 @@ After=persist.mount firmware-links.service wcnss_wlan.service usb.service
 [Service]
 Restart=no
 RemainAfterExit=yes
-ExecStart=/etc/initscripts/wlan start
-ExecStop=/etc/initscripts/wlan stop
+ExecStart=/sbin/wlan start
+ExecStop=/sbin/wlan stop
 
 [Install]
 WantedBy=multi-user.target
