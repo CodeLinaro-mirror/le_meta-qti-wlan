@@ -15,7 +15,8 @@ S = "${WORKDIR}/mdm-init/"
 do_install_append(){
   if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
       install -d ${D}/etc/initscripts
-      cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
+      install -d ${D}${base_sbindir}
+      cp ${D}/etc/init.d/wlan ${D}/${base_sbindir}/wlan
       install -d ${D}/etc/systemd/system/
       install -d ${D}/etc/systemd/system/multi-user.target.wants/
       install -m 0644 ${WORKDIR}/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
