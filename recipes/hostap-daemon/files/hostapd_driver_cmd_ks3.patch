@@ -1,8 +1,26 @@
+From 6b4b6c3cfb46067730dc8a115bb8c67741026099 Mon Sep 17 00:00:00 2001
+From: Wu Gao <wugao@codeaurora.org>
+Date: Thu, 5 Nov 2020 02:26:35 -0800
+Subject: [PATCH] hostapd: Add some ctrl iface for hostapd
+
+This change adds some ctrl iface for hostapd.
+
+Change-Id: I92343835e8a4af3ccbc511cc4682ca0d6f9bed2a
+Signed-off-by: Qiwei Cai<qcai@codeaurora.org>
+---
+ hostapd/Makefile             | 5 +++++
+ hostapd/ctrl_iface.c         | 8 ++++----
+ src/ap/ap_drv_ops.h          | 4 ++--
+ src/drivers/driver.h         | 4 ++--
+ src/drivers/driver_nl80211.c | 4 ++--
+ src/drivers/driver_nl80211.h | 7 +++++--
+ 6 files changed, 20 insertions(+), 12 deletions(-)
+
 diff --git a/hostapd/Makefile b/hostapd/Makefile
-index 6e263c5..8dceaf9 100644
+index 8666763..bc3145b 100644
 --- a/hostapd/Makefile
 +++ b/hostapd/Makefile
-@@ -360,6 +360,11 @@ CFLAGS += -DCONFIG_MBO
+@@ -349,6 +349,11 @@ CFLAGS += -DCONFIG_MBO
  OBJS += ../src/ap/mbo_ap.o
  endif
  
@@ -15,10 +33,10 @@ index 6e263c5..8dceaf9 100644
  OBJS += $(DRV_AP_OBJS)
  CFLAGS += $(DRV_AP_CFLAGS)
 diff --git a/hostapd/ctrl_iface.c b/hostapd/ctrl_iface.c
-index 7796737..8f23d61 100644
+index 2b8a820..d831d06 100644
 --- a/hostapd/ctrl_iface.c
 +++ b/hostapd/ctrl_iface.c
-@@ -2390,7 +2390,7 @@ static int hostapd_ctrl_iface_mib(struct hostapd_data *hapd, char *reply,
+@@ -2464,7 +2464,7 @@ static int hostapd_ctrl_iface_mib(struct hostapd_data *hapd, char *reply,
  	return -1;
  }
  
@@ -27,7 +45,7 @@ index 7796737..8f23d61 100644
  static int hostapd_ctrl_iface_driver_cmd(struct hostapd_data *hapd, char *cmd,
  				     char *buf, size_t buflen)
  {
-@@ -2404,7 +2404,7 @@ static int hostapd_ctrl_iface_driver_cmd(struct hostapd_data *hapd, char *cmd,
+@@ -2478,7 +2478,7 @@ static int hostapd_ctrl_iface_driver_cmd(struct hostapd_data *hapd, char *cmd,
  	}
  	return ret;
  }
@@ -36,7 +54,7 @@ index 7796737..8f23d61 100644
  
  static int hostapd_ctrl_iface_vendor(struct hostapd_data *hapd, char *cmd,
  				     char *buf, size_t buflen)
-@@ -3213,11 +3213,11 @@ static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
+@@ -3306,11 +3306,11 @@ static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
  	} else if (os_strncmp(buf, "CHAN_SWITCH ", 12) == 0) {
  		if (hostapd_ctrl_iface_chan_switch(hapd->iface, buf + 12))
  			reply_len = -1;
@@ -51,10 +69,10 @@ index 7796737..8f23d61 100644
  		reply_len = hostapd_ctrl_iface_vendor(hapd, buf + 7, reply,
  						      reply_size);
 diff --git a/src/ap/ap_drv_ops.h b/src/ap/ap_drv_ops.h
-index 6c0c351..a8640ec 100644
+index 693e21c..8217926 100644
 --- a/src/ap/ap_drv_ops.h
 +++ b/src/ap/ap_drv_ops.h
-@@ -340,7 +340,7 @@ static inline int hostapd_drv_br_set_net_param(struct hostapd_data *hapd,
+@@ -344,7 +344,7 @@ static inline int hostapd_drv_br_set_net_param(struct hostapd_data *hapd,
  	return hapd->driver->br_set_net_param(hapd->drv_priv, param, val);
  }
  
@@ -63,7 +81,7 @@ index 6c0c351..a8640ec 100644
  static inline int hostapd_drv_driver_cmd(struct hostapd_data *hapd,
  				     char *cmd, char *buf, size_t buf_len)
  {
-@@ -348,7 +348,7 @@ static inline int hostapd_drv_driver_cmd(struct hostapd_data *hapd,
+@@ -352,7 +352,7 @@ static inline int hostapd_drv_driver_cmd(struct hostapd_data *hapd,
  		return -1;
  	return hapd->driver->driver_cmd(hapd->drv_priv, cmd, buf, buf_len);
  }
@@ -73,10 +91,10 @@ index 6c0c351..a8640ec 100644
  static inline int hostapd_drv_vendor_cmd(struct hostapd_data *hapd,
  					 int vendor_id, int subcmd,
 diff --git a/src/drivers/driver.h b/src/drivers/driver.h
-index c4d50e0..e5ec084 100644
+index e79724a..c38c444 100644
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
-@@ -3453,7 +3453,7 @@ struct wpa_driver_ops {
+@@ -3649,7 +3649,7 @@ struct wpa_driver_ops {
  	 */
  	int (*set_authmode)(void *priv, int authmode);
  
@@ -85,7 +103,7 @@ index c4d50e0..e5ec084 100644
  	/**
  	 * driver_cmd - Execute driver-specific command
  	 * @priv: Private driver interface data
-@@ -3463,7 +3463,7 @@ struct wpa_driver_ops {
+@@ -3659,7 +3659,7 @@ struct wpa_driver_ops {
  	 * Returns: 0 on success, -1 on failure
  	 */
  	int (*driver_cmd)(void *priv, char *cmd, char *buf, size_t buf_len);
@@ -95,15 +113,15 @@ index c4d50e0..e5ec084 100644
  	/**
  	 * vendor_cmd - Execute vendor specific command
 diff --git a/src/drivers/driver_nl80211.c b/src/drivers/driver_nl80211.c
-index e88182f..d0aa418 100644
+index b14d081..4ce60ba 100644
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -11017,11 +11017,11 @@ const struct wpa_driver_ops wpa_driver_nl80211_ops = {
+@@ -11365,11 +11365,11 @@ const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  	.get_noa = wpa_driver_get_p2p_noa,
  	.set_ap_wps_ie = wpa_driver_set_ap_wps_p2p_ie,
  #endif /* ANDROID_P2P */
 -#ifdef ANDROID
-+#if defined(ANDROID) || defined(LINUX_EMBEDDED)
++#ifdef ANDROID || defined(LINUX_EMBEDDED)
  #ifndef ANDROID_LIB_STUB
  	.driver_cmd = wpa_driver_nl80211_driver_cmd,
  #endif /* !ANDROID_LIB_STUB */
@@ -111,22 +129,22 @@ index e88182f..d0aa418 100644
 +#endif /* ANDROID || LINUX_EMBEDDED */
  	.vendor_cmd = nl80211_vendor_cmd,
  	.set_qos_map = nl80211_set_qos_map,
- 	.set_wowlan = nl80211_set_wowlan,
+ 	.get_wowlan = nl80211_get_wowlan,
 diff --git a/src/drivers/driver_nl80211.h b/src/drivers/driver_nl80211.h
-index 8c7c6a3..221dff6 100644
+index e4d81b1..1be1a62 100644
 --- a/src/drivers/driver_nl80211.h
 +++ b/src/drivers/driver_nl80211.h
-@@ -270,13 +270,16 @@ int process_bss_event(struct nl_msg *msg, void *arg);
+@@ -267,13 +267,16 @@ int process_bss_event(struct nl_msg *msg, void *arg);
  
  const char * nl80211_iftype_str(enum nl80211_iftype mode);
  
 +#if defined(ANDROID) || defined(LINUX_EMBEDDED)
 +extern int wpa_driver_nl80211_driver_cmd(void *priv, char *cmd, char *buf,
-+					 size_t buf_len);
++					size_t buf_len);
 +#endif /* ANDROID || LINUX_EMBEDDED */
 +
  #ifdef ANDROID
- int android_nl_socket_set_nonblocking(struct nl_handle *handle);
+ int android_nl_socket_set_nonblocking(struct nl_sock *handle);
  int android_pno_start(struct i802_bss *bss,
  		      struct wpa_driver_scan_params *params);
  int android_pno_stop(struct i802_bss *bss);
@@ -135,3 +153,6 @@ index 8c7c6a3..221dff6 100644
  
  #ifdef ANDROID_P2P
  int wpa_driver_set_p2p_noa(void *priv, u8 count, int start, int duration);
+-- 
+2.7.4
+
