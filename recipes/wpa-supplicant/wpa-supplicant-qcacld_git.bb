@@ -25,6 +25,8 @@ do_configure() {
     if [ $WAP_VER == "2.9-devel" ]; then
         echo "CONFIG_OWE=y" >>.config
         echo "CONFIG_SAE=y" >>.config
+        echo "CONFIG_SUITEB192=y" >>.config
+        echo "CONFIG_SUITEB=y" >>.config
     fi
 }
 do_patch() {
