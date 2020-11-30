@@ -14,12 +14,14 @@ DEPENDS += "glib-2.0 wpa-supplicant-8-lib"
 
 FILES_${PN} += "/usr/include/*"
 
+LDFLAGS += " -Wl,--no-as-needed"
 S = "${WORKDIR}/external/wpa_supplicant_8/wpa_supplicant"
 PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"
 
 do_configure() {
     install -m 0644 ${WORKDIR}/defconfig-qcacld .config
     echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
+    rm -rf ${STAGING_LIBDIR}/libwpa_supplicant_8_lib.so*
 }
 do_patch() {
     cd ${PATCH_DIR}
