@@ -19,6 +19,6 @@ do_configure() {
 }
 do_patch() {
     cd ${PATCH_DIR}
-    patch -p1 < ${WORKDIR}/hostapd_driver_cmd.patch
+#    patch -p1 < ${WORKDIR}/hostapd_driver_cmd.patch
 }
 
