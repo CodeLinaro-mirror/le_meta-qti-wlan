@@ -11,6 +11,9 @@ python __anonymous () {
      if d.getVar('BASEMACHINE', True) == 'mdm9650':
          d.setVar('WLAN_MODULE_NAME', 'wlan_sdio')
          d.setVar('CHIP_NAME', 'qca9377')
+     elif d.getVar('BASEMACHINE', True) == 'sdxnightjar':
+         d.setVar('WLAN_MODULE_NAME', 'wlan_sdio')
+         d.setVar('CHIP_NAME', 'qca9377')
      elif d.getVar('BASEMACHINE', True) == 'sdx20':
          d.setVar('WLAN_MODULE_NAME', 'wlan_sdio')
          d.setVar('CHIP_NAME', 'qca9377')
