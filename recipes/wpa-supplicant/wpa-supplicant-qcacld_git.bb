@@ -27,6 +27,7 @@ do_configure() {
         echo "CONFIG_SAE=y" >>.config
         echo "CONFIG_SUITEB192=y" >>.config
         echo "CONFIG_SUITEB=y" >>.config
+        echo "CONFIG_DRIVER_NL80211_QCA=y" >>.config
     fi
 }
 do_patch() {
