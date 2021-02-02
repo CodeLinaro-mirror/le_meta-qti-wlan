@@ -7,7 +7,7 @@ FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://external/wpa_supplicant_8/"
 SRC_URI += "file://defconfig-qcacld"
 
-DEPENDS += "glib-2.0 wpa-supplicant-8-lib"
+DEPENDS += "glib-2.0"
 
 FILES_${PN} += "/usr/include/*"
 

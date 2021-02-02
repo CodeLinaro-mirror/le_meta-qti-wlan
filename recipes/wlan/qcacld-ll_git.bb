@@ -12,8 +12,8 @@ python __anonymous () {
 
 FILES_${PN}     += "lib/firmware/wlan/*"
 FILES_${PN}     += "${base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko"
-RPROVIDES_${PN} += "${@'kernel-module-${WLAN_MODULE_NAME}'.replace('_', '-')}"
-PROVIDES_NAME   = "kernel-module-${WLAN_MODULE_NAME}"
+RPROVIDES_${PN} += "${@'kernel-module-${WLAN_MODULE_NAME}-${KERNEL_VERSION}'.replace('_', '-')}"
+PROVIDES_NAME   = "kernel-module-${WLAN_MODULE_NAME}-${KERNEL_VERSION}"
 
 do_unpack[deptask] = "do_populate_sysroot"
 PR = "r8"

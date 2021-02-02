@@ -7,7 +7,7 @@ PR = "${INC_PR}.2"
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://external/wpa_supplicant_8/"
 SRC_URI += "file://defconfig-qcacld"
-DEPENDS = "pkgconfig libnl openssl wpa-supplicant-8-lib"
+DEPENDS = "pkgconfig libnl openssl"
 
 S = "${WORKDIR}/external/wpa_supplicant_8/hostapd/"
 PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"
