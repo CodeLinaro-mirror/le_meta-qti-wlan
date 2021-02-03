@@ -49,23 +49,29 @@ else
                 echo -n "subtypeid: $soc_subtypeid" > /dev/kmsg
             fi
 
+            #check if device hardware platform for ADP/TTP
             if [ "$soc_hwplatform" == "ADP" ] || [ "$soc_hwplatform" == "TTP" ]; then
-                # Check if device is standalone ADP/TTP
-                if [ "$soc_subtypeid" == "0" ]; then
-                    echo -n "standalone ADP/TTP -> load cnss2 module" > /dev/kmsg
-                    modprobe cnss2
-                # Check if device is ADP/TTP with PCIe fusion
-                elif [ "$soc_subtypeid" == "1" ]; then
+                #Loading cnss2 module for all other CDTs, other than PCIE Fusion
+                # Check if device CDT is PCIe fusion
+                if [ "$soc_subtypeid" == "1" ]; then
                     echo -n "ADP/TTP with PCIe fusion -> skip loading cnss2 module" > /dev/kmsg
-                # Check if device is ADP/TTP with USB fusion
-                elif [ "$soc_subtypeid" == "2" ]; then
-                    echo -n "ADP/TTP with USB fusion -> load cnss2 module" > /dev/kmsg
-                    modprobe cnss2
-                # Check if device is ADP/TTP with Flashless PCIe fusion
+                # Check if device CDT is Flashless PCIe fusion
                 elif [ "$soc_subtypeid" == "3" ]; then
                     echo -n "ADP/TTP with Flashless PCIe fusion -> skip loading cnss2 module" > /dev/kmsg
                 else
-                    echo -n "Not supported CDT sub type id, QCMAP_CLI will load cnss2 in needed" > /dev/kmsg
+                    # Check if device CDT is standalone
+                    if [ "$soc_subtypeid" == "0" ]; then
+                        echo -n "standalone ADP/TTP -> load cnss2 module" > /dev/kmsg
+                    # Check if device CDT is USB fusion
+                    elif [ "$soc_subtypeid" == "2" ]; then
+                        echo -n "ADP/TTP with USB fusion -> load cnss2 module" > /dev/kmsg
+                    # Check if device CDT is ETH fusion
+                    elif [ "$soc_subtypeid" == "5" ]; then
+                        echo -n "ADP/TTP with ETH fusion -> load cnss2 module" > /dev/kmsg
+                    else
+                        echo -n "ADP/TTP Unknown subtype identified,  loading cnss2 module" > /dev/kmsg
+                    fi
+                    modprobe cnss2
                 fi
             else
                 echo -n "Not supported platform from CDT, QCMAP_CLI will load cnss2 in needed" > /dev/kmsg
