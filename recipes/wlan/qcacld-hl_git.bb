@@ -71,6 +71,11 @@ do_install_append_sdx20 () {
     fi
 }
 
+do_configure_append_sdxnightjar () {
+    wirelessdir=${COREBASE}/../external/compat-wireless/net/wireless
+    awk -f $wirelessdir/genregdb.awk < $wirelessdir/db.txt > ${S}/CORE/VOSS/src/vos_regdb.c
+}
+
 do_module_signing() {
     if [ -f ${STAGING_KERNEL_BUILDDIR}/signing_key.priv ]; then
         if [ ${BASEMACHINE} == "apq8017" ]; then

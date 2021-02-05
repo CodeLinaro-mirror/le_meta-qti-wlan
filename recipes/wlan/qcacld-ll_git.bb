@@ -12,8 +12,8 @@ python __anonymous () {
 
 FILES_${PN}     += "lib/firmware/wlan/*"
 FILES_${PN}     += "${base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko"
-RPROVIDES_${PN} += "${@'kernel-module-${WLAN_MODULE_NAME}'.replace('_', '-')}"
-PROVIDES_NAME   = "kernel-module-${WLAN_MODULE_NAME}"
+RPROVIDES_${PN} += "${@'kernel-module-${WLAN_MODULE_NAME}-${KERNEL_VERSION}'.replace('_', '-')}"
+PROVIDES_NAME   = "kernel-module-${WLAN_MODULE_NAME}-${KERNEL_VERSION}"
 
 do_unpack[deptask] = "do_populate_sysroot"
 PR = "r8"
@@ -50,6 +50,11 @@ do_install_append_sdx20 () {
     if [ -e ${D}/${base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko ]; then
         mv ${D}/${base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko ${D}/${base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_TARGET_NAME}.ko
     fi
+}
+
+do_configure_append_sdxnightjar () {
+    wirelessdir=${COREBASE}/../external/compat-wireless/net/wireless
+    awk -f $wirelessdir/genregdb.awk < $wirelessdir/db.txt > ${S}/CORE/VOSS/src/vos_regdb.c
 }
 
 do_module_signing() {
