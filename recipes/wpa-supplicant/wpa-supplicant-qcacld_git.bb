@@ -10,7 +10,7 @@ SRC_URI += "file://p2p_tmp_config.patch"
 SRC_URI += "file://driver_cmd.patch"
 SRC_URI += "file://le_upgrade_compatiblity.patch"
 
-DEPENDS += "glib-2.0 wpa-supplicant-8-lib"
+DEPENDS += "glib-2.0 wpa-supplicant-8-lib dbus"
 
 FILES_${PN} += "/usr/include/*"
 
