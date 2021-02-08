@@ -9,6 +9,7 @@ FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://mdm-init/"
 SRC_URI += "file://wlan_daemon.service"
 SRC_URI += "file://cnss.service"
+SRC_URI += "file://dhcpcd.service"
 
 # Update for each machine
 S = "${WORKDIR}/mdm-init/"
@@ -58,6 +59,8 @@ do_install_append_kona(){
       install -d ${D}/etc/systemd/system/multi-user.target.wants/
       install -m 0644 ${WORKDIR}/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
       ln -sf /etc/systemd/system/wlan_daemon.service ${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
+      install -m 0644 ${WORKDIR}/dhcpcd.service -D ${D}/etc/systemd/system/dhcpcd.service
+      ln -sf /etc/systemd/system/dhcpcd.service ${D}/etc/systemd/system/multi-user.target.wants/dhcpcd.service
   else
       install -m 0755 ${S}/wlan_daemon -D ${D}${sysconfdir}/init.d/wlan_daemon
   fi
