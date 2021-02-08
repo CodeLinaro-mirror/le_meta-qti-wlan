@@ -11,6 +11,7 @@ SRC_URI = "file://mdm-init/"
 SRC_URI += "file://wlan_daemon.service"
 SRC_URI += "file://cnss.service"
 SRC_URI += "file://device/qcom/wlan/${BASEMACHINE}/"
+SRC_URI += "file://dhcpcd.service"
 
 # Update for each machine
 S = "${WORKDIR}/mdm-init/"
@@ -78,6 +79,8 @@ do_install_append_neo(){
 			cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
 			install -d ${D}/etc/systemd/system/
 			install -d ${D}/etc/systemd/system/multi-user.target.wants/
+			install -m 0644 ${WORKDIR}/dhcpcd.service -D ${D}/etc/systemd/system/dhcpcd.service
+			ln -sf /etc/systemd/system/dhcpcd.service ${D}/etc/systemd/system/multi-user.target.wants/dhcpcd.service
 		fi
 
 		rm ${D}/etc/init.d/wlan
