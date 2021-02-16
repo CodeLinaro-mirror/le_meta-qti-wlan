@@ -12,6 +12,7 @@ SRC_URI += "file://cnss.service"
 SRC_URI += "file://dhcpcd.service"
 SRC_URI += "file://fi.w1.wpa_supplicant1.service"
 SRC_URI += "file://dbus-wpa_supplicant.conf"
+SRC_URI += "file://device/qcom/wlan/${SOC_FAMILY}/"
 
 # Update for each machine
 S = "${WORKDIR}/mdm-init/"
@@ -72,6 +73,13 @@ do_install_append_kona(){
 
 FILES_${PN} += "/usr/share/dbus-1/system-services/*"
 FILES_${PN} += "/usr/share/dbus-1/system.d/*"
+
+do_install_append_sxr2130(){
+      if [ -e "${WORKDIR}/device/qcom/wlan/${SOC_FAMILY}/WCNSS_qcom_cfg_qca6490.ini" ];then
+            install -m 0644 ${WORKDIR}/device/qcom/wlan/${SOC_FAMILY}/WCNSS_qcom_cfg_qca6490.ini ${D}/lib/firmware/wlan/qca_cld/WCNSS_qcom_cfg.ini
+      fi
+}
+
 FILES_${PN} += "${userfsdatadir}/misc/wifi/*"
 FILES_${PN} += "${base_libdir}/firmware/wlan/qca_cld/*"
 FILES_${PN} += "/lib/firmware/wlan/qca_cld/* ${sysconfdir}/init.d/* "
