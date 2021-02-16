@@ -155,7 +155,11 @@ CONFIG_IEEE80211AX=y
 #CONFIG_NO_STDOUT_DEBUG=y
 
 # Add support for writing debug log to Android logcat instead of standard output
-#CONFIG_ANDROID_LOG=y
+CONFIG_ANDROID_LOG=y
+CFLAGS +="-DCONFIG_ANDROID_LOG"
+LIBS +=-llog
+LIBS_c +=-llog
+LIBS_p +=-llog
 
 # Add support for writing debug log to a file: -f /tmp/hostapd.log
 # Disabled by default.

@@ -8,7 +8,9 @@ FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://external/wpa_supplicant_8/"
 SRC_URI += "file://defconfig-qcacld"
 SRC_URI += "file://hostapd_driver_cmd.patch"
-DEPENDS = "pkgconfig libnl openssl wpa-supplicant-8-lib"
+DEPENDS = "pkgconfig libnl openssl wpa-supplicant-8-lib liblog"
+
+LDFLAGS +="-L${RECIPE_SYSROOT}/usr/lib -llog"
 
 S = "${WORKDIR}/external/wpa_supplicant_8/hostapd/"
 PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"
