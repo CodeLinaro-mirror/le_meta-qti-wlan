@@ -18,19 +18,6 @@ index acde38c4a..1eaf029e0 100644
  #include "sme.h"
  
  #ifdef __NetBSD__
-diff --git a/wpa_supplicant/dpp_supplicant.h b/wpa_supplicant/dpp_supplicant.h
-index 2a5c8c697..82d0e88a7 100644
---- a/wpa_supplicant/dpp_supplicant.h
-+++ b/wpa_supplicant/dpp_supplicant.h
-@@ -10,7 +10,7 @@
- #ifndef DPP_SUPPLICANT_H
- #define DPP_SUPPLICANT_H
-
--#include"dpp.h"
-+#include"common/dpp.h"
-
- enum dpp_status_error;
-
 diff --git a/wpa_supplicant/events.c b/wpa_supplicant/events.c
 index 70f849116..4a5a4a471 100644
 --- a/wpa_supplicant/events.c
