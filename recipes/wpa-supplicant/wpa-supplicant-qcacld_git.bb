@@ -7,6 +7,7 @@ FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://external/wpa_supplicant_8/"
 SRC_URI += "file://defconfig-qcacld"
 SRC_URI += "file://p2p_tmp_config.patch"
+SRC_URI += "file://le_upgrade_compatiblity.patch;"
 
 DEPENDS += "qmi"
 DEPENDS += "qmi-framework"
@@ -22,7 +23,7 @@ do_configure() {
     install -m 0644 ${WORKDIR}/defconfig-qcacld .config
     echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
     eval $(awk '$2=="VERSION_STR" {printf("WAP_VER=%s;",$3)}' ${WORKDIR}/external/wpa_supplicant_8/src/common/version.h)
-    if [ $WAP_VER == "2.9-devel" ]; then
+    if [ $WAP_VER == "2.10-devel" ]; then
         echo "CONFIG_OWE=y" >>.config
         echo "CONFIG_SAE=y" >>.config
         echo "CONFIG_SUITEB192=y" >>.config
@@ -33,6 +34,10 @@ do_configure() {
 do_patch() {
     cd ${PATCH_DIR}
     patch -p1 < ${WORKDIR}/p2p_tmp_config.patch
+    eval $(awk '$2=="VERSION_STR" {printf("WAP_VER=%s;",$3)}' ${WORKDIR}/external/wpa_supplicant_8/src/common/version.h)
+    if [ $WAP_VER == "2.10-devel" ]; then
+        patch -p1 < ${WORKDIR}/le_upgrade_compatiblity.patch
+    fi
 }
 
 INCSUFFIX ?= "none"

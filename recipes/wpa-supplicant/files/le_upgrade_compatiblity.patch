@@ -1,0 +1,79 @@
+From cff619b77d04af549deab035f9663c18dad11f54 Mon Sep 17 00:00:00 2001
+From: Jiani Liu <jianil@codeaurora.org>
+Date: Mon, 15 Mar 2021 17:36:22 +0800
+Subject: [PATCH] [PATCH] Solve compilation issue on upgrade wpa_supplicant
+
+Solve compilation issue on upgrade wpa_supplicant from Q-keystone
+
+Signed-off-by: Jiani Liu <jianil@codeaurora.org>
+
+:100644 100644 acde38c... 1eaf029... M	wpa_supplicant/ctrl_iface.c
+:100644 100644 2a5c8c6... 82d0e88... M	wpa_supplicant/dpp_supplicant.h
+:100644 100644 70f8491... 4a5a4a4... M	wpa_supplicant/events.c
+:100644 100644 9dfb1fe... 71a38ca... M	wpa_supplicant/wpa_supplicant.c
+
+diff --git a/wpa_supplicant/ctrl_iface.c b/wpa_supplicant/ctrl_iface.c
+index acde38c..1eaf029 100644
+--- a/wpa_supplicant/ctrl_iface.c
++++ b/wpa_supplicant/ctrl_iface.c
+@@ -21,6 +21,7 @@
+ #include "common/wpa_ctrl.h"
+ #ifdef CONFIG_DPP
+ #include "common/dpp.h"
++#include "dpp_supplicant.h"
+ #endif /* CONFIG_DPP */
+ #include "crypto/tls.h"
+ #include "ap/hostapd.h"
+@@ -54,7 +55,6 @@
+ #include "offchannel.h"
+ #include "drivers/driver.h"
+ #include "mesh.h"
+-#include "dpp_supplicant.h"
+ #include "sme.h"
+
+ #ifdef __NetBSD__
+diff --git a/wpa_supplicant/dpp_supplicant.h b/wpa_supplicant/dpp_supplicant.h
+index 2a5c8c6..82d0e88 100644
+--- a/wpa_supplicant/dpp_supplicant.h
++++ b/wpa_supplicant/dpp_supplicant.h
+@@ -10,7 +10,7 @@
+ #ifndef DPP_SUPPLICANT_H
+ #define DPP_SUPPLICANT_H
+
+-#include"dpp.h"
++#include"common/dpp.h"
+
+ enum dpp_status_error;
+
+diff --git a/wpa_supplicant/events.c b/wpa_supplicant/events.c
+index 70f8491..4a5a4a4 100644
+--- a/wpa_supplicant/events.c
++++ b/wpa_supplicant/events.c
+@@ -48,8 +48,9 @@
+ #include "mesh.h"
+ #include "mesh_mpm.h"
+ #include "wmm_ac.h"
++#ifdef CONFIG_DPP
+ #include "dpp_supplicant.h"
+-
++#endif /* CONFIG_DPP */
+
+ #define MAX_OWE_TRANSITION_BSS_SELECT_COUNT 5
+
+diff --git a/wpa_supplicant/wpa_supplicant.c b/wpa_supplicant/wpa_supplicant.c
+index 9dfb1fe..71a38ca 100644
+--- a/wpa_supplicant/wpa_supplicant.c
++++ b/wpa_supplicant/wpa_supplicant.c
+@@ -62,7 +62,9 @@
+ #include "wnm_sta.h"
+ #include "wpas_kay.h"
+ #include "mesh.h"
++#ifdef CONFIG_DPP
+ #include "dpp_supplicant.h"
++#endif /* CONFIG_DPP */
+ #ifdef CONFIG_MESH
+ #include "ap/ap_config.h"
+ #include "ap/hostapd.h"
+-- 
+2.7.4
+
