@@ -32,4 +32,9 @@ do_install_append_sa515m_auto(){
 	install -m 0644 ${S}/qcom/wlan/sdx24_auto/*.conf ${D}/etc/misc/wifi
 	install -d ${D}${sysconfdir}
 	install -m 0644 ${S}/qcom/wlan/sdx24_auto/vendor_cmd.xml ${D}${sysconfdir}
+	if ${@bb.utils.contains('DISTRO_FEATURES','nand-squashfs','true','false',d)}; then
+	   install -d ${D}${userfsdatadir}/misc/wifi
+	   install -m 0664 ${S}/qcom/wlan/sdx24_auto/*.conf ${D}${userfsdatadir}/misc/wifi
+	   ln -sf /data/misc/wifi/wpa_supplicant.conf  ${D}/etc/misc/wifi/wpa_supplicant.conf
+	fi
 }
