@@ -17,4 +17,5 @@ RDEPENDS_packagegroup-qti-wifi = " \
         wpa-supplicant-8-lib \
         wpa-supplicant-qcacld \
         wireless-tools \
+        util-linux-rfkill \
         "
