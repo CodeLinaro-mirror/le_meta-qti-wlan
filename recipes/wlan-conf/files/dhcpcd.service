@@ -35,7 +35,9 @@ Requires=wlan_daemon.service
 RemainAfterExit=yes
 Restart=on-failure
 ExecStartPre=/bin/sh -c 'echo "nameserver 8.8.8.8" >> /etc/resolv.conf'
-ExecStart=/usr/sbin/dhcpcd
+ExecStart=/usr/sbin/dhcpcd -t 0 -o domain_name_servers --noipv4ll -h -b -G
+ExecStop=/bin/kill -15 $MAINPID
+ExecStopPost=/bin/rm -rf /var/run/dhcpcd-*.info
 
 [Install]
 WantedBy=multi-user.target
