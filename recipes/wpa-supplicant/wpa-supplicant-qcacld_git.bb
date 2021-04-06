@@ -12,9 +12,11 @@ SRC_URI += "file://le_upgrade_compatiblity.patch;patchdir=${WORKDIR}/external/wp
 
 DEPENDS += "qmi"
 DEPENDS += "qmi-framework"
-DEPENDS += "diag configdb dsutils common glib-2.0 time-genoff xmllib wpa-supplicant-8-lib"
+DEPENDS += "diag configdb dsutils common glib-2.0 time-genoff xmllib wpa-supplicant-8-lib liblog"
 
 FILES_${PN} += "/usr/include/*"
+
+LDFLAGS +="-L${RECIPE_SYSROOT}/usr/lib -llog"
 
 S = "${WORKDIR}/external/wpa_supplicant_8/wpa_supplicant"
 
