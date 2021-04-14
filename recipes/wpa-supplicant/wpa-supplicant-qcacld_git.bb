@@ -10,11 +10,12 @@ SRC_URI += "file://p2p_tmp_config.patch"
 SRC_URI += "file://driver_cmd.patch"
 SRC_URI += "file://le_upgrade_compatiblity.patch"
 
-DEPENDS += "glib-2.0 wpa-supplicant-8-lib dbus"
+DEPENDS += "glib-2.0 wpa-supplicant-8-lib dbus liblog"
 
 FILES_${PN} += "/usr/include/*"
 
 LDFLAGS += " -Wl,--no-as-needed"
+LDFLAGS +="-L${RECIPE_SYSROOT}/usr/lib -llog"
 S = "${WORKDIR}/external/wpa_supplicant_8/wpa_supplicant"
 PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"
 
