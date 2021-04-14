@@ -10,6 +10,9 @@ SRC_URI = "file://mdm-init/"
 SRC_URI += "file://wlan_daemon.service"
 SRC_URI += "file://cnss.service"
 SRC_URI += "file://dhcpcd.service"
+SRC_URI += "file://fi.w1.wpa_supplicant1.service"
+SRC_URI += "file://dbus-wpa_supplicant.conf"
+SRC_URI += "file://device/qcom/wlan/${SOC_FAMILY}/"
 
 # Update for each machine
 S = "${WORKDIR}/mdm-init/"
@@ -61,9 +64,20 @@ do_install_append_kona(){
       ln -sf /etc/systemd/system/wlan_daemon.service ${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
       install -m 0644 ${WORKDIR}/dhcpcd.service -D ${D}/etc/systemd/system/dhcpcd.service
       ln -sf /etc/systemd/system/dhcpcd.service ${D}/etc/systemd/system/multi-user.target.wants/dhcpcd.service
+      install -m 0644 ${WORKDIR}/fi.w1.wpa_supplicant1.service -D ${D}/usr/share/dbus-1/system-services/fi.w1.wpa_supplicant1.service
+      install -m 0644 ${WORKDIR}/dbus-wpa_supplicant.conf -D ${D}/usr/share/dbus-1/system.d/dbus-wpa_supplicant.conf
   else
       install -m 0755 ${S}/wlan_daemon -D ${D}${sysconfdir}/init.d/wlan_daemon
   fi
+}
+
+FILES_${PN} += "/usr/share/dbus-1/system-services/*"
+FILES_${PN} += "/usr/share/dbus-1/system.d/*"
+
+do_install_append_sxr2130(){
+      if [ -e "${WORKDIR}/device/qcom/wlan/${SOC_FAMILY}/WCNSS_qcom_cfg_qca6490.ini" ];then
+            install -m 0644 ${WORKDIR}/device/qcom/wlan/${SOC_FAMILY}/WCNSS_qcom_cfg_qca6490.ini ${D}/lib/firmware/wlan/qca_cld/WCNSS_qcom_cfg.ini
+      fi
 }
 
 FILES_${PN} += "${userfsdatadir}/misc/wifi/*"
