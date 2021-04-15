@@ -1,4 +1,9 @@
-inherit autotools qcommon qlicense qprebuilt
+inherit autotools-brokensep pkgconfig qprebuilt
+
+HOMEPAGE         = "http://support.cdmatech.com"
+LICENSE          = "Qualcomm-Technologies-Inc.-Proprietary"
+LIC_FILES_CHKSUM = "file://${COREBASE}/meta-qti-bsp-prop/files/qcom-licenses/\
+${LICENSE};md5=92b1d0ceea78229551577d4284669bb8"
 
 DESCRIPTION = "CNSS"
 PR = "r2"
@@ -9,6 +14,7 @@ FILESPATH =+ "${WORKSPACE}/hardware/qcom/:"
 WPA_SUPPLICANT_DIR = "${WORKSPACE}/external/wpa_supplicant_8/"
 
 SRC_URI = "file://wlan/qcwcn/wpa_supplicant_8_lib/"
+PACKAGE_ARCH ?= "${MACHINE_ARCH}"
 
 S = "${WORKDIR}/wlan/qcwcn/wpa_supplicant_8_lib"
 
