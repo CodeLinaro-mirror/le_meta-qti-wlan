@@ -52,7 +52,7 @@ index 4bdeaa0..6d1bbd8 100644
 +#endif /* ANDROID || LINUX_EMBEDDED */
 +
  #ifdef ANDROID
- int android_nl_socket_set_nonblocking(struct nl_handle *handle);
+ int android_nl_socket_set_nonblocking(struct nl_sock *handle);
  int android_pno_start(struct i802_bss *bss,
  		      struct wpa_driver_scan_params *params);
  int android_pno_stop(struct i802_bss *bss);
