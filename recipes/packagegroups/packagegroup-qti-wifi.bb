@@ -12,8 +12,10 @@ HOSTAPD_DAEMON_BB = "${@oe.utils.conditional('BASEMACHINE', 'sdxlemur', 'hostap-
 
 WPA_SUPPLICANT_BB = "${@oe.utils.conditional('BASEMACHINE', 'sdxlemur', 'wpa-supplicant-qcacld-ks3', 'wpa-supplicant-qcacld', d)}"
 
+QCACLD32_LL_BB = "${@oe.utils.conditional('MACHINE_FEATURES', 'qti-wifi', 'qcacld32-ll', '', d)}"
+
 RDEPENDS_packagegroup-qti-wifi = " \
-        qcacld32-ll \
+        ${QCACLD32_LL_BB} \
         iw \
         wlan-conf \
         wlan-sigma-dut \
