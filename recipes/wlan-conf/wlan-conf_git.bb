@@ -50,6 +50,21 @@ do_install_append_msm(){
   fi
 }
 
+do_install_append(){
+    if [ "${BASEMACHINE}" == "qrbx210" ]; then
+        if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
+            install -d ${D}/etc/initscripts
+            cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
+            install -d ${D}/etc/systemd/system/
+            install -d ${D}/etc/systemd/system/multi-user.target.wants/
+            install -m 0644 ${WORKDIR}/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
+            ln -sf /etc/systemd/system/wlan_daemon.service ${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
+        else
+            install -m 0755 ${S}/wlan_daemon -D ${D}${sysconfdir}/init.d/wlan_daemon
+        fi
+    fi
+}
+
 FILES_${PN} += "${userfsdatadir}/misc/wifi/*"
 FILES_${PN} += "${base_libdir}/firmware/wlan/qca_cld/*"
 FILES_${PN} += "/lib/firmware/wlan/qca_cld/* ${sysconfdir}/init.d/* "
@@ -62,6 +77,7 @@ EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'apq8096', '--enable-target
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'apq8098', '--enable-target-apq8098=yes', '', d)}"
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'apq8009', '--enable-target-apq8009=yes', '', d)}"
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'apq8017', '--enable-target-apq8017=yes', '', d)}"
+EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'qrbx210', '--enable-target-qrbx210-rbx=yes', '', d)}"
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'sdx20', '--enable-target-sdx20=yes', '', d)}"
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'sdxpoorwills', '--enable-target-sdxpoorwills=yes', '', d)}"
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'sdxprairie', '--enable-target-sdxprairie=yes', '', d)}"
