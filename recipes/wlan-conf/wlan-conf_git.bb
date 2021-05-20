@@ -4,6 +4,7 @@ LICENSE = "ISC"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=f3b90e78ea0cffb20bf5cca7947a896d"
 PR = "r3"
 
+RDEPENDS_${PN} += "dhcpcd"
 FILESPATH =+ "${WORKSPACE}:"
 # Provide a baseline
 SRC_URI = "file://mdm-init/"
