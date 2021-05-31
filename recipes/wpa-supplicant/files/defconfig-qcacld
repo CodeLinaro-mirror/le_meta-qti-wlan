@@ -443,6 +443,7 @@ LIBS_p +=-llog
 
 # LE platform build with wpa_cli "driver" command
 CONFIG_LINUX_EMBEDDED=y
+CONFIG_LINUX_EMBEDDED_LIB_EVENT=y
 
 # Enable privilege separation (see README 'Privilege separation' for details)
 #CONFIG_PRIVSEP=y

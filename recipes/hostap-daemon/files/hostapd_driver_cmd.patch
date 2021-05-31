@@ -1,8 +1,8 @@
 diff --git a/hostapd/Android.mk b/hostapd/Android.mk
-index 411d80b..f01020c 100644
+index 411d80b..7d7ca51 100644
 --- a/hostapd/Android.mk
 +++ b/hostapd/Android.mk
-@@ -1089,6 +1089,10 @@ ifdef CONFIG_ANDROID_LOG
+@@ -1089,6 +1089,14 @@ ifdef CONFIG_ANDROID_LOG
  L_CFLAGS += -DCONFIG_ANDROID_LOG
  endif
  
@@ -10,14 +10,18 @@ index 411d80b..f01020c 100644
 +L_CFLAGS += -DLINUX_EMBEDDED
 +endif
 +
++ifdef CONFIG_LINUX_EMBEDDED_LIB_EVENT
++L_CFLAGS += -DLINUX_EMBEDDED_LIB_EVENT
++endif
++
  OBJS_c = hostapd_cli.c
  OBJS_c += src/common/wpa_ctrl.c
  OBJS_c += src/utils/os_$(CONFIG_OS).c
 diff --git a/hostapd/Makefile b/hostapd/Makefile
-index 8666763..aee3665 100644
+index 8666763..9a955c0 100644
 --- a/hostapd/Makefile
 +++ b/hostapd/Makefile
-@@ -175,6 +175,10 @@ LIBS_h += -lgcov
+@@ -175,6 +175,14 @@ LIBS_h += -lgcov
  LIBS_n += -lgcov
  endif
  
@@ -25,10 +29,14 @@ index 8666763..aee3665 100644
 +CFLAGS += -DLINUX_EMBEDDED
 +endif
 +
++ifdef CONFIG_LINUX_EMBEDDED_LIB_EVENT
++CFLAGS += -DLINUX_EMBEDDED_LIB_EVENT
++endif
++
  ifndef CONFIG_NO_DUMP_STATE
  # define HOSTAPD_DUMP_STATE to include support for dumping internal state
  # through control interface commands (undefine it, if you want to save in
-@@ -1229,6 +1233,10 @@ LIBS += -lsqlite3
+@@ -1229,6 +1237,10 @@ LIBS += -lsqlite3
  LIBS_h += -lsqlite3
  endif
  
@@ -215,3 +223,18 @@ index ba3fcc6..f75694a 100644
  
  
  /* driver_nl80211_scan.c */
+diff --git a/src/drivers/driver_nl80211_event.c b/src/drivers/driver_nl80211_event.c
+index e48f098..c12a565 100644
+--- a/src/drivers/driver_nl80211_event.c
++++ b/src/drivers/driver_nl80211_event.c
+@@ -2241,8 +2241,8 @@ static void nl80211_vendor_event(struct wpa_driver_nl80211_data *drv,
+ 		return;
+ 	}
+ 
+-#ifdef ANDROID
+-#ifdef ANDROID_LIB_EVENT
++#if defined(ANDROID) || defined(LINUX_EMBEDDED)
++#if defined(ANDROID_LIB_EVENT) || defined(LINUX_EMBEDDED_LIB_EVENT)
+        wpa_driver_nl80211_driver_event(drv, vendor_id, subcmd, data, len);
+ #endif /* ANDROID_LIB_EVENT */
+ #endif /* ANDROID */

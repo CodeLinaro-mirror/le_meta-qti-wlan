@@ -4,6 +4,7 @@ LICENSE = "ISC"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=f3b90e78ea0cffb20bf5cca7947a896d"
 PR = "r3"
 
+RDEPENDS_${PN} += "dhcpcd"
 FILESPATH =+ "${WORKSPACE}:"
 # Provide a baseline
 SRC_URI = "file://mdm-init/"
@@ -56,6 +57,7 @@ do_install_append_msm(){
 
 do_install_append_kona(){
   if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
+      install -d ${D}/data/vendor/wifi
       install -d ${D}/etc/initscripts
       cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
       install -d ${D}/etc/systemd/system/
@@ -83,6 +85,7 @@ do_install_append_sxr2130(){
 FILES_${PN} += "${userfsdatadir}/misc/wifi/*"
 FILES_${PN} += "${base_libdir}/firmware/wlan/qca_cld/*"
 FILES_${PN} += "/lib/firmware/wlan/qca_cld/* ${sysconfdir}/init.d/* "
+FILES_${PN} += "/data/*"
 
 BASEPRODUCT = "${@d.getVar('PRODUCT', False)}"
 

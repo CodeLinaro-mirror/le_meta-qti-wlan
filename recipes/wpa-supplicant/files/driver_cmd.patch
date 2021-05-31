@@ -103,7 +103,7 @@ index ba3fcc6..2d4c4e4 100644
  
  /* driver_nl80211_scan.c */
 diff --git a/src/drivers/driver_nl80211_event.c b/src/drivers/driver_nl80211_event.c
-index e48f098..ec60745 100644
+index e48f098..c12a565 100644
 --- a/src/drivers/driver_nl80211_event.c
 +++ b/src/drivers/driver_nl80211_event.c
 @@ -2241,8 +2241,8 @@ static void nl80211_vendor_event(struct wpa_driver_nl80211_data *drv,
@@ -113,15 +113,15 @@ index e48f098..ec60745 100644
 -#ifdef ANDROID
 -#ifdef ANDROID_LIB_EVENT
 +#if defined(ANDROID) || defined(LINUX_EMBEDDED)
-+#if defined(ANDROID_LIB_EVENT) || defined(LINUX_EMBEDDED)
++#if defined(ANDROID_LIB_EVENT) || defined(LINUX_EMBEDDED_LIB_EVENT)
         wpa_driver_nl80211_driver_event(drv, vendor_id, subcmd, data, len);
  #endif /* ANDROID_LIB_EVENT */
  #endif /* ANDROID */
 diff --git a/wpa_supplicant/Android.mk b/wpa_supplicant/Android.mk
-index 97566fd..e27d2ab 100644
+index 97566fd..b20ccd6 100644
 --- a/wpa_supplicant/Android.mk
 +++ b/wpa_supplicant/Android.mk
-@@ -1550,6 +1550,10 @@ ifdef CONFIG_ANDROID_LOG
+@@ -1550,6 +1550,14 @@ ifdef CONFIG_ANDROID_LOG
  L_CFLAGS += -DCONFIG_ANDROID_LOG
  endif
  
@@ -129,14 +129,18 @@ index 97566fd..e27d2ab 100644
 +L_CFLAGS += -DLINUX_EMBEDDED
 +endif
 +
++ifdef CONFIG_LINUX_EMBEDDED_LIB_EVENT
++L_CFLAGS += -DLINUX_EMBEDDED_LIB_EVENT
++endif
++
  ifdef CONFIG_IPV6
  # for eapol_test only
  L_CFLAGS += -DCONFIG_IPV6
 diff --git a/wpa_supplicant/Makefile b/wpa_supplicant/Makefile
-index dc949c1..f511355 100644
+index dc949c1..7aad5f9 100644
 --- a/wpa_supplicant/Makefile
 +++ b/wpa_supplicant/Makefile
-@@ -190,6 +190,10 @@ LIBS_c += -lgcov
+@@ -190,6 +190,14 @@ LIBS_c += -lgcov
  LIBS_p += -lgcov
  endif
  
@@ -144,10 +148,14 @@ index dc949c1..f511355 100644
 +CFLAGS += -DLINUX_EMBEDDED
 +endif
 +
++ifdef CONFIG_LINUX_EMBEDDED_LIB_EVENT
++CFLAGS += -DLINUX_EMBEDDED_LIB_EVENT
++endif
++
  ifdef CONFIG_HT_OVERRIDES
  CFLAGS += -DCONFIG_HT_OVERRIDES
  endif
-@@ -1837,6 +1841,10 @@ EXTRALIBS += WbemUuid.Lib
+@@ -1837,6 +1845,10 @@ EXTRALIBS += WbemUuid.Lib
  endif
  endif
  
