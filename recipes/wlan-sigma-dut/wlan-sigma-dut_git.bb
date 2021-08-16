@@ -1,4 +1,4 @@
-inherit autotools qcommon
+inherit autotools
 
 DESCRIPTION = "WFA certification testing tool for QCA devices"
 HOMEPAGE = "https://github.com/qca/sigma-dut"
