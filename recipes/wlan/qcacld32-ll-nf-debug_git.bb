@@ -41,6 +41,7 @@ FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld"
 # Explicitly disable HL to enable LL as current WLAN driver is not having
 # simultaneous support of HL and LL.
 EXTRA_OEMAKE += "CONFIG_CNSS=n CONFIG_CLD_HL_SDIO_CORE=n CONFIG_CNSS_SDIO=n"
+EXTRA_OEMAKE += "${@bb.utils.contains('MACHINE_FEATURES', 'qca-wifi', ' CONFIG_CNSS2=n CONFIG_WLAN_DISABLE_EXPORT_SYMBOL=y', '', d)}"
 EXTRA_OEMAKE += "CONFIG_QCA_CLD_WLAN_PROFILE=default MODNAME=wlan_debug KERNEL_BUILD=y"
 
 # The common header file, 'wlan_nlink_common.h' can be installed from other
