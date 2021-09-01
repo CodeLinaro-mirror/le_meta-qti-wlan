@@ -12,6 +12,8 @@ DEPENDS = "libnl"
 PR = "r1"
 PV = "1.0"
 
+PACKAGE_ARCH ?= "${MACHINE_ARCH}"
+
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/tools/ \
           "
@@ -28,7 +30,24 @@ do_compile_prepend() {
 
 do_install() {
     install -d ${D}${sbindir}/
+    install -d ${D}${libdir}/
+    install -d ${D}${includedir}/dsrc-tools/
+    install -m 0755 ${S}/dsrc/inc/* ${D}${includedir}/dsrc-tools/
+    install -m 0755 ${S}/dsrc/src/*.h ${D}${includedir}/dsrc-tools/
+    install -m 0755 ${S}/dsrc/lib/* ${D}${libdir}/
     install -m 0755 ${S}/dsrc/bin/dsrc_* ${D}${sbindir}/
     install -m 0755 ${S}/dsrc/bin/wlan_ts ${D}${sbindir}/
     install -m 0755 ${S}/dsrc/bin/dcc.dat ${D}${sbindir}/
 }
+
+INSANE_SKIP_${PN} = "dev-elf"
+INSANE_SKIP_${PN} = "ldflags"
+INSANE_SKIP_${PN}-dev = "ldflags"
+
+SOLIBS = ".so"
+FILES_SOLIBSDEV = ""
+FILES_${PN} += "${libdir}/*"
+FILES_${PN} += "${userfsdatadir}/*"
+FILES_${PN} += "${includedir}"
+FILES_${PN} += "${includedir}/dsrc-tools"
+FILES_${PN} += "${sbindir}"
