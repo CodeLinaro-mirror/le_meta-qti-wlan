@@ -2,3 +2,5 @@
 IMAGE_INSTALL += "qcacld-dsrc"
 IMAGE_INSTALL += "dsrc-tools"
 IMAGE_INSTALL += "qcacld-config"
+
+PACKAGE_EXCLUDE += "qcacld-dsrc"
