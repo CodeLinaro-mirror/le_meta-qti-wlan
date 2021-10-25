@@ -8,4 +8,8 @@ PROVIDES = "${PACKAGES}"
 
 PACKAGES = "packagegroup-qti-wifi"
 
-RDEPENDS_packagegroup-qti-wifi = ""
+RDEPENDS_packagegroup-qti-wifi = " \
+        hostap-daemon-qcacld \
+        wpa-supplicant-8-lib \
+        wpa-supplicant-qcacld \
+        "
