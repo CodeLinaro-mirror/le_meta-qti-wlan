@@ -5,6 +5,8 @@ inherit pkgconfig
 
 PR = "${INC_PR}.2"
 
+PACKAGE_ARCH = "${MACHINE_ARCH}"
+
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://external/wpa_supplicant_8/"
 SRC_URI += "file://defconfig-qcacld"
