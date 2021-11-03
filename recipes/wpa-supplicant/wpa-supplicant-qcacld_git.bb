@@ -10,9 +10,7 @@ SRC_URI = "file://external/wpa_supplicant_8/"
 SRC_URI += "file://${MACHINE}/"
 SRC_URI += "file://misc/"
 
-DEPENDS += "qmi"
-DEPENDS += "qmi-framework"
-DEPENDS += "diag configdb dsutils common glib-2.0 time-genoff xmllib wpa-supplicant-8-lib"
+DEPENDS += "glib-2.0 wpa-supplicant-8-lib dbus liblog"
 
 FILES_${PN} += "/usr/include/*"
 
