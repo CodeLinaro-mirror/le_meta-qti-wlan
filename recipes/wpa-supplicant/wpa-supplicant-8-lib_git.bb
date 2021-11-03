@@ -14,6 +14,8 @@ PR = "r2"
 
 DEPENDS += "libcutils libnl liblog"
 
+PACKAGE_ARCH = "${MACHINE_ARCH}"
+
 FILESPATH =+ "${WORKSPACE}/hardware/qcom/:"
 WPA_SUPPLICANT_DIR = "${WORKSPACE}/external/wpa_supplicant_8/"
 
