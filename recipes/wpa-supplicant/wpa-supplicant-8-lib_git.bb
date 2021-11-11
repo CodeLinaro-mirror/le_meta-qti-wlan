@@ -4,14 +4,16 @@ DESCRIPTION = "CNSS"
 LICENSE = "BSD-3-Clause"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/\
 ${LICENSE};md5=550794465ba0ec5312d6919e203a55f9"
+
 PR = "r2"
 
-DEPENDS = "libcutils libnl liblog"
+DEPENDS += "libcutils libnl liblog"
 
 FILESPATH =+ "${WORKSPACE}/hardware/qcom/:"
 WPA_SUPPLICANT_DIR = "${WORKSPACE}/external/wpa_supplicant_8/"
 
 SRC_URI = "file://wlan/qcwcn/wpa_supplicant_8_lib/"
+PACKAGE_ARCH ?= "${MACHINE_ARCH}"
 
 S = "${WORKDIR}/wlan/qcwcn/wpa_supplicant_8_lib"
 
