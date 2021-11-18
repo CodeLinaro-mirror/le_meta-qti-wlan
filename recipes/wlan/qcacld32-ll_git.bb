@@ -1,4 +1,4 @@
-inherit autotools-brokensep module qperf
+inherit autotools-brokensep module qperf logging
 
 # if is TARGET_KERNEL_ARCH is set inherit qtikernel-arch to compile for that arch.
 inherit ${@bb.utils.contains('TARGET_KERNEL_ARCH', 'aarch64', 'qtikernel-arch', '', d)}
@@ -19,6 +19,8 @@ PR = "r8"
 DEPENDS = "rtsp-alg"
 DEPENDS_append_sdmsteppe = " virtual/kernel"
 DEPENDS_remove_sdmsteppe = "rtsp-alg"
+DEPENDS_remove_kona = "rtsp-alg"
+DEPENDS_remove_waipio = "rtsp-alg"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/qcacld-3.0/"
@@ -33,6 +35,7 @@ FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld"
 # Explicitly disable HL to enable LL as current WLAN driver is not having
 # simultaneous support of HL and LL.
 EXTRA_OEMAKE += "CONFIG_CLD_HL_SDIO_CORE=n CONFIG_CNSS_SDIO=n"
+EXTRA_OEMAKE += "${@oe.utils.conditional('MACHINE', 'sxrneo', 'CONFIG_CNSS_QCA6750=y CONFIG_WLAN_SYNC_TSF_PLUS=y CONFIG_WLAN_SYNC_TSF_TIMER=y CONFIG_WLAN_TWT_SAP_STA_COUNT=2 CONFIG_WLAN_TWT_SAP_PDEV_COUNT=y', '', d)}"
 
 # The common header file, 'wlan_nlink_common.h' can be installed from other
 # qcacld recipes too. To suppress the duplicate detection error, add it to
@@ -75,6 +78,9 @@ do_module_signing() {
 }
 
 do_compile() {
+    bbnote "==============================================================="
+    bbnote "EXTRA_OEMAKE = ${EXTRA_OEMAKE}"
+    bbnote "==============================================================="
     # Build default wlan.ko, if NF_PERF is 1, move this build output to wlan_debug.ko
     unset CFLAGS CPPFLAGS CXXFLAGS LDFLAGS
     oe_runmake CONFIG_QCA_CLD_WLAN_PROFILE=default KERNEL_PATH=${STAGING_KERNEL_DIR}   \
