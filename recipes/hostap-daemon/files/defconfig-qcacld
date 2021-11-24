@@ -215,3 +215,10 @@ CONFIG_IEEE80211AX=y
 # Experimental implementation of draft-harkins-owe-07.txt
 CONFIG_OWE=y
 CONFIG_SAE=y
+
+# Enable OCV, SAE_PK and SUITEB in WPA3 R3
+CONFIG_OCV=y
+NEED_AES_SIV=y
+CONFIG_SAE_PK=y
+CONFIG_SUITEB=y
+CONFIG_SUITEB192=y
