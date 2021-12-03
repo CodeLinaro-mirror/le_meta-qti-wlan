@@ -17,5 +17,11 @@ SRC_URI = "file://${WORKSPACE}/external/hostap"
 S = "${WORKDIR}/hostap/wpa_supplicant"
 
 do_install() {
-    make install DESTDIR=${D} BINDIR=${sbindir} LIBDIR=${libdir} INCDIR=${includedir}
+    if [ ${BASEMACHINE} == "sdxlemur" ]; then
+        make install DESTDIR=${D} BINDIR=${sbindir}/mcc LIBDIR=${libdir} INCDIR=${includedir}
+        ln -sf /systemrw/wlan/bin/wpa_supplicant ${D}/usr/sbin/wpa_supplicant
+        ln -sf /systemrw/wlan/bin/wpa_cli ${D}/usr/sbin/wpa_cli
+    else
+        make install DESTDIR=${D} BINDIR=${sbindir} LIBDIR=${libdir} INCDIR=${includedir}
+    fi
 }

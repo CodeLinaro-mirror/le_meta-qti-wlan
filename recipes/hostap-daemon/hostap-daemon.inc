@@ -17,5 +17,11 @@ SRC_URI = "file://${WORKSPACE}/external/hostap/"
 S = "${WORKDIR}/external/hostap/hostapd/"
 
 do_install() {
-    make install DESTDIR=${D} BINDIR=${sbindir}/
+    if [ ${BASEMACHINE} == "sdxlemur" ]; then
+        make install DESTDIR=${D} BINDIR=${sbindir}/mcc/
+        ln -sf /systemrw/wlan/bin/hostapd ${D}/usr/sbin/hostapd
+        ln -sf /systemrw/wlan/bin/hostapd_cli ${D}/usr/sbin/hostapd_cli
+    else
+        make install DESTDIR=${D} BINDIR=${sbindir}/
+    fi
 }
