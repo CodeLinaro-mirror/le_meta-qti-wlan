@@ -1,4 +1,4 @@
-inherit autotools systemd update-rc.d qperf
+inherit autotools systemd update-rc.d qperf useradd
 DESCRIPTION = "Device specific config"
 LICENSE = "ISC"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=f3b90e78ea0cffb20bf5cca7947a896d"
@@ -14,6 +14,7 @@ SRC_URI += "file://dhcpcd.service"
 SRC_URI += "file://fi.w1.wpa_supplicant1.service"
 SRC_URI += "file://dbus-wpa_supplicant.conf"
 SRC_URI += "file://device/qcom/wlan/${SOC_FAMILY}/"
+SRC_URI += "file://wlan-conf_systemd_tmpfiles.conf"
 
 # Update for each machine
 S = "${WORKDIR}/mdm-init/"
@@ -57,8 +58,10 @@ do_install_append_msm(){
 
 do_install_append_kona(){
   if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
-      install -d ${D}/data/vendor/wifi
-      install -d ${D}/data/wlan_logs
+      #systemd-tmpfiles service for wlan-conf
+      install -d ${D}${sysconfdir}/tmpfiles.d
+      install -m 0644 ${WORKDIR}/wlan-conf_systemd_tmpfiles.conf \
+              -D ${D}${sysconfdir}/tmpfiles.d/wlan-conf_systemd_tmpfiles.conf
       install -d ${D}/etc/initscripts
       cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
       install -d ${D}/etc/systemd/system/
