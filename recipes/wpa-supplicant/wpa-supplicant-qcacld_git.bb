@@ -11,6 +11,7 @@ SRC_URI += "file://${MACHINE}/"
 SRC_URI += "file://misc/"
 
 DEPENDS += "glib-2.0 wpa-supplicant-8-lib dbus liblog"
+DEPENDS_append_sdxlemur = " qmi qmi-framework"
 
 FILES_${PN} += "/usr/include/*"
 
@@ -33,6 +34,13 @@ do_configure() {
         echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
     fi
 }
+
+do_configure_append_sdxlemur() {
+    echo "CONFIG_EAP_PROXY=qmi" >> .config
+    echo "CONFIG_EAP_PROXY_DUAL_SIM := true" >> .config
+    echo "CONFIG_EAP_PROXY_AKA_PRIME := true" >> .config
+}
+
 do_patch() {
     cd ${PATCH_DIR}
     if [ "$(ls -A "${WORKDIR}/${MACHINE}")" ]
