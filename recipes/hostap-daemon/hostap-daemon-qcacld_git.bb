@@ -33,6 +33,11 @@ do_configure() {
         echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
     fi
 }
+
+do_configure_append_sdxlemur() {
+    echo "CONFIG_WEP=y" >> .config
+}
+
 do_patch() {
     cd ${PATCH_DIR}
 
