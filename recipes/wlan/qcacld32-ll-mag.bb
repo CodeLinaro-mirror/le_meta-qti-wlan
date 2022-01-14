@@ -23,9 +23,19 @@ DEPENDS_remove_sdmsteppe = "rtsp-alg"
 DEPENDS_remove_qrb5165 = "rtsp-alg"
 
 FILESPATH =+ "${WORKSPACE}:"
-SRC_URI = "file://wlan/qcacld-3.0/"
-SRC_URI += "file://wlan/qca-wifi-host-cmn/"
-SRC_URI += "file://wlan/fw-api/"
+
+QCACLD = "wlan-cld3.driver.lnx.2.0.r18"
+QCACMN = "wlan-cmn.driver.lnx.2.0.r18"
+FWAPI = "wlan-api.lnx.1.0.r19"
+
+BB_STRICT_CHECKSUM = "ignore"
+
+SRC_URI = "https://source.codeaurora.org/quic/la/platform/vendor/qcom-opensource/wlan/qca-wifi-host-cmn/snapshot/${QCACMN}.tar.gz;name=hdr;subdir=wlan"
+SRC_URI += "https://source.codeaurora.org/quic/la/platform/vendor/qcom-opensource/wlan/qcacld-3.0/snapshot/${QCACLD}.tar.gz;name=src;subdir=wlan"
+SRC_URI += "https://source.codeaurora.org/quic/la/platform/vendor/qcom-opensource/wlan/fw-api/snapshot/${FWAPI}.tar.gz;name=api;subdir=wlan"
+
+SRC_URI += "file://qcacld-3.0.patch"
+SRC_URI += "file://qca-wifi-host-cmn.patch"
 
 S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn/"
 S = "${WORKDIR}/wlan/qcacld-3.0/"
@@ -43,7 +53,12 @@ SSTATE_DUPWHITELIST += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wlan_nlink
 
 do_patch() {
     cd ${WORKDIR}/wlan
-    sed -i '/CONFIG_IPA_WDI3_TX_TWO_PIPES/d' ./qcacld-3.0/configs/default_defconfig
+    mv ${QCACLD}/* qcacld-3.0
+    mv ${QCACMN} qca-wifi-host-cmn
+    mv ${FWAPI} fw-api
+    patch -d ./qcacld-3.0 -p1 < ${WORKDIR}/qcacld-3.0.patch
+    patch -d ./qca-wifi-host-cmn -p1 < ${WORKDIR}/qca-wifi-host-cmn.patch
+    sed -i '$a CONFIG_SMMU_S1_UNMAP := y' ./qcacld-3.0/configs/default_defconfig
     sed -i 's/ifneq ($(MODNAME), wlan)/ifneq ($(MODNAME), wlan-mag)/' ./qcacld-3.0/Kbuild
 }
 
