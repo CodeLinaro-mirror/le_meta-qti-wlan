@@ -20,10 +20,18 @@ DEPENDS = "rtsp-alg"
 DEPENDS_append_sdmsteppe = " virtual/kernel"
 DEPENDS_remove_sdmsteppe = "rtsp-alg"
 
+QCACMN_REV = "LE.UM.4.2.1.r1-09300-QCS404.0"
+QCAAPI_REV = "LE.UM.4.2.1.r1-08200-QCS404.0"
+
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/qcacld-3.0/"
-SRC_URI += "file://wlan/qca-wifi-host-cmn/"
-SRC_URI += "file://wlan/fw-api/"
+SRC_URI += "https://source.codeaurora.org/quic/la/platform/vendor/qcom-opensource/wlan/fw-api/snapshot/${QCAAPI_REV}.tar.gz;subdir=wlan;name=api"
+SRC_URI += "https://source.codeaurora.org/quic/la/platform/vendor/qcom-opensource/wlan/qca-wifi-host-cmn/snapshot/${QCACMN_REV}.tar.gz;subdir=wlan;name=cmn"
+
+SRC_URI[api.md5sum] = "76223e548dd9c20c223da7778cfca6f8"
+SRC_URI[api.sha256sum] = "af5ffdd457ee68dd5d70d053faf0b57fe15aec44ac7a0306d6efab3506ac1983"
+SRC_URI[cmn.md5sum] = "9962a3cd9d4f3f6cc31fd365fadbf942"
+SRC_URI[cmn.sha256sum] = "4f4142a74cf78ba5dd1919146df4f0a5c0335b9f197a7df4c6736a7f38bf3d17"
 
 S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn/"
 S = "${WORKDIR}/wlan/qcacld-3.0/"
@@ -47,6 +55,11 @@ EXTRA_OEMAKE += "CONFIG_QCA_CLD_WLAN_PROFILE=${WLAN_CONFIG}"
 # qcacld recipes too. To suppress the duplicate detection error, add it to
 # SSTATE_DUPWHITELIST.
 SSTATE_DUPWHITELIST += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wlan_nlink_common.h"
+
+do_patch () {
+    mv ${WORKDIR}/wlan/${QCAAPI_REV} ${WORKDIR}/wlan/fw-api
+    mv ${WORKDIR}/wlan/${QCACMN_REV} ${WORKDIR}/wlan/qca-wifi-host-cmn
+}
 
 do_install () {
     module_do_install
