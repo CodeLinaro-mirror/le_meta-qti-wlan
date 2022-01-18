@@ -1,5 +1,5 @@
 diff --git a/src/drivers/driver.h b/src/drivers/driver.h
-index a445150..303b94c 100644
+index a4451505a..303b94cc7 100644
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
 @@ -3802,7 +3802,7 @@ struct wpa_driver_ops {
@@ -21,36 +21,14 @@ index a445150..303b94c 100644
  	/**
  	 * vendor_cmd - Execute vendor specific command
 diff --git a/src/drivers/driver_nl80211.c b/src/drivers/driver_nl80211.c
-index 9a9a146..82a24b2 100644
+index e8590b20a..cde05d377 100644
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -9173,11 +9173,11 @@ static int nl80211_set_p2p_powersave(void *priv, int legacy_ps, int opp_ps,
- 		   "opp_ps=%d ctwindow=%d)", legacy_ps, opp_ps, ctwindow);
- 
- 	if (opp_ps != -1 || ctwindow != -1) {
--#ifdef ANDROID_P2P
-+#if defined(ANDROID_P2P) || defined(LINUX_EMBEDDED)
- 		wpa_driver_set_p2p_ps(priv, legacy_ps, opp_ps, ctwindow);
--#else /* ANDROID_P2P */
-+#else /* ANDROID_P2P || LINUX_EMBEDDED*/
- 		return -1; /* Not yet supported */
--#endif /* ANDROID_P2P */
-+#endif /* ANDROID_P2P || LINUX_EMBEDDED*/
- 	}
- 
- 	if (legacy_ps == -1)
-@@ -12192,16 +12192,16 @@ const struct wpa_driver_ops wpa_driver_nl80211_ops = {
- 	.get_survey = wpa_driver_nl80211_get_survey,
- 	.status = wpa_driver_nl80211_status,
- 	.switch_channel = nl80211_switch_channel,
--#ifdef ANDROID_P2P
-+#if defined(ANDROID_P2P) || defined(LINUX_EMBEDDED)
- 	.set_noa = wpa_driver_set_p2p_noa,
+@@ -12224,11 +12224,11 @@ const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  	.get_noa = wpa_driver_get_p2p_noa,
  	.set_ap_wps_ie = wpa_driver_set_ap_wps_p2p_ie,
--#endif /* ANDROID_P2P */
+ #endif /* ANDROID_P2P */
 -#ifdef ANDROID
-+#endif /* ANDROID_P2P || LINUX_EMBEDDED*/
 +#if defined(ANDROID) || defined(LINUX_EMBEDDED)
  #ifndef ANDROID_LIB_STUB
  	.driver_cmd = wpa_driver_nl80211_driver_cmd,
@@ -61,68 +39,33 @@ index 9a9a146..82a24b2 100644
  	.set_qos_map = nl80211_set_qos_map,
  	.get_wowlan = nl80211_get_wowlan,
 diff --git a/src/drivers/driver_nl80211.h b/src/drivers/driver_nl80211.h
-index 80d4564..b1998e5 100644
+index 80d456472..4487166b6 100644
 --- a/src/drivers/driver_nl80211.h
 +++ b/src/drivers/driver_nl80211.h
-@@ -295,28 +295,27 @@ const char * nl80211_iftype_str(enum nl80211_iftype mode);
+@@ -295,13 +295,16 @@ const char * nl80211_iftype_str(enum nl80211_iftype mode);
  
  void nl80211_restore_ap_mode(struct i802_bss *bss);
  
--#ifdef ANDROID
--int android_nl_socket_set_nonblocking(struct nl_sock *handle);
--int android_pno_start(struct i802_bss *bss,
--		      struct wpa_driver_scan_params *params);
--int android_pno_stop(struct i802_bss *bss);
 +#if defined(ANDROID) || defined(LINUX_EMBEDDED)
- extern int wpa_driver_nl80211_driver_cmd(void *priv, char *cmd, char *buf,
- 					 size_t buf_len);
++extern int wpa_driver_nl80211_driver_cmd(void *priv, char *cmd, char *buf,
++					 size_t buf_len);
++#endif /* ANDROID || LINUX_EMBEDDED */
++
+ #ifdef ANDROID
+ int android_nl_socket_set_nonblocking(struct nl_sock *handle);
+ int android_pno_start(struct i802_bss *bss,
+ 		      struct wpa_driver_scan_params *params);
+ int android_pno_stop(struct i802_bss *bss);
+-extern int wpa_driver_nl80211_driver_cmd(void *priv, char *cmd, char *buf,
+-					 size_t buf_len);
  extern int wpa_driver_nl80211_driver_event(struct wpa_driver_nl80211_data *drv,
  					   u32 vendor_id, u32 subcmd,
  					   u8 *data, size_t len);
--
--
--#ifdef ANDROID_P2P
-+#endif /* ANDROID || LINUX_EMBEDDED */
-+#ifdef ANDROID
-+int android_nl_socket_set_nonblocking(struct nl_sock *handle);
-+int android_pno_start(struct i802_bss *bss,
-+		      struct wpa_driver_scan_params *params);
-+int android_pno_stop(struct i802_bss *bss);
-+#endif /* ANDROID */
-+#if defined(ANDROID_P2P) || defined(LINUX_EMBEDDED)
- int wpa_driver_set_p2p_noa(void *priv, u8 count, int start, int duration);
- int wpa_driver_get_p2p_noa(void *priv, u8 *buf, size_t len);
- int wpa_driver_set_p2p_ps(void *priv, int legacy_ps, int opp_ps, int ctwindow);
- int wpa_driver_set_ap_wps_p2p_ie(void *priv, const struct wpabuf *beacon,
- 				 const struct wpabuf *proberesp,
- 				 const struct wpabuf *assocresp);
--#endif /* ANDROID_P2P */
--#endif /* ANDROID */
--
-+#endif /* ANDROID_P2P || LINUX_EMBEDDED */
- 
- /* driver_nl80211_scan.c */
- 
-diff --git a/src/drivers/driver_nl80211_event.c b/src/drivers/driver_nl80211_event.c
-index 8b781f6..c9fb324 100644
---- a/src/drivers/driver_nl80211_event.c
-+++ b/src/drivers/driver_nl80211_event.c
-@@ -2576,8 +2576,8 @@ static void nl80211_vendor_event(struct wpa_driver_nl80211_data *drv,
- 		return;
- 	}
- 
--#ifdef ANDROID
--#ifdef ANDROID_LIB_EVENT
-+#if defined(ANDROID) || defined(LINUX_EMBEDDED)
-+#if defined(ANDROID_LIB_EVENT) || defined(LINUX_EMBEDDED_LIB_EVENT)
-        wpa_driver_nl80211_driver_event(drv, vendor_id, subcmd, data, len);
- #endif /* ANDROID_LIB_EVENT */
- #endif /* ANDROID */
 diff --git a/wpa_supplicant/Android.mk b/wpa_supplicant/Android.mk
-index 0aacafd..54451a7 100644
+index 0aacafd4a..33ac52267 100644
 --- a/wpa_supplicant/Android.mk
 +++ b/wpa_supplicant/Android.mk
-@@ -1524,6 +1524,14 @@ ifdef CONFIG_ANDROID_LOG
+@@ -1524,6 +1524,10 @@ ifdef CONFIG_ANDROID_LOG
  L_CFLAGS += -DCONFIG_ANDROID_LOG
  endif
  
@@ -130,15 +73,11 @@ index 0aacafd..54451a7 100644
 +L_CFLAGS += -DLINUX_EMBEDDED
 +endif
 +
-+ifdef CONFIG_LINUX_EMBEDDED_LIB_EVENT
-+L_CFLAGS += -DLINUX_EMBEDDED_LIB_EVENT
-+endif
-+
  ifdef CONFIG_IPV6
  # for eapol_test only
  L_CFLAGS += -DCONFIG_IPV6
 diff --git a/wpa_supplicant/Makefile b/wpa_supplicant/Makefile
-index ce1c8b2..32e1f66 100644
+index ce1c8b2e3..730d0a59b 100644
 --- a/wpa_supplicant/Makefile
 +++ b/wpa_supplicant/Makefile
 @@ -1,5 +1,8 @@
@@ -150,15 +89,7 @@ index ce1c8b2..32e1f66 100644
  ifndef CONFIG_NO_WPA_PASSPHRASE
  BINALL += wpa_passphrase
  endif
-@@ -16,7 +19,6 @@ endif
- 
- EXTRA_TARGETS=dynamic_eap_methods
- 
--CONFIG_FILE=.config
- include ../src/build.rules
- 
- ifdef LIBS
-@@ -180,6 +182,14 @@ LIBS_c += -lgcov
+@@ -180,6 +183,10 @@ LIBS_c += -lgcov
  LIBS_p += -lgcov
  endif
  
@@ -166,14 +97,10 @@ index ce1c8b2..32e1f66 100644
 +CFLAGS += -DLINUX_EMBEDDED
 +endif
 +
-+ifdef CONFIG_LINUX_EMBEDDED_LIB_EVENT
-+CFLAGS += -DLINUX_EMBEDDED_LIB_EVENT
-+endif
-+
  ifdef CONFIG_HT_OVERRIDES
  CFLAGS += -DCONFIG_HT_OVERRIDES
  endif
-@@ -1850,6 +1860,10 @@ EXTRALIBS += WbemUuid.Lib
+@@ -1850,6 +1857,10 @@ EXTRALIBS += WbemUuid.Lib
  endif
  endif
  
@@ -185,7 +112,7 @@ index ce1c8b2..32e1f66 100644
  CFLAGS += -DCONFIG_FST
  ifdef CONFIG_FST_TEST
 diff --git a/wpa_supplicant/android.config b/wpa_supplicant/android.config
-index 283f8eb..2a509c8 100644
+index 283f8eb0a..2a509c876 100644
 --- a/wpa_supplicant/android.config
 +++ b/wpa_supplicant/android.config
 @@ -376,6 +376,9 @@ CONFIG_IEEE80211R=y
@@ -199,7 +126,7 @@ index 283f8eb..2a509c8 100644
  #CONFIG_PRIVSEP=y
  
 diff --git a/wpa_supplicant/ctrl_iface.c b/wpa_supplicant/ctrl_iface.c
-index 9dc17f5..79f3619 100644
+index 9dc17f5ee..79f36198b 100644
 --- a/wpa_supplicant/ctrl_iface.c
 +++ b/wpa_supplicant/ctrl_iface.c
 @@ -8314,7 +8314,7 @@ static int wpa_supplicant_pktcnt_poll(struct wpa_supplicant *wpa_s, char *buf,
@@ -247,7 +174,7 @@ index 9dc17f5..79f3619 100644
  		"GET_NETWORK ",
  		"REMOVE_NETWORK ",
 diff --git a/wpa_supplicant/driver_i.h b/wpa_supplicant/driver_i.h
-index 237f4e0..30f5f7d 100644
+index 237f4e085..30f5f7d2f 100644
 --- a/wpa_supplicant/driver_i.h
 +++ b/wpa_supplicant/driver_i.h
 @@ -599,7 +599,7 @@ static inline int wpa_drv_tdls_oper(struct wpa_supplicant *wpa_s,
@@ -269,10 +196,10 @@ index 237f4e0..30f5f7d 100644
  static inline void wpa_drv_set_rekey_info(struct wpa_supplicant *wpa_s,
  					  const u8 *kek, size_t kek_len,
 diff --git a/wpa_supplicant/wpa_cli.c b/wpa_supplicant/wpa_cli.c
-index b72983e..c5af762 100644
+index de2991bce..68a9a8518 100644
 --- a/wpa_supplicant/wpa_cli.c
 +++ b/wpa_supplicant/wpa_cli.c
-@@ -2901,12 +2901,12 @@ static int wpa_cli_cmd_raw(struct wpa_ctrl *ctrl, int argc, char *argv[])
+@@ -2900,12 +2900,12 @@ static int wpa_cli_cmd_raw(struct wpa_ctrl *ctrl, int argc, char *argv[])
  }
  
  
@@ -287,7 +214,7 @@ index b72983e..c5af762 100644
  
  
  static int wpa_cli_cmd_vendor(struct wpa_ctrl *ctrl, int argc, char *argv[])
-@@ -3848,10 +3848,10 @@ static const struct wpa_cli_cmd wpa_cli_commands[] = {
+@@ -3847,10 +3847,10 @@ static const struct wpa_cli_cmd wpa_cli_commands[] = {
  	  "<params..> = Sent unprocessed command" },
  	{ "flush", wpa_cli_cmd_flush, NULL, cli_cmd_flag_none,
  	  "= flush wpa_supplicant state" },
