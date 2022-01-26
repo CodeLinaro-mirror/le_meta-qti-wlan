@@ -9,9 +9,10 @@ PROVIDES = "${PACKAGES}"
 PACKAGES = "packagegroup-qti-wifi"
 
 RDEPENDS_packagegroup-qti-wifi = " \
-	qcacld32-ll \
-	iw \
-	wlan-conf \
+        qcacld32-ll \
+        iw \
+        wlan-conf \
+        wlan-sigma-dut \
         hostap-daemon-qcacld \
         wpa-supplicant-8-lib \
         wpa-supplicant-qcacld \
