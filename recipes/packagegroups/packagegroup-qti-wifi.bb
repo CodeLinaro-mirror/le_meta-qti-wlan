@@ -14,6 +14,7 @@ WPA_SUPPLICANT_BB = "${@oe.utils.conditional('BASEMACHINE', 'sdxlemur', 'wpa-sup
 
 RDEPENDS_packagegroup-qti-wifi = " \
         qcacld32-ll \
+        qcacld32-ll-mag \
         iw \
         wlan-conf \
         wlan-sigma-dut \
