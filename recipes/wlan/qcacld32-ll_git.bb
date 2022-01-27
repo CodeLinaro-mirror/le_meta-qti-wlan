@@ -40,11 +40,10 @@ FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld"
 
 # Explicitly disable HL to enable LL as current WLAN driver is not having
 # simultaneous support of HL and LL.
-EXTRA_OEMAKE += "CONFIG_CNSS=n CONFIG_CLD_HL_SDIO_CORE=n CONFIG_CNSS_SDIO=n"
+EXTRA_OEMAKE += "CONFIG_CNSS=n CONFIG_CLD_HL_SDIO_CORE=n CONFIG_CNSS_SDIO=n CONFIG_CNSS2=n CONFIG_WLAN_DISABLE_EXPORT_SYMBOL=y"
 
 WLAN_CONFIG = "${@bb.utils.contains('DISTRO_FEATURES', 'wlan-perf', 'qcs40x.snoc.perf', 'default', d)}"
 
-EXTRA_OEMAKE += "${@bb.utils.contains('MACHINE_FEATURES', 'qca-wifi', ' CONFIG_CNSS2=n CONFIG_WLAN_DISABLE_EXPORT_SYMBOL=y', '', d)}"
 # Force qcs40x use: ./qcacld-3.0/configs/qcs40x.snoc.perf_defconfig
 python __anonymous () {
        if d.getVar('BASEMACHINE', True) == 'qcs40x':
