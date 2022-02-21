@@ -84,6 +84,8 @@ EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'sdxprairie', '--enable-tar
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'qcs40x', '--enable-target-qcs405-som1=yes', '', d)}"
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'qcs605', '--enable-target-qcs605=yes', '', d)}"
 
+EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'sdmsteppe', '--enable-target-sdmsteppe=yes', '', d)}"
+
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'apq8053', '--enable-pronto-wlan=yes', '', d)}"
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'apq8017', '--enable-pronto-wlan=yes', '', d)}"
 
