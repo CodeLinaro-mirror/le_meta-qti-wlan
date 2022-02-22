@@ -1,37 +1,16 @@
-From 9154de89475d73de25aadd27474619930c854a80 Mon Sep 17 00:00:00 2001
-From: Wu Gao <wugao@codeaurora.org>
-Date: Fri, 30 Oct 2020 14:22:19 +0800
-Subject: [PATCH] Fix SAP ht40 bandwidth fallback issue
-
-Currently hostapd ignores the secondary channel provided by ACS if
-both HT40+ and HT40- are set in hostapd.conf. This change adds patch
-to use such channel for ht40 if it's valid, which is more reasonable.
-
-Change-Id: I087868edd6c28f713c882738656595e03bde21db
-Signed-off-by: Qiwei Cai<qcai@codeaurora.org>
----
- src/ap/hw_features.c | 7 ++++---
- 1 file changed, 4 insertions(+), 3 deletions(-)
-
 diff --git a/src/ap/hw_features.c b/src/ap/hw_features.c
-index c4619d7..a835c4b 100644
+index 4b66b02f4..e15d9af74 100644
 --- a/src/ap/hw_features.c
 +++ b/src/ap/hw_features.c
-@@ -736,10 +736,11 @@ static int hostapd_is_usable_chans(struct hostapd_iface *iface)
- 	if (!iface->conf->secondary_channel)
- 		return 1;
- 
+@@ -927,6 +927,11 @@ static int hostapd_is_usable_chans(struct hostapd_iface *iface)
+ 		    (pri_chan->allowed_bw & HOSTAPD_CHAN_WIDTH_40M))
+ 			return 1;
+ 	}
++
 +	if (hostapd_is_usable_chan(iface, iface->conf->channel +
 +				   iface->conf->secondary_channel * 4, 0))
 +		return 1;
++
  	if (!iface->conf->ht40_plus_minus_allowed)
--		return hostapd_is_usable_chan(
--			iface, iface->conf->channel +
--			iface->conf->secondary_channel * 4, 0);
-+		return 0;
+ 		return 0;
  
- 	/* Both HT40+ and HT40- are set, pick a valid secondary channel */
- 	secondary_chan = iface->conf->channel + 4;
--- 
-1.9.1
-
