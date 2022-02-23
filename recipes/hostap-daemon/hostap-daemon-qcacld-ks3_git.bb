@@ -16,6 +16,7 @@ PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"
 do_configure() {
     install -m 0644 ${WORKDIR}/defconfig-qcacld .config
     echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
+    echo "CONFIG_WEP=y" >> .config
 }
 do_patch() {
     cd ${PATCH_DIR}

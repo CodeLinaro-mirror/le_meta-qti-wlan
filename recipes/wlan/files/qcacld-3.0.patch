@@ -1,0 +1,39 @@
+From d292a714e79f537cd61f74ec39ae64277ac54b91 Mon Sep 17 00:00:00 2001
+From: Yi Chen <quic_yichen@quicinc.com>
+Date: Thu, 27 Jan 2022 13:29:57 +0800
+Subject: [PATCH] fix crash caused by ipa kernel difference
+
+Signed-off-by: Yi Chen <quic_yichen@quicinc.com>
+---
+ configs/default_defconfig  | 2 +-
+ core/dp/txrx/ol_txrx_ipa.c | 1 +
+ 2 files changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/configs/default_defconfig b/configs/default_defconfig
+index c977a98e35..3355598924 100644
+--- a/configs/default_defconfig
++++ b/configs/default_defconfig
+@@ -884,7 +884,7 @@ CONFIG_HDD_INIT_WITH_RTNL_LOCK := y
+ CONFIG_WLAN_CONV_SPECTRAL_ENABLE := y
+ CONFIG_WLAN_SPECTRAL_ENABLE := y
+ CONFIG_WMI_CMD_STRINGS := y
+-CONFIG_FEATURE_MONITOR_MODE_SUPPORT := y
++CONFIG_FEATURE_MONITOR_MODE_SUPPORT := n
+ CONFIG_WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY := n
+ CONFIG_WLAN_FEATURE_TWT := y
+ CONFIG_FW_THERMAL_THROTTLE := y
+diff --git a/core/dp/txrx/ol_txrx_ipa.c b/core/dp/txrx/ol_txrx_ipa.c
+index d1e08eea9a..a5febdcf04 100644
+--- a/core/dp/txrx/ol_txrx_ipa.c
++++ b/core/dp/txrx/ol_txrx_ipa.c
+@@ -710,6 +710,7 @@ QDF_STATUS ol_txrx_ipa_setup_iface(char *ifname, uint8_t *mac_addr,
+ 		  "%s: Add Partial hdr: %s, "QDF_MAC_ADDR_FMT,
+ 		  __func__, ifname, QDF_MAC_ADDR_REF(mac_addr));
+ 
++	qdf_mem_zero(&in, sizeof(qdf_ipa_wdi_reg_intf_in_params_t));
+ 	qdf_mem_zero(&hdr_info, sizeof(qdf_ipa_wdi_hdr_info_t));
+ 	memcpy(&uc_tx_hdr, &ipa_uc_tx_hdr, OL_TXRX_IPA_UC_WLAN_TX_HDR_LEN);
+ 	qdf_ether_addr_copy(uc_tx_hdr.eth.h_source, mac_addr);
+-- 
+2.17.1
+
