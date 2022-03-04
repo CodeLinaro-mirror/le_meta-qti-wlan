@@ -58,6 +58,7 @@ do_install_append_msm(){
 do_install_append_kona(){
   if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
       install -d ${D}/data/vendor/wifi
+      install -d ${D}/data/wlan_logs
       install -d ${D}/etc/initscripts
       cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
       install -d ${D}/etc/systemd/system/
