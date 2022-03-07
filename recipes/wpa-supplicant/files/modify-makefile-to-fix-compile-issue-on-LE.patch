@@ -1,0 +1,30 @@
+From 78cecf221df22820d1a48949c23ee8a1f6cda85e Mon Sep 17 00:00:00 2001
+From: Yao Zhao <quic_yaozhao@quicinc.com>
+Date: Mon, 7 Mar 2022 16:35:57 +0530
+Subject: [PATCH] Modify makefile to fix compile issue on LE
+
+Add -DCONFIG_ANDROID_S in makfile to fix compile issue on LE
+Which LE need WPA3 R3 function.
+
+Change-Id: Id13a586f6e06cdb2244c03f8bdaf4e105ddcea24
+Signed-off-by : Yao Zhao <quic_yaozhao@quicinc.com>
+---
+ qcwcn/wpa_supplicant_8_lib/Makefile.am | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/qcwcn/wpa_supplicant_8_lib/Makefile.am b/qcwcn/wpa_supplicant_8_lib/Makefile.am
+index d8c9a5c..0c0f476 100644
+--- a/qcwcn/wpa_supplicant_8_lib/Makefile.am
++++ b/qcwcn/wpa_supplicant_8_lib/Makefile.am
+@@ -11,7 +11,7 @@ endif
+
+ AM_CFLAGS += -Wno-unused-parameter -Wno-int-to-pointer-cast \
+              -Wno-maybe-uninitialized -Wno-parentheses \
+-             -DCONFIG_P2P -lcutils
++             -DCONFIG_P2P -DCONFIG_ANDROID_S -lcutils
+
+ h_sources = driver_cmd_nl80211_extn.h
+ library_includedir = $(pkgincludedir)
+--
+2.7.4
+
