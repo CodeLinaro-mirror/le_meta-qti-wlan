@@ -9,6 +9,7 @@ SRC_URI += "file://defconfig-qcacld"
 SRC_URI += "file://p2p_tmp_config.patch"
 SRC_URI += "file://driver_cmd.patch"
 SRC_URI += "file://driver_cmd_ks-3.0.patch"
+SRC_URI += "file://driver_cmd_ks-4.0.patch"
 
 DEPENDS += "qmi"
 DEPENDS += "qmi-framework"
@@ -28,6 +29,9 @@ do_patch() {
     patch -p1 < ${WORKDIR}/p2p_tmp_config.patch
 if [ ${BASEMACHINE} == "qrbx210" ]; then
     patch -p1 < ${WORKDIR}/driver_cmd_ks-3.0.patch
+elif
+   [ ${BASEMACHINE} == "sdmsteppe" ]; then
+    patch -p1 < ${WORKDIR}/driver_cmd_ks-4.0.patch
 else
     patch -p1 < ${WORKDIR}/driver_cmd.patch
 fi
