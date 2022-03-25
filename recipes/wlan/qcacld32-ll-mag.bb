@@ -59,9 +59,8 @@ do_patch() {
         mv qcacld-3.0* qcacld-3.0
         mv qca-wifi-host-cmn* qca-wifi-host-cmn
         mv fw-api* fw-api
-        patch -d ./qcacld-3.0 -p1 < ${WORKDIR}/qcacld-3.0.patch
-        patch -d ./qca-wifi-host-cmn -p1 < ${WORKDIR}/qca-wifi-host-cmn.patch
         sed -i '$a CONFIG_SMMU_S1_UNMAP := y' ./qcacld-3.0/configs/default_defconfig
+        sed -i 's/CONFIG_FEATURE_MONITOR_MODE_SUPPORT := y/CONFIG_FEATURE_MONITOR_MODE_SUPPORT := n/' ./qcacld-3.0/configs/default_defconfig
         sed -i 's/ifneq ($(MODNAME), wlan)/ifneq ($(MODNAME), wlan-mag)/' ./qcacld-3.0/Kbuild
     fi
 }
