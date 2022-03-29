@@ -37,6 +37,10 @@ Restart=no
 RemainAfterExit=yes
 ExecStart=/etc/initscripts/wlan init-start
 ExecStop=/etc/initscripts/wlan shutdown
+User=wifi
+Group=wifi
+SupplementaryGroups=system
+AmbientCapabilities=~
 
 [Install]
 WantedBy=multi-user.target
