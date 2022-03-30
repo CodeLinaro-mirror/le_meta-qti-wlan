@@ -20,6 +20,7 @@ DEPENDS = "rtsp-alg"
 DEPENDS_append_sdmsteppe = " virtual/kernel"
 DEPENDS_remove_sdmsteppe = "rtsp-alg"
 DEPENDS_remove_qrbx210-rbx = "rtsp-alg"
+DEPENDS_remove_qrb5165 = "rtsp-alg"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/qcacld-3.0/"
