@@ -13,9 +13,18 @@ FILESPATH =+ "${WORKSPACE}/hardware/qcom/:"
 WPA_SUPPLICANT_DIR = "${WORKSPACE}/external/wpa_supplicant_8/"
 
 SRC_URI = "file://wlan/qcwcn/wpa_supplicant_8_lib/"
+SRC_URI += "file://modify-makefile-to-fix-compile-issue-on-LE.patch"
 PACKAGE_ARCH ?= "${MACHINE_ARCH}"
 
 S = "${WORKDIR}/wlan/qcwcn/wpa_supplicant_8_lib"
+PATCH_DIR = "${WORKDIR}/wlan/"
+
+do_patch() {
+    cd ${PATCH_DIR}
+if [ ${BASEMACHINE} == "qrbx210" ]; then
+    patch -p1 < ${WORKDIR}/modify-makefile-to-fix-compile-issue-on-LE.patch
+fi
+}
 
 CFLAGS += "-I ${WPA_SUPPLICANT_DIR}/src"
 CFLAGS += "-I ${WPA_SUPPLICANT_DIR}/src/common"
