@@ -26,7 +26,7 @@ do_configure() {
 do_patch() {
     cd ${PATCH_DIR}
     patch -p1 < ${WORKDIR}/p2p_tmp_config.patch
-if [ ${BASEMACHINE} == "qrbx210" ] || [ ${BASEMACHINE} == "sdmsteppe" ]; then
+if [ ${BASEMACHINE} == "qrbx210" ]; then
     patch -p1 < ${WORKDIR}/driver_cmd_ks-3.0.patch
 else
     patch -p1 < ${WORKDIR}/driver_cmd.patch
