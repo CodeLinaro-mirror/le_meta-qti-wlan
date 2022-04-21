@@ -35,8 +35,6 @@ FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld"
 # simultaneous support of HL and LL.
 EXTRA_OEMAKE += "CONFIG_CLD_HL_SDIO_CORE=n CONFIG_CNSS_SDIO=n"
 
-WIFI_DRIVER_STATE_CTRL_PARAM = "/dev/wlan"
-EXTRA_OEMAKE += "WLAN_CTRL_NAME=${WIFI_DRIVER_STATE_CTRL_PARAM}"
 # The common header file, 'wlan_nlink_common.h' can be installed from other
 # qcacld recipes too. To suppress the duplicate detection error, add it to
 # SSTATE_DUPWHITELIST.
