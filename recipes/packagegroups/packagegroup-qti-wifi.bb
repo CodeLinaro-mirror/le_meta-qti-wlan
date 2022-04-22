@@ -8,9 +8,11 @@ PROVIDES = "${PACKAGES}"
 
 PACKAGES = "packagegroup-qti-wifi"
 
+WLAN_IW_TOOL="${@oe.utils.conditional('BASEMACHINE', 'sdxlemur', 'iw-wifi6e', 'iw', d)}"
+
 RDEPENDS_packagegroup-qti-wifi = " \
         qcacld32-ll \
-        iw \
+        ${WLAN_IW_TOOL} \
         wlan-conf \
         wlan-sigma-dut \
         hostap-daemon-qcacld \
