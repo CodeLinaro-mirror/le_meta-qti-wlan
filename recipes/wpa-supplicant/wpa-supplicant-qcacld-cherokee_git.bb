@@ -7,6 +7,7 @@ FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://external/wpa_supplicant_8/"
 SRC_URI += "file://defconfig-qcacld"
 SRC_URI += "file://p2p_tmp_config.patch;striplevel=2"
+SRC_URI += "file://driver_cmd.patch;patchdir=../"
 
 DEPENDS += "glib-2.0"
 
