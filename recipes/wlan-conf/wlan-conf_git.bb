@@ -23,20 +23,20 @@ do_install_append(){
       ln -sf /etc/systemd/system/wlan_daemon.service ${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
 
       if ${@bb.utils.contains('COMBINED_FEATURES', 'qti-wifi', 'true', 'false', d)}; then
-          mkdir -p ${D}/lib/firmware/wlan/qca_cld/wlan_debug
-          ln -sf /lib/firmware/wlan/qca_cld/WCNSS_qcom_cfg.ini ${D}/lib/firmware/wlan/qca_cld/wlan_debug/WCNSS_qcom_cfg.ini
+          mkdir -p ${D}/lib/firmware/wlan/qca_cld
+          ln -sf /etc/firmware/wlan/qca_cld/WCNSS_qcom_cfg.ini ${D}/lib/firmware/wlan/qca_cld/WCNSS_qcom_cfg.ini
       fi
   else
       install -m 0755 ${S}/wlan_daemon -D ${D}${sysconfdir}/init.d/wlan_daemon
   fi
   if ${@bb.utils.contains('MACHINE_FEATURES', 'qti-helium', 'true', 'false', d)}; then
-      mkdir -p ${D}/lib/firmware/wlan/qca_cld/wlan_debug
-      ln -sf /lib/firmware/wlan/qca_cld/WCNSS_qcom_cfg.ini ${D}/lib/firmware/wlan/qca_cld/wlan_debug/WCNSS_qcom_cfg.ini
+      mkdir -p ${D}/lib/firmware/wlan/qca_cld
+      ln -sf /etc/firmware/wlan/qca_cld/WCNSS_qcom_cfg.ini ${D}/lib/firmware/wlan/qca_cld/WCNSS_qcom_cfg.ini
   fi
 }
 FILES_${PN} += "${userfsdatadir}/misc/wifi/*"
 FILES_${PN} += "${base_libdir}/firmware/wlan/qca_cld/*"
-FILES_${PN} += "/lib/firmware/wlan/qca_cld/* ${sysconfdir}/init.d/* "
+FILES_${PN} += "/etc/firmware/wlan/qca_cld/* ${sysconfdir}/init.d/* "
 FILES_${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'wlan-sdio', '/lib/firmware/wlan_sdio', '', d)}"
 
 
