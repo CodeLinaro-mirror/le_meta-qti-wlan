@@ -563,3 +563,6 @@ CONFIG_ERP=y
 
 # Support Operating Channel Validation
 CONFIG_OCV=y
+
+# WEP
+CONFIG_WEP=y
