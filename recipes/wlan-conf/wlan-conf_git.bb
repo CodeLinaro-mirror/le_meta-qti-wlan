@@ -10,6 +10,7 @@ FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://mdm-init/"
 SRC_URI += "file://wlan_daemon.service"
 SRC_URI += "file://cnss.service"
+SRC_URI += "file://device/qcom/wlan/${BASEMACHINE}/"
 
 # Update for each machine
 S = "${WORKDIR}/mdm-init/"
@@ -69,6 +70,24 @@ do_install_append_msm(){
   fi
 }
 
+do_install_append_neo(){
+	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
+		if grep -q "CONFIG_ICNSS2=m" ${STAGING_KERNEL_BUILDDIR}/.config
+		then
+			install -d ${D}/etc/initscripts
+			cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
+			install -d ${D}/etc/systemd/system/
+			install -d ${D}/etc/systemd/system/multi-user.target.wants/
+		fi
+
+		rm ${D}/etc/init.d/wlan
+	fi
+
+	if [ -e "${WORKDIR}/device/qcom/wlan/${BASEMACHINE}/WCNSS_qcom_cfg_qca6750.ini" ];then
+		install -m 0644 ${WORKDIR}/device/qcom/wlan/${BASEMACHINE}/WCNSS_qcom_cfg_qca6750.ini ${D}/lib/firmware/wlan/qca_cld/WCNSS_qcom_cfg.ini
+	fi
+}
+
 FILES_${PN} += "${userfsdatadir}/misc/wifi/*"
 FILES_${PN} += "${base_libdir}/firmware/wlan/qca_cld/*"
 FILES_${PN} += "/lib/firmware/wlan/qca_cld/* ${sysconfdir}/init.d/* "
@@ -90,6 +109,7 @@ EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'qcs605', '--enable-target-
 
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'apq8053', '--enable-pronto-wlan=yes', '', d)}"
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'apq8017', '--enable-pronto-wlan=yes', '', d)}"
+EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'neo', '--enable-target-sxrneo=yes', '', d)}"
 
 # Enable qsap-wlan in place of pronto-wlan for Drones
 EXTRA_OECONF_append_qsap += "--enable-snap-wlan=yes --enable-qsap-wlan=yes --enable-naples-wlan=yes"
