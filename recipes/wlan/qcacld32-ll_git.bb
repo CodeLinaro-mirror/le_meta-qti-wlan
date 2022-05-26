@@ -106,4 +106,8 @@ do_compile() {
     fi
 }
 
+do_deploy_append_neo () {
+        install -m 0644 ${S}/wlan.ko ${DEPLOYDIR}/kernel_modules/
+}
+
 addtask module_signing after do_package before do_package_write_ipk
