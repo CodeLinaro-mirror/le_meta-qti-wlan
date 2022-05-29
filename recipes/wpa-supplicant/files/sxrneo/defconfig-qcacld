@@ -426,7 +426,7 @@ CONFIG_DEBUG_FILE=y
 
 # Add support for writing debug log to Android logcat instead of standard
 # output
-#CONFIG_ANDROID_LOG=y
+CONFIG_ANDROID_LOG=y
 
 # LE platform build with wpa_cli "driver" command
 CONFIG_LINUX_EMBEDDED=y
@@ -517,7 +517,6 @@ CONFIG_NEED_AP_MLME=y
 
 # Enable compiling libwpa_client as a dynamic library
 CONFIG_BUILD_WPA_CLIENT_SO=y
-
 # Enable P2P in wpa_supplicant
 CONFIG_P2P=y
 CONFIG_TDLS=y
