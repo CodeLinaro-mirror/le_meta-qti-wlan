@@ -10,7 +10,7 @@ PACKAGES = "packagegroup-qti-wifi"
 
 WLAN_IW_TOOL="${@oe.utils.conditional('BASEMACHINE', 'sdxlemur', 'iw-wifi6e', 'iw', d)}"
 
-RDEPENDS_packagegroup-qti-wifi_append_sxrneo = "tcpdump rfkill dnsmasq"
+RDEPENDS_packagegroup-qti-wifi_append_sxrneo = "tcpdump rfkill dnsmasq dhcpcd"
 
 RDEPENDS_packagegroup-qti-wifi = " \
         qcacld32-ll \
