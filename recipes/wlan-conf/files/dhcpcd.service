@@ -34,13 +34,20 @@ Requires=wlan_daemon.service
 [Service]
 RemainAfterExit=yes
 Restart=on-failure
-ExecStartPre=/bin/sh -c 'echo "nameserver 8.8.8.8" >> /etc/resolv.conf'
+ExecStartPre=+/bin/sh -c 'echo "nameserver 8.8.8.8" >> /etc/resolv.conf'
+ExecStartPre=+/bin/sh -c '/bin/chown system /etc/resolv.conf'
+ExecStartPre=+/bin/sh -c '/bin/mkdir -p /var/run/dhcpcd'
+ExecStartPre=+/bin/sh -c '/bin/chown system /var/run/dhcpcd'
+ExecStartPre=+/bin/sh -c '/bin/touch /var/run/dhcpcd.pid'
+ExecStartPre=+/bin/sh -c '/bin/chown system /var/run/dhcpcd.pid'
 ExecStart=/usr/sbin/dhcpcd -t 0 -o domain_name_servers --noipv4ll -h -b -A
 ExecStop=/bin/kill -15 $MAINPID
 ExecStopPost=/bin/rm -rf /var/run/dhcpcd-*.info
 User=system
 Group=system
-AmbientCapabilities=~
+PIDFile=/var/run/dhcpcd.pid
+AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_NET_ADMIN CAP_NET_RAW
+SupplementaryGroups=inet net_admin
 
 [Install]
 WantedBy=multi-user.target
