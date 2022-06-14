@@ -5,6 +5,7 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5
 PR = "r3"
 
 RDEPENDS_${PN} += "dhcpcd tcpdump ebtables iptables dnsmasq"
+RDEPENDS_${PN}_append_sxr2130-mtp += "iperf2 iperf3"
 FILESPATH =+ "${WORKSPACE}:"
 # Provide a baseline
 SRC_URI = "file://mdm-init/"
