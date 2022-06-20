@@ -24,15 +24,16 @@ DEPENDS_remove_qrb5165 = "rtsp-alg"
 
 FILESPATH =+ "${WORKSPACE}:"
 
+CODELINARO_WLAN= "https://git.codelinaro.org/clo/la/platform/vendor/qcom-opensource/wlan"
 QCACLD = "wlan-cld3.driver.lnx.2.0.r18"
 QCACMN = "wlan-cmn.driver.lnx.2.0.r18"
 FWAPI = "wlan-api.lnx.1.0.r19"
 
 BB_STRICT_CHECKSUM = "ignore"
 
-SRC_URI = "https://source.codeaurora.org/quic/la/platform/vendor/qcom-opensource/wlan/qca-wifi-host-cmn/snapshot/${QCACMN}.tar.gz;name=hdr;subdir=wlan"
-SRC_URI += "https://source.codeaurora.org/quic/la/platform/vendor/qcom-opensource/wlan/qcacld-3.0/snapshot/${QCACLD}.tar.gz;name=src;subdir=wlan"
-SRC_URI += "https://source.codeaurora.org/quic/la/platform/vendor/qcom-opensource/wlan/fw-api/snapshot/${FWAPI}.tar.gz;name=api;subdir=wlan"
+SRC_URI = "${CODELINARO_WLAN}/qcacld-3.0/-/archive/${QCACLD}.tar.gz;subdir=wlan"
+SRC_URI += "${CODELINARO_WLAN}/qca-wifi-host-cmn/-/archive/${QCACMN}.tar.gz;subdir=wlan"
+SRC_URI += "${CODELINARO_WLAN}/fw-api/-/archive/${FWAPI}.tar.gz;subdir=wlan"
 
 SRC_URI += "file://qcacld-3.0.patch"
 SRC_URI += "file://qca-wifi-host-cmn.patch"
@@ -53,13 +54,15 @@ SSTATE_DUPWHITELIST += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wlan_nlink
 
 do_patch() {
     cd ${WORKDIR}/wlan
-    mv ${QCACLD}/* qcacld-3.0
-    mv ${QCACMN} qca-wifi-host-cmn
-    mv ${FWAPI} fw-api
-    patch -d ./qcacld-3.0 -p1 < ${WORKDIR}/qcacld-3.0.patch
-    patch -d ./qca-wifi-host-cmn -p1 < ${WORKDIR}/qca-wifi-host-cmn.patch
-    sed -i '$a CONFIG_SMMU_S1_UNMAP := y' ./qcacld-3.0/configs/default_defconfig
-    sed -i 's/ifneq ($(MODNAME), wlan)/ifneq ($(MODNAME), wlan-mag)/' ./qcacld-3.0/Kbuild
+    if [ ! -d "qca-wifi-host-cmn" ]; then
+        rm -rf qcacld-3.0
+        mv qcacld-3.0* qcacld-3.0
+        mv qca-wifi-host-cmn* qca-wifi-host-cmn
+        mv fw-api* fw-api
+        sed -i '$a CONFIG_SMMU_S1_UNMAP := y' ./qcacld-3.0/configs/default_defconfig
+        sed -i 's/CONFIG_FEATURE_MONITOR_MODE_SUPPORT := y/CONFIG_FEATURE_MONITOR_MODE_SUPPORT := n/' ./qcacld-3.0/configs/default_defconfig
+        sed -i 's/ifneq ($(MODNAME), wlan)/ifneq ($(MODNAME), wlan-mag)/' ./qcacld-3.0/Kbuild
+    fi
 }
 
 do_install () {
