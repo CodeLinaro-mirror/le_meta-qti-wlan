@@ -48,7 +48,7 @@ do_compile() {
 }
 
 do_install() {
-    KERNEL_VERSION="${@oe.utils.read_file('${STAGING_KERNEL_BUILDDIR}/kernel-abiversion')}"
+    KERNEL_VERSION="${@get_kernelversion_file("${STAGING_KERNEL_BUILDDIR}")}"
     bbnote "Kernel Version: \"${KERNEL_VERSION}\""
     install -d ${S}/unstripped
     cp -f ${S}/wlan.ko ${S}/unstripped
