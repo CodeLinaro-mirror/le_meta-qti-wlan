@@ -25,6 +25,7 @@ SRC_URI += "file://wlan/qca-wifi-host-cmn/"
 SRC_URI += "file://wlan/fw-api/"
 SRC_URI += "file://kernel-5.10/kernel_platform"
 SRC_URI += "file://kernel-5.10/out/${KERNEL_DEFCONFIG}"
+SRC_URI += "file://wlan_load.conf"
 
 CLANG_BIN = "${WORKDIR}/recipe-sysroot-native/usr/bin/clang/bin"
 S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn/"
@@ -63,6 +64,8 @@ do_install() {
     cp -f ${S}/wlan.ko ${S}/unstripped
     ${CLANG_BIN}/llvm-strip --strip-unneeded ${S}/wlan.ko
     install -m 0755 ${S}/wlan.ko -D ${D}/${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/wlan.ko
+    install -d ${D}${sysconfdir}/modules-load.d
+    install -m 0755 ${WORKDIR}/wlan_load.conf -D ${D}${sysconfdir}/modules-load.d/wlan_load.conf
     install -d ${FIRMWARE_PATH}
 }
 
