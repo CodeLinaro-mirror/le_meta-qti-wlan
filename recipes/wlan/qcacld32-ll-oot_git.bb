@@ -32,8 +32,17 @@ S = "${WORKDIR}/wlan/qcacld-3.0/"
 
 FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld"
 
-BUILD_FLAGS = "CONFIG_CLD_HL_SDIO_CORE=n CONFIG_CNSS_SDIO=n"
-BUILD_FLAGS += "${@oe.utils.conditional('MACHINE', 'sxrneo', 'CONFIG_CNSS_QCA6750=y CONFIG_WLAN_SYNC_TSF_PLUS=y CONFIG_WLAN_SYNC_TSF_TIMER=y CONFIG_WLAN_TWT_SAP_STA_COUNT=2 CONFIG_WLAN_TWT_SAP_PDEV_COUNT=y CONFIG_WLAN_FEATURE_PEER_TXQ_FLUSH_CONF=y CONFIG_QCA_CLD_WLAN_PROFILE=default', '', d)}"
+do_configure_append_sxrneo() {
+    sed -i '1i CONFIG_CLD_HL_SDIO_CORE=n' ${WORKDIR}/wlan/qcacld-3.0/configs/default_defconfig
+    sed -i '1i CONFIG_CNSS_SDIO=n' ${WORKDIR}/wlan/qcacld-3.0/configs/default_defconfig
+    sed -i '1i CONFIG_CNSS_QCA6750=y' ${WORKDIR}/wlan/qcacld-3.0/configs/default_defconfig
+    sed -i '1i CONFIG_WLAN_SYNC_TSF_PLUS=y' ${WORKDIR}/wlan/qcacld-3.0/configs/default_defconfig
+    sed -i '1i CONFIG_WLAN_SYNC_TSF_TIMER=y' ${WORKDIR}/wlan/qcacld-3.0/configs/default_defconfig
+    sed -i '1i CONFIG_WLAN_TWT_SAP_STA_COUNT=y' ${WORKDIR}/wlan/qcacld-3.0/configs/default_defconfig
+    sed -i '1i CONFIG_WLAN_TWT_SAP_PDEV_COUNT=y' ${WORKDIR}/wlan/qcacld-3.0/configs/default_defconfig
+    sed -i '1i CONFIG_WLAN_FEATURE_PEER_TXQ_FLUSH_CONF=y' ${WORKDIR}/wlan/qcacld-3.0/configs/default_defconfig
+    sed -i '1i CONFIG_QCA_CLD_WLAN_PROFILE=default' ${WORKDIR}/wlan/qcacld-3.0/configs/default_defconfig
+}
 
 do_compile() {
     cd ${WORKDIR}/kernel-5.10/kernel_platform  && \
@@ -44,7 +53,7 @@ do_compile() {
     UNSTRIPPED_MODULES=wlan \
     MODULE_OUT=${WORKDIR}/wlan/qcacld-3.0 \
     OUT_DIR=${WORKDIR}/kernel-5.10/out/${KERNEL_DEFCONFIG} \
-    ./build/build_module.sh ${BUILD_FLAGS}
+    ./build/build_module.sh
 }
 
 do_install() {
