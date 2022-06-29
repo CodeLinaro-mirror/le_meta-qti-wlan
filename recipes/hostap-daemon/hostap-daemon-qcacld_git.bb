@@ -26,3 +26,8 @@ do_install_append_auto() {
     install -d ${D}${sysconfdir}
     install -m 0644 ${S}/hostapd.conf ${D}${sysconfdir}/hostapd.conf
 }
+
+do_install_append_sa515m() {
+    install -d ${D}${sysconfdir}
+    install -m 0644 ${S}/hostapd.conf ${D}${sysconfdir}/hostapd.conf
+}
