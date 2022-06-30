@@ -51,7 +51,7 @@ do_install_append_msm(){
 }
 
 do_install_append(){
-    if [ "${BASEMACHINE}" == "qrbx210" ]; then
+    if [ ${BASEMACHINE} == "qrb5165" ] || [ ${BASEMACHINE} == "qrbx210" ]; then
         if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
             install -d ${D}/etc/initscripts
             cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
@@ -78,6 +78,7 @@ EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'apq8098', '--enable-target
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'apq8009', '--enable-target-apq8009=yes', '', d)}"
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'apq8017', '--enable-target-apq8017=yes', '', d)}"
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'qrbx210', '--enable-target-qrbx210-rbx=yes', '', d)}"
+EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'qrb5165', '--enable-target-qrb5165=yes', '', d)}"
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'sdx20', '--enable-target-sdx20=yes', '', d)}"
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'sdxpoorwills', '--enable-target-sdxpoorwills=yes', '', d)}"
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'sdxprairie', '--enable-target-sdxprairie=yes', '', d)}"
