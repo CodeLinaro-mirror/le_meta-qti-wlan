@@ -10,7 +10,7 @@ PROVIDES_NAME   = "kernel-module-wlan"
 RPROVIDES_${PN} += "${PROVIDES_NAME}-${KERNEL_VERSION}"
 do_unpack[deptask] = "do_populate_sysroot"
 PR = "r8"
-
+PV = "2.0"
 DEPENDS = "linux-msm-headers"
 
 do_configure[depends] += "virtual/kernel:do_shared_workdir"
