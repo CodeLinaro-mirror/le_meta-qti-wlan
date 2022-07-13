@@ -8,10 +8,19 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5
 PR = "r0"
 
 SRC_DIR = "${WORKSPACE}/wlan/utils/sigma-dut/"
+SRC_URI += "file://Makefile.patch"
+
+DEPENDS = "libnl"
 
 CFLAGS += "-DLINUX_EMBEDDED"
+CFLAGS += "-I ${STAGING_INCDIR}/libnl3"
 
 S = "${WORKDIR}/wlan/utils/sigma-dut"
+
+do_patch() {
+    cd ${S}
+    patch -p1 < ${WORKDIR}/Makefile.patch
+}
 
 do_install() {
     make install DESTDIR=${D} BINDIR=${sbindir}/
