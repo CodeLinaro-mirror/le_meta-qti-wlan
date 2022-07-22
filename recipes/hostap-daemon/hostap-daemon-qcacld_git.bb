@@ -3,7 +3,7 @@ inherit pkgconfig logging
 include hostap-daemon.inc
 
 PR = "${INC_PR}.2"
-
+PV = "5.0"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 FILESPATH =+ "${WORKSPACE}:"
@@ -13,6 +13,7 @@ SRC_URI += "file://misc/"
 DEPENDS = "pkgconfig libnl openssl wpa-supplicant-8-lib liblog"
 
 LDFLAGS +="-L${RECIPE_SYSROOT}/usr/lib -llog"
+CFLAGS_append_sxrneo +="-DCONFIG_ANDROID_LOG"
 
 S = "${WORKDIR}/external/wpa_supplicant_8/hostapd/"
 PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"
@@ -36,6 +37,11 @@ do_configure() {
 
 do_configure_append_sdxlemur() {
     echo "CONFIG_WEP=y" >> .config
+}
+
+do_configure_append_sxrneo() {
+    echo "LIBS_c +=-llog" >> .config
+    echo "LIBS +=-llog" >> .config
 }
 
 do_patch() {

@@ -2,7 +2,7 @@ inherit pkgconfig logging
 include wpa-supplicant.inc
 
 PR = "${INC_PR}.2"
-
+PV = "5.0"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 FILESPATH =+ "${WORKSPACE}:"
@@ -17,6 +17,10 @@ FILES_${PN} += "/usr/include/*"
 
 S = "${WORKDIR}/external/wpa_supplicant_8/wpa_supplicant"
 PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"
+
+LDFLAGS_append_sxrneo += " -Wl,--no-as-needed"
+LDFLAGS_append_sxrneo +="-L${RECIPE_SYSROOT}/usr/lib -llog"
+CFLAGS_append_sxrneo +="-DCONFIG_ANDROID_LOG"
 
 do_configure() {
     if [ "$(ls -A "${WORKDIR}/${MACHINE}")" ]
@@ -40,6 +44,12 @@ do_configure_append_sdxlemur() {
     echo "CONFIG_EAP_PROXY_DUAL_SIM := true" >> .config
     echo "CONFIG_EAP_PROXY_AKA_PRIME := true" >> .config
     echo "CONFIG_WEP=y" >> .config
+}
+
+do_configure_append_sxrneo() {
+	rm -rf ${STAGING_LIBDIR}/libwpa_supplicant_8_lib.so*
+        echo "EXTRALIBS +=\"-llog\"" >> .config
+        echo "LIBS +=\"-llog\"" >> .config
 }
 
 do_patch() {
