@@ -1,0 +1,28 @@
+From 9de3616a55b97ef38bb6ebea6254e679d1483855 Mon Sep 17 00:00:00 2001
+From: Yingqian Yang <quic_yingqian@quicinc.com>
+Date: Sat, 23 Jul 2022 10:04:55 +0800
+Subject: [PATCH] Disable host python dependency
+
+Enable python venv in pigweed
+
+Signed-off-by: Yingqian Yang <quic_yingqian@quicinc.com>
+---
+ scripts/python.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/scripts/python.json b/scripts/python.json
+index 06db285a26..f86c86e6d8 100644
+--- a/scripts/python.json
++++ b/scripts/python.json
+@@ -2,7 +2,7 @@
+     "packages": [
+         {
+             "path": "infra/3pp/tools/cpython3/${platform}",
+-            "platforms": ["mac-amd64", "windows-amd64"],
++            "platforms": ["linux-amd64", "mac-amd64", "windows-amd64"],
+             "tags": ["version:2@3.9.5.chromium.19"]
+         },
+         {
+-- 
+2.17.1
+
