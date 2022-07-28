@@ -16,18 +16,12 @@ RPROVIDES_${PN} += "${PROVIDES_NAME}-${KERNEL_VERSION}"
 do_unpack[deptask] = "do_populate_sysroot"
 PR = "r8"
 
-# This DEPENDS is to serialize kernel module builds
-DEPENDS = "rtsp-alg"
-DEPENDS_remove_automotive = "rtsp-alg"
-DEPENDS_remove_auto = "rtsp-alg"
-
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/qcacld-3.0/"
 SRC_URI += "file://wlan/qca-wifi-host-cmn/"
 SRC_URI += "file://wlan/fw-api/"
-SRC_URI_append_automotive = " file://device/qcom/wlan/msm_auto/WCNSS_qcom_cfg_qca6174.ini"
-SRC_URI_append_auto = " file://device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6174.ini"
-SRC_URI_append_auto = " file://device/qcom/wlan/sdx_auto/wlan_mac.bin"
+SRC_URI_append = " file://device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6174.ini"
+SRC_URI_append = " file://device/qcom/wlan/sdx_auto/wlan_mac.bin"
 
 S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn/"
 S = "${WORKDIR}/wlan/qcacld-3.0/"
@@ -40,13 +34,30 @@ EXTRA_OEMAKE += "CONFIG_CLD_HL_SDIO_CORE=n CONFIG_CNSS_SDIO=n"
 EXTRA_OEMAKE += "CONFIG_QCA_CLD_WLAN_PROFILE=qca6174"
 EXTRA_OEMAKE += "DYNAMIC_SINGLE_CHIP=${_MODNAME}"
 EXTRA_OEMAKE += "MODNAME=${_MODNAME}"
-EXTRA_OEMAKE_append_sdxpoorwills = " WLAN_CFG_OVERRIDE="CONFIG_MDM_PLATFORM=y CONFIG_WLAN_CONV_SPECTRAL_ENABLE=n CONFIG_WLAN_WBUFF=n CONFIG_REMOVE_PKT_LOG=y CONFIG_WDI_EVENT_ENABLE=n""
 
-# Rome IPA on sa515m is not supported, disable it
-EXTRA_OEMAKE_append_sa515m = " WLAN_CFG_OVERRIDE="CONFIG_WLAN_CONV_SPECTRAL_ENABLE=n CONFIG_WLAN_WBUFF=n CONFIG_REMOVE_PKT_LOG=y CONFIG_WDI_EVENT_ENABLE=n CONFIG_NUM_IPA_IFACE=2 CONFIG_ENABLE_SMMU_S1_TRANSLATION=y CONFIG_FEATURE_IPA_PIPE_CHANGE_WDI1=y CONFIG_MDM_PLATFORM=y CONFIG_INTRA_BSS_FWD_OFFLOAD=y""
+_WLAN_CFG_OVERRIDE_515 = "\
+						CONFIG_WLAN_CONV_SPECTRAL_ENABLE=n \
+						CONFIG_WLAN_WBUFF=n \
+						CONFIG_REMOVE_PKT_LOG=y \
+						CONFIG_WDI_EVENT_ENABLE=n \
+						CONFIG_NUM_IPA_IFACE=2 \
+						CONFIG_ENABLE_SMMU_S1_TRANSLATION=y \
+						CONFIG_FEATURE_IPA_PIPE_CHANGE_WDI1=y \
+						CONFIG_MDM_PLATFORM=y \
+						CONFIG_INTRA_BSS_FWD_OFFLOAD=y \
+						"
+_WLAN_CFG_OVERRIDE_415 = "\
+						CONFIG_MDM_PLATFORM=y \
+						CONFIG_WLAN_CONV_SPECTRAL_ENABLE=n \
+						CONFIG_WLAN_WBUFF=n \
+						CONFIG_REMOVE_PKT_LOG=y \
+						CONFIG_WDI_EVENT_ENABLE=n \
+                        "
 
-LDFLAGS_aarch64_automotive = "-O1 --hash-style=gnu --as-needed"
-LDFLAGS_aarch64_auto = "-O1 --hash-style=gnu --as-needed"
+EXTRA_OEMAKE_append_sdxpoorwills = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_415}"
+EXTRA_OEMAKE_append_sa515m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_515}"
+
+LDFLAGS_aarch64 = "-O1 --hash-style=gnu --as-needed"
 
 # The common header file, 'wlan_nlink_common.h' can be installed from other
 # qcacld recipes too. To suppress the duplicate detection error, add it to
@@ -54,53 +65,17 @@ LDFLAGS_aarch64_auto = "-O1 --hash-style=gnu --as-needed"
 SSTATE_DUPWHITELIST += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wlan_nlink_common.h"
 
 inherit systemd
-SRC_URI_append_automotive = " file://init_qti_wlan_auto.service"
-SYSTEMD_SERVICE_${PN}_automotive = "init_qti_wlan_auto.service"
-SYSTEMD_AUTO_ENABLE_${PN}_automotive = "enable"
-SRC_URI_append_automotive = " file://init.qti.wlan_on.sh"
-SRC_URI_append_automotive = " file://init.qti.wlan_off.sh"
 FILES_${PN}     += "usr/bin/init.qti.wlan_on.sh"
 FILES_${PN}     += "usr/bin/init.qti.wlan_off.sh"
 
-SRC_URI_append_auto = " file://init_qti_wlan_auto.service"
-SYSTEMD_SERVICE_${PN}_auto = "init_qti_wlan_auto.service"
+SRC_URI_append = " file://init_qti_wlan_auto.service"
+SYSTEMD_SERVICE_${PN} = "init_qti_wlan_auto.service"
 
 # disable wlan service on boot for sdxpoorwills-auto
-SYSTEMD_AUTO_ENABLE_${PN}_auto = "disable"
+SYSTEMD_AUTO_ENABLE_${PN} = "disable"
 
-SRC_URI_append_auto = " file://init.qti.wlan_on.sh"
-SRC_URI_append_auto = " file://init.qti.wlan_off.sh"
-
-
-do_compile_prepend_automotive() {
-    #Add gnu99 for compiler compatible issues
-    sed -i '$a\ccflags-y += -std=gnu99' ${S}/Kbuild
-    #In yocto system, get build tag by 'git log' in wlan src dir instead of 'git reflog' in work dir
-    sed -i -e '/^ifeq ($(CONFIG_BUILD_TAG), y)/,/^endif/{/^ifeq ($(CONFIG_BUILD_TAG), y)/!{/^endif/!d}}' ${S}/Kbuild
-    sed -i -e '/^ifeq ($(CONFIG_BUILD_TAG), y)/a\
-    WLAN_ROOT_LV = ${WORKSPACE}/wlan/qcacld-3.0\
-    WLAN_CMN_LV = ${WORKSPACE}/wlan/qca-wifi-host-cmn\
-    CLD_IDS = $(shell cd "$(WLAN_ROOT_LV)" && git log -1 | sed -nE '\''s/^\\s*Change-Id: (I[0-f]{10})[0-f]{30}\\s*\$\$/\\1/p'\'')\
-    CMN_IDS = $(shell cd "$(WLAN_CMN_LV)" && git log -1 | sed -nE '\''s/^\\s*Change-Id: (I[0-f]{10})[0-f]{30}\\s*\$\$/\\1/p'\'')\
-    TIMESTAMP = $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')\
-    BUILD_TAG = "$(TIMESTAMP); cld:$(CLD_IDS); cmn:$(CMN_IDS);"\
-    CFLAGS_wlan_hdd_main.o += -DBUILD_TAG=\\"$(BUILD_TAG)\\"' ${S}/Kbuild
-}
-
-do_compile_prepend_auto() {
-    #Add gnu99 for compiler compatible issues
-    sed -i '$a\ccflags-y += -std=gnu99' ${S}/Kbuild
-    #In yocto system, get build tag by 'git log' in wlan src dir instead of 'git reflog' in work dir
-    sed -i -e '/^ifeq ($(CONFIG_BUILD_TAG), y)/,/^endif/{/^ifeq ($(CONFIG_BUILD_TAG), y)/!{/^endif/!d}}' ${S}/Kbuild
-    sed -i -e '/^ifeq ($(CONFIG_BUILD_TAG), y)/a\
-    WLAN_ROOT_LV = ${WORKSPACE}/wlan/qcacld-3.0\
-    WLAN_CMN_LV = ${WORKSPACE}/wlan/qca-wifi-host-cmn\
-    CLD_IDS = $(shell cd "$(WLAN_ROOT_LV)" && git log -1 | sed -nE '\''s/^\\s*Change-Id: (I[0-f]{10})[0-f]{30}\\s*\$\$/\\1/p'\'')\
-    CMN_IDS = $(shell cd "$(WLAN_CMN_LV)" && git log -1 | sed -nE '\''s/^\\s*Change-Id: (I[0-f]{10})[0-f]{30}\\s*\$\$/\\1/p'\'')\
-    TIMESTAMP = $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')\
-    BUILD_TAG = "$(TIMESTAMP); cld:$(CLD_IDS); cmn:$(CMN_IDS);"\
-    CFLAGS_wlan_hdd_main.o += -DBUILD_TAG=\\"$(BUILD_TAG)\\"' ${S}/Kbuild
-}
+SRC_URI_append = " file://init.qti.wlan_on.sh"
+SRC_URI_append = " file://init.qti.wlan_off.sh"
 
 do_install () {
     module_do_install
@@ -115,30 +90,16 @@ do_install () {
     install -m 0644 ${S}/${_MODNAME}.ko ${WLAN_KO}/wlan/
 }
 
-do_install_append_automotive() {
-    install -D -m 0644 ${WORKDIR}/device/qcom/wlan/msm_auto/WCNSS_qcom_cfg_qca6174.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
-    install -d ${D}${bindir}
-    install -D -m 0755 ${WORKDIR}/init.qti.wlan_on.sh ${D}${bindir}/init.qti.wlan_on.sh
-    install -D -m 0755 ${WORKDIR}/init.qti.wlan_off.sh ${D}${bindir}/init.qti.wlan_off.sh
-    # Install systemd service file
-    if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}; then
-        install -m 0644 ${WORKDIR}/init_qti_wlan_auto.service -D ${D}${systemd_unitdir}/system/init_qti_wlan_auto.service
-    fi
-}
-
-do_install_append_auto() {
+do_install_append() {
     install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6174.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
-    chown -RH root:1001 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
     chmod -R 0664 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
     install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/wlan_mac.bin ${FIRMWARE_PATH}/wlan_mac.bin
-    chown -RH root:1001 ${FIRMWARE_PATH}/wlan_mac.bin
     chmod -R 0664 ${FIRMWARE_PATH}/wlan_mac.bin
     install -d ${D}${bindir}
     install -D -m 0755 ${WORKDIR}/init.qti.wlan_on.sh ${D}${bindir}/init.qti.wlan_on.sh
     install -D -m 0755 ${WORKDIR}/init.qti.wlan_off.sh ${D}${bindir}/init.qti.wlan_off.sh
     install -d ${D}/lib/firmware/${_MODNAME}/
 
-    #for sa515 platform
     ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan30.b00 ${D}/lib/firmware/${_MODNAME}/
     ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan30.bin ${D}/lib/firmware/${_MODNAME}/
     mv ${D}/lib/firmware/${_MODNAME}/bdwlan30.bin ${D}/lib/firmware/${_MODNAME}/utfbd30.bin
@@ -156,20 +117,7 @@ do_install_append_auto() {
         install -m 0644 ${WORKDIR}/init_qti_wlan_auto.service -D ${D}${systemd_unitdir}/system/init_qti_wlan_auto.service
     fi
 }
-do_install_append_sa415m_auto() {
-    #for sa415 platform
-    ln -sf /firmware/image/bdwlan30.b00 ${D}/lib/firmware/${_MODNAME}/
-    ln -sf /firmware/image/bdwlan30.bin ${D}/lib/firmware/${_MODNAME}/
-    mv ${D}/lib/firmware/${_MODNAME}/bdwlan30.bin ${D}/lib/firmware/${_MODNAME}/utfbd30.bin
-    ln -sf /firmware/image/qwlan30.bin ${D}/lib/firmware/${_MODNAME}/
-    ln -sf /firmware/image/utf30.bin ${D}/lib/firmware/${_MODNAME}/
-    ln -sf /firmware/image/otp30.bin ${D}/lib/firmware/${_MODNAME}/
-    ln -sf /firmware/image/data.msc ${D}/lib/firmware/${_MODNAME}/
-    ln -sf /firmware/image/bdwlan30.b31 ${D}/lib/firmware/${_MODNAME}/
-    mv ${D}/lib/firmware/${_MODNAME}/bdwlan30.b31 ${D}/lib/firmware/${_MODNAME}/utfbd30.b31
-    ln -sf /firmware/image/bdwlan30.bin ${D}/lib/firmware/${_MODNAME}/
-    ln -sf /firmware/image/bdwlan30.b31 ${D}/lib/firmware/${_MODNAME}/
-}
+
 do_module_signing() {
     if [ -f ${STAGING_KERNEL_BUILDDIR}/signing_key.priv ]; then
         bbnote "Signing ${PN} module"
