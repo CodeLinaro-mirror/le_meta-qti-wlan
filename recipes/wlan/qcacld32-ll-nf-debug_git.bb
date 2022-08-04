@@ -20,7 +20,7 @@ DEPENDS = "rtsp-alg"
 DEPENDS_append_sdmsteppe = " virtual/kernel"
 DEPENDS_remove_sdmsteppe = "rtsp-alg"
 
-QCACMN_REV = "89e84d04c79918c8f96af20b5ef49f6042bc4f26"
+QCACMN_REV = "40a580986123ccd75b870adfb2344f23c5343c94"
 QCAAPI_REV = "66a9bd7ae05fd2115bd469e80af22df30fad9441"
 
 FILESPATH =+ "${WORKSPACE}:"
@@ -30,8 +30,8 @@ SRC_URI += "https://git.codelinaro.org/clo/la/platform/vendor/qcom-opensource/wl
 
 SRC_URI[api.md5sum] = "aff1b70b5e7373a46b115ac0cc618568"
 SRC_URI[api.sha256sum] = "b96cda1f50cfb9d095aeaa421ffc05e3435d08307c33921865ae97423937ee09"
-SRC_URI[cmn.md5sum] = "4c35dc5d3f8ace680232239f949a6e4e"
-SRC_URI[cmn.sha256sum] = "80aa6f8e56761f1aace8d033980e8c2c3cf2c46d64e3a63aafa34667507075ae"
+SRC_URI[cmn.md5sum] = "7ac88f364f39c56023b5850c322de64e"
+SRC_URI[cmn.sha256sum] = "d88c4f7d479ad79af30a2c641a91856ee961459c4e00195edf3fabc6f5326b06"
 
 S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn/"
 S = "${WORKDIR}/wlan/qcacld-3.0/"
