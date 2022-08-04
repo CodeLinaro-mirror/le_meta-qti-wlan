@@ -10,7 +10,7 @@ PROVIDES_NAME   = "kernel-module-wlan"
 RPROVIDES_${PN} += "${PROVIDES_NAME}-${KERNEL_VERSION}"
 do_unpack[deptask] = "do_populate_sysroot"
 PR = "r8"
-
+PV = "2.0"
 DEPENDS = "linux-msm-headers"
 
 do_configure[depends] += "virtual/kernel:do_shared_workdir"
@@ -25,6 +25,7 @@ SRC_URI += "file://wlan/qca-wifi-host-cmn/"
 SRC_URI += "file://wlan/fw-api/"
 SRC_URI += "file://kernel-5.10/kernel_platform"
 SRC_URI += "file://kernel-5.10/out/${KERNEL_DEFCONFIG}"
+SRC_URI += "file://wlan_load.conf"
 
 CLANG_BIN = "${WORKDIR}/recipe-sysroot-native/usr/bin/clang/bin"
 S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn/"
@@ -32,8 +33,17 @@ S = "${WORKDIR}/wlan/qcacld-3.0/"
 
 FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld"
 
-BUILD_FLAGS = "CONFIG_CLD_HL_SDIO_CORE=n CONFIG_CNSS_SDIO=n"
-BUILD_FLAGS += "${@oe.utils.conditional('MACHINE', 'sxrneo', 'CONFIG_CNSS_QCA6750=y CONFIG_WLAN_SYNC_TSF_PLUS=y CONFIG_WLAN_SYNC_TSF_TIMER=y CONFIG_WLAN_TWT_SAP_STA_COUNT=2 CONFIG_WLAN_TWT_SAP_PDEV_COUNT=y CONFIG_WLAN_FEATURE_PEER_TXQ_FLUSH_CONF=y CONFIG_QCA_CLD_WLAN_PROFILE=default', '', d)}"
+do_configure_append_sxrneo() {
+    sed -i '1i CONFIG_CLD_HL_SDIO_CORE=n' ${WORKDIR}/wlan/qcacld-3.0/configs/default_defconfig
+    sed -i '1i CONFIG_CNSS_SDIO=n' ${WORKDIR}/wlan/qcacld-3.0/configs/default_defconfig
+    sed -i '1i CONFIG_CNSS_QCA6750=y' ${WORKDIR}/wlan/qcacld-3.0/configs/default_defconfig
+    sed -i '1i CONFIG_WLAN_SYNC_TSF_PLUS=y' ${WORKDIR}/wlan/qcacld-3.0/configs/default_defconfig
+    sed -i '1i CONFIG_WLAN_SYNC_TSF_TIMER=y' ${WORKDIR}/wlan/qcacld-3.0/configs/default_defconfig
+    sed -i '1i CONFIG_WLAN_TWT_SAP_STA_COUNT=y' ${WORKDIR}/wlan/qcacld-3.0/configs/default_defconfig
+    sed -i '1i CONFIG_WLAN_TWT_SAP_PDEV_COUNT=y' ${WORKDIR}/wlan/qcacld-3.0/configs/default_defconfig
+    sed -i '1i CONFIG_WLAN_FEATURE_PEER_TXQ_FLUSH_CONF=y' ${WORKDIR}/wlan/qcacld-3.0/configs/default_defconfig
+    sed -i '1i CONFIG_QCA_CLD_WLAN_PROFILE=default' ${WORKDIR}/wlan/qcacld-3.0/configs/default_defconfig
+}
 
 do_compile() {
     cd ${WORKDIR}/kernel-5.10/kernel_platform  && \
@@ -44,7 +54,7 @@ do_compile() {
     UNSTRIPPED_MODULES=wlan \
     MODULE_OUT=${WORKDIR}/wlan/qcacld-3.0 \
     OUT_DIR=${WORKDIR}/kernel-5.10/out/${KERNEL_DEFCONFIG} \
-    ./build/build_module.sh ${BUILD_FLAGS}
+    ./build/build_module.sh
 }
 
 do_install() {
@@ -54,6 +64,8 @@ do_install() {
     cp -f ${S}/wlan.ko ${S}/unstripped
     ${CLANG_BIN}/llvm-strip --strip-unneeded ${S}/wlan.ko
     install -m 0755 ${S}/wlan.ko -D ${D}/${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/wlan.ko
+    install -d ${D}${sysconfdir}/modules-load.d
+    install -m 0755 ${WORKDIR}/wlan_load.conf -D ${D}${sysconfdir}/modules-load.d/wlan_load.conf
     install -d ${FIRMWARE_PATH}
 }
 

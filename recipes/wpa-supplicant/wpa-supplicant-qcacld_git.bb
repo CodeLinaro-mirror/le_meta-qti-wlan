@@ -2,7 +2,7 @@ inherit pkgconfig logging
 include wpa-supplicant.inc
 
 PR = "${INC_PR}.2"
-
+PV = "5.0"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 FILESPATH =+ "${WORKSPACE}:"

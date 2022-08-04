@@ -14,7 +14,6 @@ RPROVIDES_${PN} += "${PROVIDES_NAME}-${KERNEL_VERSION}"
 
 do_unpack[deptask] = "do_populate_sysroot"
 PR = "r8"
-
 # This DEPENDS is to serialize kernel module builds
 DEPENDS = "rtsp-alg"
 DEPENDS_append_sdmsteppe = " virtual/kernel"
