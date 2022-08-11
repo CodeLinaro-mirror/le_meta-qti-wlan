@@ -19,7 +19,7 @@ index b232e413e8..664cc25efd 100644
  # device controller wheel package
  wheel
 -dbus-python; sys_platform == 'linux'
-+#dbus-python; sys_platform == 'linux'
++pydbus; sys_platform == 'linux'
  pgi; sys_platform == 'linux'
  pyobjc-core; sys_platform == 'darwin'
  pyobjc-framework-cocoa; sys_platform == 'darwin'

@@ -12,12 +12,13 @@ SRCREV = "c77810b9a777e978b537b9d43b655eb99edf48a9"
 SRC_URI[md5sum] = "d99b3661674e0901bdb26675a0a1e717"
 SRC_URI[sha256sum] = "0d289e85f56e734149597f8c5346cdaa494002158fa102c4149b891f075dcaec"
 
-SRC_URI += "file://activiate.patch"
-SRC_URI += "file://python_json.patch"
+SRC_URI += "file://python_json.patch \
+            file://activiate.patch \
+            file://environment.patch"
 
 S = "${WORKDIR}/git"
 
-DEPENDS += "python3-native avahi ninja-native dbus-glib-native"
+DEPENDS += "avahi ninja-native dbus-glib-native"
 
 TARGET_CC_ARCH += "${LDFLAGS}"
 TARGET_CC = "${CC}"

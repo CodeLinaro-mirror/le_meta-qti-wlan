@@ -1,0 +1,28 @@
+From ad4aeb90ae56547d270c95d663fc9b3a3f5d2093 Mon Sep 17 00:00:00 2001
+From: Yingqian Yang <quic_yingqian@quicinc.com>
+Date: Mon, 8 Aug 2022 16:21:59 +0800
+Subject: [PATCH] fix pw script unrecognized due to kernel version
+
+add python prefix
+
+Signed-off-by: Yingqian Yang <quic_yingqian@quicinc.com>
+---
+ pw_env_setup/py/pw_env_setup/environment.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/third_party/pigweed/repo/pw_env_setup/py/pw_env_setup/environment.py b/third_party/pigweed/repo/pw_env_setup/py/pw_env_setup/environment.py
+index 39a601ad..59f5adb1 100644
+--- a/third_party/pigweed/repo/pw_env_setup/py/pw_env_setup/environment.py
++++ b/third_party/pigweed/repo/pw_env_setup/py/pw_env_setup/environment.py
+@@ -249,7 +249,7 @@ class Doctor(Command):
+     def __init__(self, *args, **kwargs):
+         log_level = 'warn' if 'PW_ENVSETUP_QUIET' in os.environ else 'info'
+         super(Doctor, self).__init__(
+-            command=['pw', '--no-banner', '--loglevel', log_level, 'doctor'],
++            command=['python', '$VIRTUAL_ENV/bin/pw', '--no-banner', '--loglevel', log_level, 'doctor'],
+             *args,
+             **kwargs)
+ 
+-- 
+2.17.1
+
