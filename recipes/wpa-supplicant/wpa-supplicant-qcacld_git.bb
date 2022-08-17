@@ -26,6 +26,7 @@ do_configure_append_sdxprairie() {
     echo "CONFIG_EAP_PROXY=qmi" >> .config
     echo "CONFIG_EAP_PROXY_DUAL_SIM := true" >> .config
     echo "CONFIG_EAP_PROXY_AKA_PRIME := true" >> .config
+    echo "CONFIG_WEP=y" >> .config
 }
 
 do_patch() {
