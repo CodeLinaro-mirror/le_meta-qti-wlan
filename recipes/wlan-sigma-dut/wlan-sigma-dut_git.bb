@@ -1,4 +1,4 @@
-inherit autotools qcommon
+inherit autotools-brokensep pkgconfig
 
 DESCRIPTION = "WFA certification testing tool for QCA devices"
 DEPENDS = "libnl"

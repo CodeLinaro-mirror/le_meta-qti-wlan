@@ -7,6 +7,9 @@ ${LICENSE};md5=550794465ba0ec5312d6919e203a55f9"
 PR = "r0"
 
 FILESPATH =+ "${WORKSPACE}:"
+FILES_${PN} += "lib/firmware/wlan/*"
+FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld/qca6490"
+
 # Provide a baseline
 SRC_URI = "file://device/"
 
@@ -32,4 +35,14 @@ do_install_append_sa515m_auto(){
 	install -m 0644 ${S}/qcom/wlan/sdx24_auto/*.conf ${D}/etc/misc/wifi
 	install -d ${D}${sysconfdir}
 	install -m 0644 ${S}/qcom/wlan/sdx24_auto/vendor_cmd.xml ${D}${sysconfdir}
+}
+
+do_install_append_sa515m(){
+	install -d ${D}/etc/misc/wifi
+	install -m 0644 ${S}/qcom/wlan/sdx24_auto/*.conf ${D}/etc/misc/wifi
+	install -d ${D}${sysconfdir}
+	install -m 0644 ${S}/qcom/wlan/sdx24_auto/vendor_cmd.xml ${D}${sysconfdir}
+	install -d ${FIRMWARE_PATH}
+	install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6490.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
+	chmod -R 0664 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
 }
