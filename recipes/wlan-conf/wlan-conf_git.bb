@@ -2,6 +2,7 @@ inherit autotools systemd update-rc.d qperf useradd
 DESCRIPTION = "Device specific config"
 LICENSE = "ISC"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=f3b90e78ea0cffb20bf5cca7947a896d"
+PV = "1.0"
 PR = "r3"
 DEPENDS += "virtual/kernel"
 
