@@ -33,6 +33,7 @@ do_install_append_mdm(){
 }
 
 do_install_append_sdxlemur(){
+	install -d ${D}/data/wlan_logs
 	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
 		if grep -q "CONFIG_CNSS2=m" ${STAGING_KERNEL_BUILDDIR}/.config
 		then
@@ -87,6 +88,7 @@ do_install_append(){
 FILES_${PN} += "${userfsdatadir}/misc/wifi/*"
 FILES_${PN} += "${base_libdir}/firmware/wlan/qca_cld/*"
 FILES_${PN} += "/lib/firmware/wlan/qca_cld/* ${sysconfdir}/init.d/* "
+FILES_${PN} += "/data/wlan_logs"
 
 BASEPRODUCT = "${@d.getVar('PRODUCT', False)}"
 
