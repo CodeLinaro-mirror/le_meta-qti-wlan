@@ -16,6 +16,9 @@ SRC_URI_append_sxrneo+= "file://sxrneo/dhcpcd.service"
 SRC_URI_append_sxrneo+= "file://sxrneo/wlan_daemon.service"
 SRC_URI_append_sxrneo+= "file://sxrneo/wpa_supplicant.service"
 SRC_URI_append_sxrneo+= "file://sxrneo/wlan-conf_systemd_tmpfiles.conf"
+SRC_URI_append_sxrneo+= "file://sxrneo/fi.w1.wpa_supplicant1.service"
+SRC_URI_append_sxrneo+= "file://sxrneo/dbus-wpa_supplicant.conf"
+SRC_URI_append_sxrneo+= "file://sxrneo/dbus-wpa_supplicant_testing.conf"
 
 # Update for each machine
 S = "${WORKDIR}/mdm-init/"
@@ -93,6 +96,10 @@ do_install_append_neo(){
 			ln -sf /etc/systemd/system/dhcpcd.service ${D}/etc/systemd/system/multi-user.target.wants/dhcpcd.service
 			install -m 0644 ${WORKDIR}/sxrneo/wpa_supplicant.service -D ${D}/etc/systemd/system/wpa_supplicant.service
 			ln -sf /etc/systemd/system/wpa_supplicant.service ${D}/etc/systemd/system/multi-user.target.wants/wpa_supplicant.service
+			install -m 0644 ${WORKDIR}/sxrneo/fi.w1.wpa_supplicant1.service -D ${D}/usr/share/dbus-1/system-services/fi.w1.wpa_supplicant1.service
+			install -m 0644 ${WORKDIR}/sxrneo/dbus-wpa_supplicant.conf -D ${D}/usr/share/dbus-1/system.d/dbus-wpa_supplicant.conf
+			install -m 0644 ${WORKDIR}/sxrneo/dbus-wpa_supplicant_testing.conf -D ${D}/etc/dbus-1/system.d/dbus-wpa_supplicant_testing.conf
+
 		fi
 
 		rm ${D}/etc/init.d/wlan
@@ -106,6 +113,9 @@ do_install_append_neo(){
 FILES_${PN} += "${userfsdatadir}/misc/wifi/*"
 FILES_${PN} += "${base_libdir}/firmware/wlan/qca_cld/*"
 FILES_${PN} += "/lib/firmware/wlan/qca_cld/* ${sysconfdir}/init.d/* "
+FILES_${PN}_append_sxrneo += "/usr/share/dbus-1/system-services/*"
+FILES_${PN}_append_sxrneo += "/usr/share/dbus-1/system.d/*"
+FILES_${PN}_append_sxrneo += "/etc/dbus-1/system.d/*"
 
 BASEPRODUCT = "${@d.getVar('PRODUCT', False)}"
 

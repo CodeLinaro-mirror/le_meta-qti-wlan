@@ -39,7 +39,7 @@ After=wlan_daemon.service
 [Service]
 Restart=no
 RemainAfterExit=yes
-ExecStart=/usr/sbin/wpa_supplicant -Dnl80211 -iwlan0 -c /data/misc/wifi/wpa_supplicant.conf -B
+ExecStart=/usr/sbin/wpa_supplicant -u -Dnl80211 -iwlan0 -c /data/misc/wifi/wpa_supplicant.conf -B
 Type=oneshot
 ExecStop=/bin/killall wpa_supplicant
 User=wifi
