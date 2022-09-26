@@ -17,8 +17,13 @@ EXTRA_ADDR :=lib/modules/$(LINUX_VERSION)-${COMPILE_MODE}/extra
 
 include $(INCLUDE_DIR)/package.mk
 
+ifeq ($(TARGET_MACHINE),sdx75)
 TARGET_MAKEOPTS := CONFIG_ARCH_SDXPINN=y \
-		    CONFIG_CNSS_KIWI_V2=y
+		   CONFIG_CNSS_KIWI_V2=y \
+		   CONFIG_QCA_CLD_WLAN_PROFILE=kiwi_v2
+else
+TARGET_MAKEOPTS := CONFIG_QCA_CLD_WLAN_PROFILE=default
+endif
 
 define KernelPackage/$(PKG_NAME)
   SECTION:=Kernel Modules
@@ -28,14 +33,12 @@ define KernelPackage/$(PKG_NAME)
 endef
 
 QCACLD32_LL_MAKEOPTS=  M="$(PKG_BUILD_DIR)/qcacld-3.0" \
-			CONFIG_QCA_CLD_WLAN_PROFILE=default \
 			${TARGET_MAKEOPTS} \
 			CONFIG_HIF_PCI=y \
 			KERNEL_PATH=${LINUX_DIR} \
 			KERNEL_SRC=${LINUX_DIR} \
 			KERNEL_VERSION=${LINUX_VERSION} \
-			ARCH=$(LINUX_KARCH) \
-			TARGET=arm64 \
+			TARGET=$(LINUX_KARCH) \
 			CC=$(KERNEL_CC) \
 			TOOLPREFIX="$(KERNEL_CROSS)" \
 			TOOLPATH="$(KERNEL_CROSS)" \
@@ -52,6 +55,7 @@ define Build/Prepare
 	$(CP) $(LOCAL_SRC)/qcacld-3.0 $(PKG_BUILD_DIR)/
 	$(CP) $(LOCAL_SRC)/qca-wifi-host-cmn $(PKG_BUILD_DIR)/
 	$(CP) $(LOCAL_SRC)/fw-api $(PKG_BUILD_DIR)/
+	ln -sf $(PKG_BUILD_DIR)/qcacld-3.0 $(PKG_BUILD_DIR)/../qcacld-3.0
 endef
 
 define Build/Compile

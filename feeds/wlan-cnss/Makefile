@@ -50,6 +50,9 @@ endef
 define KernelPackage/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/lib/modules/$(LINUX_VERSION)-debug/extra/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss2/cnss2.ko $(1)/lib/modules/$(LINUX_VERSION)-debug/extra/
+	 $(CP) $(PKG_BUILD_DIR)/cnss_utils/cnss_plat_ipc_qmi_svc.ko $(1)/lib/modules/$(LINUX_VERSION)-debug/extra/
+	$(CP) $(PKG_BUILD_DIR)/cnss_utils/cnss_utils.ko $(1)/lib/modules/$(LINUX_VERSION)-debug/extra/
+	$(CP) $(PKG_BUILD_DIR)/cnss_utils/wlan_firmware_service.ko $(1)/lib/modules/$(LINUX_VERSION)-debug/extra/
 endef
 
 $(eval $(call KernelPackage,$(PKG_NAME)))
