@@ -17,6 +17,7 @@ RDEPENDS_packagegroup-wlan = " \
     cld80211-lib \
     wlan-conf \
     wireless-tools \
+    sigma-dut \
     "
 RDEPENDS_packagegroup-wlan-debug = " \
     qcacld32-ll-nf-debug \
