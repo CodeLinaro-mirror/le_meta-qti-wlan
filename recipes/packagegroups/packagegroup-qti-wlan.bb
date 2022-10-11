@@ -20,6 +20,7 @@ RDEPENDS_${PN} += "\
     qcacld32-ll-hasting \
     qcacld32-ll-genoa \
     qcacld32-ll-rome \
+    qcacld32-ll-hsp \
     wpa-supplicant-qcacld \
     wlan-conf \
     "
