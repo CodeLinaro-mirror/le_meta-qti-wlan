@@ -1,28 +1,26 @@
-From 6d80d1e6dccda37d8a151bf3bb0468b86e6966d4 Mon Sep 17 00:00:00 2001
-From: Yingqian Yang <quic_yingqian@quicinc.com>
-Date: Wed, 13 Jul 2022 15:39:30 +0800
-Subject: [PATCH] matter over wifi
+From 34a78517174f7221cc7b42a59c6e06555599ca77 Mon Sep 17 00:00:00 2001
+From: Cheng Jiang <quic_chejiang@quicinc.com>
+Date: Tue, 11 Oct 2022 09:35:42 +0800
+Subject: [PATCH] supporting matter on qcs610
 
-supporting matter on qcs610
-
-Signed-off-by: Yingqian Yang <quic_yingqian@quicinc.com>
+Signed-off-by: Cheng Jiang <quic_chejiang@quicinc.com>
 ---
  scripts/requirements.txt | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/scripts/requirements.txt b/scripts/requirements.txt
-index b232e413e8..664cc25efd 100644
+index e33963c48c2..7cee25d38eb 100644
 --- a/scripts/requirements.txt
 +++ b/scripts/requirements.txt
-@@ -12,7 +12,7 @@ requests>=2.24.0
- 
+@@ -16,7 +16,7 @@ requests>=2.24.0
+
  # device controller wheel package
  wheel
--dbus-python; sys_platform == 'linux'
+-dbus-python==1.2.18; sys_platform == 'linux'
 +pydbus; sys_platform == 'linux'
  pgi; sys_platform == 'linux'
  pyobjc-core; sys_platform == 'darwin'
  pyobjc-framework-cocoa; sys_platform == 'darwin'
--- 
+--
 2.17.1
 
