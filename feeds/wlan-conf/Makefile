@@ -44,9 +44,6 @@ define Build/Prepare
 	$(CP) $(LOCAL_SRC)/* $(PKG_BUILD_DIR)/
 endef
 
-define Build/InstallDev
-endef
-
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(STAGING_DIR)
 	mkdir -p  $(1)/$(ETC_DATA_ADDR)

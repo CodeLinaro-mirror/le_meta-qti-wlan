@@ -6,10 +6,10 @@ PKG_VERSION:=1.0
 PKG_RELEASE:=1
 PKG_FIXUP:=autoreconf
 
-ifeq ($(VARIANT),release)
-  COMPILE_MODE := release
+ifeq ($(VARIANT),perf)
+  COMPILE_MODE :=perf
 else
-  COMPILE_MODE := debug
+  COMPILE_MODE :=debug
 endif
 
 LOCAL_SRC := $(TOPDIR)/src/wlan
@@ -68,14 +68,12 @@ define Build/InstallDev
 	mkdir -p $(1)/usr/include/qcacld
 	$(CP) $(PKG_BUILD_DIR)/qcacld-3.0/wlan.ko $(PKG_BUILD_DIR)/qcacld-3.0/wlan.ko.unstripped
 	$(TOOLCHAIN_DIR)/aarch64-openwrt-linux-musl/bin/strip --strip-unneed $(PKG_BUILD_DIR)/qcacld-3.0/wlan.ko
-	$(CP) $(PKG_BUILD_DIR)/qcacld-3.0/wlan.ko $(1)/$(EXTRA_ADDR)/
 	$(CP) $(PKG_BUILD_DIR)/qca-wifi-host-cmn/utils/nlink/inc/wlan_nlink_common.h $(1)/usr/include/qcacld/
 endef
 
 define  KernelPackage/$(PKG_NAME)/install
-	$(INSTALL_DIR) $(1)/$(EXTRA_ADDR)/ $(1)/usr/include/qcacld/
-	$(CP) $(PKG_BUILD_DIR)/qcacld-3.0/wlan.ko $(1)/$(EXTRA_ADDR)/
-	$(CP) $(PKG_BUILD_DIR)/qca-wifi-host-cmn/utils/nlink/inc/wlan_nlink_common.h $(1)/usr/include/qcacld/
+	$(INSTALL_DIR) $(1)/$(EXTRA_ADDR)/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/qcacld-3.0/wlan.ko $(1)/$(EXTRA_ADDR)/
 endef
 
 $(eval $(call KernelPackage,$(PKG_NAME)))

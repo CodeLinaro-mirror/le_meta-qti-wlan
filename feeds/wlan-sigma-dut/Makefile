@@ -29,15 +29,9 @@ define Build/Prepare
 	$(Build/Patch)
 endef
 
-define Build/InstallDev
-	$(INSTALL_DIR) $(STAGING_DIR)
-	mkdir -p  $(1)/usr/sbin
-	$(CP) $(PKG_BUILD_DIR)/sigma_dut $(1)/usr/sbin/
-endef
-
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(CP) $(PKG_BUILD_DIR)/sigma_dut $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/sigma_dut $(1)/usr/sbin/
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
