@@ -1,11 +1,19 @@
 inherit autotools-brokensep module qperf
 
-DESCRIPTION = "Qualcomm Atheros WLAN CLD3.0 low latency driver"
+SUMMARY = "Qualcomm Technologies, Inc. WLAN Driver"
+DESCRIPTION = "Qualcomm Technologies, Inc. WLAN CLD3.0 low latency driver for the first WLAN chip.\
+               It is a kernel extra module, which loaded by qca6696-module-load.service \
+               once the system bootup. And this WLAN host driver module name is qca6490.ko,\
+               it create two interface by defaults, one is wlan0 and the other is wlan1. \
+               Application can use the wireless interfaces as STA or AP mode in need. \
+               Usually, it bind to pcie0 slot by default if it loaded first. \"
+HOMEPAGE = "https://git.codelinaro.org/"
 LICENSE = "ISC"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=f3b90e78ea0cffb20bf5cca7947a896d"
 
-_MODNAME = "qca6696"
-FW_PATH_NAME = "qca6390"
+PR = "r8"
+_MODNAME = "qca6490"
+FW_PATH_NAME = "qca6490"
 FILES_${PN}     += "lib/firmware/wlan/*"
 FILES_${PN}     += "lib/firmware/*"
 FILES_${PN}     += "lib/modules/${KERNEL_VERSION}/extra/${_MODNAME}.ko"
@@ -15,35 +23,28 @@ RPROVIDES_${PN} += "${PROVIDES_NAME}-${KERNEL_VERSION}"
 do_unpack[deptask] = "do_populate_sysroot"
 PR = "r8"
 
-
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/qcacld-3.0/"
 SRC_URI += "file://wlan/qca-wifi-host-cmn/"
 SRC_URI += "file://wlan/fw-api/"
-SRC_URI_append_sdxprairie = " file://device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6390.ini"
-SRC_URI_append_sdxprairie = " file://device/qcom/wlan/sdx_auto/wlan_mac.bin"
-SRC_URI_append_sa515m = " file://device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6390.ini"
-SRC_URI_append_sa515m = " file://device/qcom/wlan/sdx_auto/wlan_mac.bin"
-SRC_URI_append_sa415m = " file://device/qcom/wlan/sdx24_auto/WCNSS_qcom_cfg_qca6390.ini"
-SRC_URI_append_sa415m = " file://device/qcom/wlan/sdx24_auto/wlan_mac.bin"
 
-S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn/"
-S = "${WORKDIR}/wlan/qcacld-3.0/"
+S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn"
+S = "${WORKDIR}/wlan/qcacld-3.0"
 
 FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld/${_MODNAME}"
 
 # Explicitly disable HL to enable LL as current WLAN driver is not having
 # simultaneous support of HL and LL.
-EXTRA_OEMAKE += "CONFIG_CLD_HL_SDIO_CORE=n CONFIG_CNSS_SDIO=n"
-EXTRA_OEMAKE += "CONFIG_QCA_CLD_WLAN_PROFILE=qca6390"
-EXTRA_OEMAKE += "DYNAMIC_SINGLE_CHIP=${_MODNAME}"
-EXTRA_OEMAKE += "MODNAME=${_MODNAME}"
+EXTRA_OEMAKE_append = " CONFIG_CLD_HL_SDIO_CORE=n \
+                       CONFIG_CNSS_SDIO=n \
+                       CONFIG_QCA_CLD_WLAN_PROFILE=qca6490 \
+                       DYNAMIC_SINGLE_CHIP=${_MODNAME} \
+                       MODNAME=${_MODNAME} \
+                       "
 
 #Enable/Disable IPA by MACHINE name
-EXTRA_OEMAKE_append_sdxprairie = " CONFIG_ENABLE_IPA=y"
 EXTRA_OEMAKE_append_sa515m = " CONFIG_ENABLE_IPA=n"
 
-#Enable DFS channel in STA_AP_MODE for sdxprairie platform
 _WLAN_CFG_OVERRIDE_515 = "\
 						CONFIG_FEATURE_FORCE_WAKE=y \
 						CONFIG_FEATURE_HAL_DELAYED_REG_WRITE=y \
@@ -68,32 +69,39 @@ _WLAN_CFG_OVERRIDE_515 = "\
 						CONFIG_FEATURE_COEX=y \
 						CONFIG_QCACLD_FEATURE_BTC_CHAIN_MODE=y \
 						CONFIG_QCACLD_FEATURE_COEX_CONFIG=y \
+						CONFIG_DIRECT_BUF_RX_ENABLE=y \
+						CONFIG_WMI_DBR_SUPPORT=y \
+						CONFIG_QCOM_ESE=y \
+						CONFIG_RX_FISA=n \
+						CONFIG_WLAN_BCN_RECV_FEATURE=n \
+						CONFIG_SAP_AVOID_ACS_FREQ_LIST=n \
+						CONFIG_SAR_SAFETY_FEATURE=n \
+						CONFIG_FEATURE_INTEROP_ISSUES_AP=n \
+						CONFIG_FEATURE_CLUB_LL_STATS_AND_GET_STATION=n \
+						CONFIG_INTERFACE_MGR=n \
+						CONFIG_FEATURE_MSCS=n \
+						CONFIG_ADAPTIVE_11R=n \
+						CONFIG_CM_ROAM_OFFLOAD=n \
+						CONFIG_ANI_LEVEL_REQUEST=n \
+						CONFIG_WLAN_HANG_EVENT=n \
+						CONFIG_FEATURE_VDEV_OPS_WAKELOCK=n \
+						CONFIG_QCACLD_RX_DESC_MULTI_PAGE_ALLOC=n \
+						CONFIG_RX_HASH_DEBUG=n \
+						CONFIG_DP_MEM_PRE_ALLOC=n \
+						CONFIG_MAX_ALLOC_PAGE_SIZE=n \
+						CONFIG_UNIT_TEST=n \
+						CONFIG_DSC_DEBUG=n \
+						CONFIG_LEAK_DETECTION=n \
+						CONFIG_TALLOC_DEBUG=n \
+						CONFIG_HAL_DEBUG=n \
+						CONFIG_HIF_DEBUG=n \
+						CONFIG_QDF_TEST=n \
+						CONFIG_HIF_REG_WINDOW_SUPPORT=y \
+						CONFIG_DEVICE_FORCE_WAKE_ENABLE=y \
+						CONFIG_HIF_CE_DEBUG_DATA_BUF=n  \
 						"
-_WLAN_CFG_OVERRIDE_415 = "\
-						CONFIG_FEATURE_FORCE_WAKE=y \
-						CONFIG_FEATURE_HAL_DELAYED_REG_WRITE=y \
-						CONFIG_FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE=n \
-						CONFIG_SUPPORT_P2P_BY_ONE_INTF_WLAN=y \
-						CONFIG_FEATURE_MONITOR_MODE_SUPPORT=n \
-						CONFIG_DCS=n \
-						CONFIG_WLAN_FEATURE_MIB_STATS=n \
-						CONFIG_WLAN_CONV_SPECTRAL_ENABLE=n \
-						CONFIG_FEATURE_MEMDUMP_ENABLE=n \
-						CONFIG_FEATURE_UNIT_TEST_SUSPEND=n \
-						CONFIG_WLAN_WBUFF=n \
-						CONFIG_TSO_DEBUG_LOG_ENABLE=n \
-						CONFIG_WLAN_FEATURE_P2P_DEBUG=n \
-						CONFIG_DESC_DUP_DETECT_DEBUG=n \
-						CONFIG_DEBUG_RX_RING_BUFFER=n \
-						CONFIG_FOURTH_CONNECTION=n \
-						CONFIG_FOURTH_CONNECTION_AUTO=n \
-						CONFIG_REMOVE_PKT_LOG=y \
-						CONFIG_WDI_EVENT_ENABLE=n \
-                        "
 
 EXTRA_OEMAKE_append_sa515m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_515}"
-EXTRA_OEMAKE_append_sdxprairie = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_515}"
-EXTRA_OEMAKE_append_sa415m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_415}"
 
 LDFLAGS_aarch64 = "-O1 --hash-style=gnu --as-needed"
 
@@ -141,20 +149,6 @@ do_install_append() {
     if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}; then
         install -m 0644 ${WORKDIR}/init_qti_wlan_auto.service -D ${D}${systemd_unitdir}/system/init_qti_wlan_auto.service
     fi
-}
-
-do_install_append_sa515m() {
-    install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6390.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
-    chmod -R 0664 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
-}
-
-do_install_append_sa415m() {
-    install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx24_auto/WCNSS_qcom_cfg_qca6390.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
-    chown -RH root:1001 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
-    chmod -R 0664 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
-    install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx24_auto/wlan_mac.bin ${FIRMWARE_PATH}/wlan_mac.bin
-    chown -RH root:1001 ${FIRMWARE_PATH}/wlan_mac.bin
-    chmod -R 0664 ${FIRMWARE_PATH}/wlan_mac.bin
 }
 
 do_module_signing() {
