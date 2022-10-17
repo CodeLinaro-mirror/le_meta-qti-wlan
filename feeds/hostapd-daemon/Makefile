@@ -78,13 +78,10 @@ define Build/Compile
         $(MAKE) -j32 $(HOSTAPD_MAKEOPTS)
 endef
 
-define Build/InstallDev
-endef
-
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(CP) $(PKG_BUILD_DIR)/hostapd/hostapd $(1)/usr/sbin/
-	$(CP) $(PKG_BUILD_DIR)/hostapd/hostapd_cli $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hostapd/hostapd $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hostapd/hostapd_cli $(1)/usr/sbin/
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
