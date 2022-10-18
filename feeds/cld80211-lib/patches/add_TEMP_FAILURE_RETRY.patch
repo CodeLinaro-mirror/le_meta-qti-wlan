@@ -1,0 +1,33 @@
+From 7abba24df63a8c43bb958c239d8ea46583ecf27c Mon Sep 17 00:00:00 2001
+From: Jingbin Hu<quic_jingbinh@quicinc.com>
+Date: Mon, 5 Sep 2022 23:33:37 -0700
+Subject: [PATCH] Add TEMP_FAILURE_RETRY
+
+Signed-off-by: Jingbin Hu<quic_jingbinh@quicinc.com>
+---
+ cld80211_lib.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/cld80211_lib.c b/cld80211_lib.c
+index bc082a9..2973821 100644
+--- a/cld80211_lib.c
++++ b/cld80211_lib.c
+@@ -50,6 +50,15 @@
+  #include <unistd.h>
+  #define ALOGI(fmt, args...) syslog(LOG_INFO, fmt, ## args)
+  #define ALOGE(fmt, args...) syslog(LOG_ERR, fmt, ## args)
++#ifndef TEMP_FAILURE_RETRY
++/* Used to retry syscalls that can return EINTR. */
++#define TEMP_FAILURE_RETRY(exp) ({         \
++	typeof (exp) _rc;                      \
++	do {                                   \
++	     _rc = (exp);                       \
++           } while (_rc == -1 && errno == EINTR); \
++		    _rc; })
++#endif
+  extern const char *__progname;
+  const char *getprogname() { return (__progname); }
+ #endif
+-- 
+2.7.4
+
