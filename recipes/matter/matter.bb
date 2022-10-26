@@ -6,21 +6,21 @@ SECTION = "base"
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=89aea4e17d99a7cacdbeed46a0096b10"
 
-BRANCH = "master"
+BRANCH = "v1.0-branch"
 SRC_URI = "gitsm://github.com/project-chip/connectedhomeip.git;branch=${BRANCH};protocol=https"
-SRCREV = "c77810b9a777e978b537b9d43b655eb99edf48a9"
+SRCREV = "v1.0.0"
 SRC_URI[md5sum] = "d99b3661674e0901bdb26675a0a1e717"
 SRC_URI[sha256sum] = "0d289e85f56e734149597f8c5346cdaa494002158fa102c4149b891f075dcaec"
 
-SRC_URI += "file://python_json.patch \
-            file://activiate.patch \
-            file://environment.patch"
+SRC_URI += " file://activiate.patch \
+             file://python_json.patch \
+             file://update-python-dependencies.patch \
+             file://environment.patch"
 
 S = "${WORKDIR}/git"
 
-DEPENDS += "avahi ninja-native dbus-glib-native"
+DEPENDS += " avahi ninja-native dbus-glib-native "
 
-TARGET_CC_ARCH += "${LDFLAGS}"
 TARGET_CC = "${CC}"
 TARGET_CXX = "${CXX}"
 
@@ -39,8 +39,6 @@ do_configure() {
 }
 
 do_compile() {
-    cd ${S}
-    source scripts/activate.sh
 
     cd ${S}/examples/all-clusters-app/linux/out/test
     python3 ${THISDIR}/files/rspfile.py toolchain.ninja ${S}
