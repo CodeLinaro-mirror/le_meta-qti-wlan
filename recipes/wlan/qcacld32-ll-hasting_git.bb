@@ -41,7 +41,7 @@ EXTRA_OEMAKE += "MODNAME=${_MODNAME}"
 
 #Enable/Disable IPA by MACHINE name
 EXTRA_OEMAKE_append_sdxprairie = " CONFIG_ENABLE_IPA=y"
-EXTRA_OEMAKE_append_sa515m = " CONFIG_ENABLE_IPA=n"
+EXTRA_OEMAKE_append_sa515m = " CONFIG_ENABLE_IPA=y"
 
 #Enable DFS channel in STA_AP_MODE for sdxprairie platform
 _WLAN_CFG_OVERRIDE_515 = "\
