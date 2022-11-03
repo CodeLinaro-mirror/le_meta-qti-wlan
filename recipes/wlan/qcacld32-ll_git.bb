@@ -56,9 +56,11 @@ do_patch() {
     wget https://git.codelinaro.org/clo/la/platform/vendor/qcom-opensource/wlan/qca-wifi-host-cmn/-/commit/918e46deec2ad759e59d6bfcd0f9421e0877dfde.diff
     wget https://git.codelinaro.org/clo/la/platform/vendor/qcom-opensource/wlan/qca-wifi-host-cmn/-/commit/31f4e86ecb7551696255c289a9fac20ef1f5b5cb.diff
     wget https://git.codelinaro.org/clo/la/platform/vendor/qcom-opensource/wlan/qca-wifi-host-cmn/-/commit/a29108516fab259a7c637b6dbf32af3bac2bc855.diff
+    wget https://git.codelinaro.org/clo/la/platform/vendor/qcom-opensource/wlan/qca-wifi-host-cmn/-/commit/3e3a071188d84bf7cda5590520ae78cc8d312dc2.diff
     patch -p1 < 918e46deec2ad759e59d6bfcd0f9421e0877dfde.diff
     patch -p1 < 31f4e86ecb7551696255c289a9fac20ef1f5b5cb.diff
     patch -p1 < a29108516fab259a7c637b6dbf32af3bac2bc855.diff
+    patch -p1 < 3e3a071188d84bf7cda5590520ae78cc8d312dc2.diff
     cd ${S}
     patch -p1 < ${WORKDIR}/qcacld-kbuild.patch
     mv ${WORKDIR}/wlan/fw-api-${QCAAPI_REV} ${WORKDIR}/wlan/fw-api
