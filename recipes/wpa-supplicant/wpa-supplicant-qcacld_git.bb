@@ -21,5 +21,12 @@ S = "${WORKDIR}/external/wpa_supplicant_8/wpa_supplicant"
 do_configure() {
     install -m 0644 ${WORKDIR}/defconfig-qcacld .config
     echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
+    echo "CFLAGS +=\"-I${STAGING_INCDIR}/dbus-1.0\"" >> .config
 }
 
+do_install_append(){
+    install -d ${D}/etc/dbus-1/system.d/
+    install -m 0644 ${S}/dbus/dbus-wpa_supplicant.conf -D ${D}/etc/dbus-1/system.d/dbus-wpa_supplicant.conf
+    install -d ${D}/etc/systemd/system/
+    install -m 0644 ${S}/dbus/fi.w1.wpa_supplicant1.service -D ${D}/etc/systemd/system/fi.w1.wpa_supplicant1.service
+}
