@@ -1,6 +1,6 @@
-From e15858d8c25699f31d8c5639b2e45d5aacb3a88a Mon Sep 17 00:00:00 2001
+From fe65f90a20e7d79538b7cd348e0825db2f6ac8da Mon Sep 17 00:00:00 2001
 From: jiaymao <quic_jiaymao@quicinc.com>
-Date: Wed, 16 Nov 2022 18:04:14 +0800
+Date: Wed, 16 Nov 2022 18:43:46 +0800
 Subject: [PATCH] add qcs610 in src platform layer
 
 Signed-off-by: jiaymao <quic_jiaymao@quicinc.com>
@@ -804,7 +804,7 @@ index 5080622..83ba37a 100644
  }
 diff --git a/src/platform/qcs610/fluoride/AdapterMain.cpp b/src/platform/qcs610/fluoride/AdapterMain.cpp
 new file mode 100644
-index 0000000..12872c3
+index 0000000..41abd03
 --- /dev/null
 +++ b/src/platform/qcs610/fluoride/AdapterMain.cpp
 @@ -0,0 +1,876 @@
@@ -873,7 +873,7 @@ index 0000000..12872c3
 +const char *CONFIG_FILE_PATH           = "/etc/bluetooth/bt_chip.conf";
 +const char *CONFIG_DEFAULT_DEVICE_NAME = "QCS610_CHIP";
 +#define BTM_MAX_LOC_BD_NAME_LEN 248
-+#define AUTO_CONNECT 1
++#define AUTO_CONNECT 0
 +
 +using namespace gatt;
 +
