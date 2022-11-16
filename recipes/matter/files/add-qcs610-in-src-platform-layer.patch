@@ -1,6 +1,6 @@
-From f186fb01491394e1037159338b2b4983b4b9821c Mon Sep 17 00:00:00 2001
+From 247b4e65c888ec81cd3feb63af93f515ba2a1130 Mon Sep 17 00:00:00 2001
 From: jiaymao <quic_jiaymao@quicinc.com>
-Date: Wed, 16 Nov 2022 19:06:27 +0800
+Date: Wed, 16 Nov 2022 19:18:00 +0800
 Subject: [PATCH] add qcs610 in src platform layer
 
 Signed-off-by: jiaymao <quic_jiaymao@quicinc.com>
@@ -9,15 +9,15 @@ Signed-off-by: jiaymao <quic_jiaymao@quicinc.com>
  src/platform/qcs610/BLEManagerImpl.h          |  36 +-
  src/platform/qcs610/BUILD.gn                  |  79 +-
  src/platform/qcs610/BlePlatformConfig.h       |   3 +-
+ src/platform/qcs610/CHIPLinuxStorage.h        |   6 +-
  .../qcs610/ConnectivityManagerImpl.cpp        |   2 +-
- src/platform/qcs610/PlatformManagerImpl.cpp   |   3 +-
  src/platform/qcs610/args.gni                  |   2 +-
  src/platform/qcs610/dbus/openthread/BUILD.gn  |   2 +-
  src/platform/qcs610/dbus/wpa/BUILD.gn         |   2 +-
  src/platform/qcs610/fluoride/AdapterMain.cpp  | 876 ++++++++++++++++++
  src/platform/qcs610/fluoride/AdapterMain.hpp  | 156 ++++
  src/platform/qcs610/fluoride/Types.h          |  49 +-
- 12 files changed, 1244 insertions(+), 206 deletions(-)
+ 12 files changed, 1245 insertions(+), 208 deletions(-)
  create mode 100644 src/platform/qcs610/fluoride/AdapterMain.cpp
  create mode 100644 src/platform/qcs610/fluoride/AdapterMain.hpp
 
@@ -789,6 +789,29 @@ index 4c1ffd4..6f0fec3 100644
  // ========== Platform-specific Configuration Overrides =========
  
  /* none so far */
+diff --git a/src/platform/qcs610/CHIPLinuxStorage.h b/src/platform/qcs610/CHIPLinuxStorage.h
+index 61945cd..075d3f1 100644
+--- a/src/platform/qcs610/CHIPLinuxStorage.h
++++ b/src/platform/qcs610/CHIPLinuxStorage.h
+@@ -37,15 +37,15 @@
+ #include <platform/qcs610/CHIPLinuxStorageIni.h>
+ 
+ #ifndef FATCONFDIR
+-#define FATCONFDIR "/tmp"
++#define FATCONFDIR "/data"
+ #endif
+ 
+ #ifndef SYSCONFDIR
+-#define SYSCONFDIR "/tmp"
++#define SYSCONFDIR "/data"
+ #endif
+ 
+ #ifndef LOCALSTATEDIR
+-#define LOCALSTATEDIR "/tmp"
++#define LOCALSTATEDIR "/data"
+ #endif
+ 
+ #define CHIP_DEFAULT_FACTORY_PATH                                                                                                  \
 diff --git a/src/platform/qcs610/ConnectivityManagerImpl.cpp b/src/platform/qcs610/ConnectivityManagerImpl.cpp
 index afadf3e..d289b2a 100644
 --- a/src/platform/qcs610/ConnectivityManagerImpl.cpp
@@ -802,21 +825,6 @@ index afadf3e..d289b2a 100644
  #endif
  
  using namespace ::chip;
-diff --git a/src/platform/qcs610/PlatformManagerImpl.cpp b/src/platform/qcs610/PlatformManagerImpl.cpp
-index cfe9dac..906f0e7 100644
---- a/src/platform/qcs610/PlatformManagerImpl.cpp
-+++ b/src/platform/qcs610/PlatformManagerImpl.cpp
-@@ -210,8 +210,9 @@ void PlatformManagerImpl::_Shutdown()
-     {
-         ChipLogError(DeviceLayer, "Failed to get current uptime since the Node’s last reboot");
-     }
--
-+    ChipLogError(DeviceLayer, "PlatformManagerImpl::_Shutdown");
-     Internal::GenericPlatformManagerImpl_POSIX<PlatformManagerImpl>::_Shutdown();
-+    ChipLogError(DeviceLayer, "PlatformManagerImpl::_Shutdown done");
- }
- 
- #if CHIP_WITH_GIO
 diff --git a/src/platform/qcs610/args.gni b/src/platform/qcs610/args.gni
 index f9f97ee..5794587 100644
 --- a/src/platform/qcs610/args.gni
