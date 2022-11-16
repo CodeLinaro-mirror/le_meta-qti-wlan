@@ -1,9 +1,9 @@
-From 9a710991b41722c210364bb3dd0991a41fe4d437 Mon Sep 17 00:00:00 2001
-From: Cheng Jiang <quic_chejiang@quicinc.com>
-Date: Wed, 16 Nov 2022 15:36:49 +0800
+From e15858d8c25699f31d8c5639b2e45d5aacb3a88a Mon Sep 17 00:00:00 2001
+From: jiaymao <quic_jiaymao@quicinc.com>
+Date: Wed, 16 Nov 2022 18:04:14 +0800
 Subject: [PATCH] add qcs610 in src platform layer
 
-Signed-off-by: Cheng Jiang <quic_chejiang@quicinc.com>
+Signed-off-by: jiaymao <quic_jiaymao@quicinc.com>
 ---
  src/platform/qcs610/BLEManagerImpl.cpp        | 210 ++---
  src/platform/qcs610/BLEManagerImpl.h          |  35 +-
@@ -14,10 +14,10 @@ Signed-off-by: Cheng Jiang <quic_chejiang@quicinc.com>
  src/platform/qcs610/args.gni                  |   2 +-
  src/platform/qcs610/dbus/openthread/BUILD.gn  |   2 +-
  src/platform/qcs610/dbus/wpa/BUILD.gn         |   2 +-
- src/platform/qcs610/fluoride/AdapterMain.cpp  | 861 ++++++++++++++++++
+ src/platform/qcs610/fluoride/AdapterMain.cpp  | 876 ++++++++++++++++++
  src/platform/qcs610/fluoride/AdapterMain.hpp  | 156 ++++
  src/platform/qcs610/fluoride/Types.h          |  49 +-
- 12 files changed, 1204 insertions(+), 200 deletions(-)
+ 12 files changed, 1219 insertions(+), 200 deletions(-)
  create mode 100644 src/platform/qcs610/fluoride/AdapterMain.cpp
  create mode 100644 src/platform/qcs610/fluoride/AdapterMain.hpp
 
@@ -804,10 +804,10 @@ index 5080622..83ba37a 100644
  }
 diff --git a/src/platform/qcs610/fluoride/AdapterMain.cpp b/src/platform/qcs610/fluoride/AdapterMain.cpp
 new file mode 100644
-index 0000000..e9f7aa9
+index 0000000..12872c3
 --- /dev/null
 +++ b/src/platform/qcs610/fluoride/AdapterMain.cpp
-@@ -0,0 +1,861 @@
+@@ -0,0 +1,876 @@
 +/*
 + * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
 + * Not a Contribution.
@@ -870,7 +870,8 @@ index 0000000..e9f7aa9
 +#include "AdapterMain.hpp"
 +#define LOGTAG  "AdapterMain "
 +
-+const char *CONFIG_FILE_PATH       = "/etc/bluetooth/bt_chip.conf";
++const char *CONFIG_FILE_PATH           = "/etc/bluetooth/bt_chip.conf";
++const char *CONFIG_DEFAULT_DEVICE_NAME = "QCS610_CHIP";
 +#define BTM_MAX_LOC_BD_NAME_LEN 248
 +#define AUTO_CONNECT 1
 +
@@ -1271,9 +1272,23 @@ index 0000000..e9f7aa9
 +    DeInitHandler();
 +}
 +
-+void InitHandler(void)
++inline config_t * initChipConfig()
 +{
 +    config_t * config = config_new (CONFIG_FILE_PATH);
++    if (NULL == config) {
++        ALOGE (LOGTAG " config file does not exist, generate a default one");
++        config = config_new_empty();
++        config_set_string(config, CONFIG_DEFAULT_SECTION, "BtLocalDeviceName", CONFIG_DEFAULT_DEVICE_NAME);
++        config_save(config, CONFIG_FILE_PATH);
++    } else {
++        ALOGE(LOGTAG "read config file, dev name is %s", config_get_string(config, CONFIG_DEFAULT_SECTION, "BtLocalDeviceName", "MDM"));
++    }
++    return config;
++}
++
++void InitHandler(void)
++{
++    config_t * config = initChipConfig();
 +    if (NULL == config) {
 +        ALOGE (LOGTAG " Error in Loading config file");
 +    }
