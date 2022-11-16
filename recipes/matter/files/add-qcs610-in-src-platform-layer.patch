@@ -1,6 +1,6 @@
-From c143a41f9ab9e4864eeb84f352ff8af1fe6ca8bb Mon Sep 17 00:00:00 2001
+From 9124f5f9e51d0c94595c5f04e096afa861233cd6 Mon Sep 17 00:00:00 2001
 From: jiaymao <quic_jiaymao@quicinc.com>
-Date: Wed, 16 Nov 2022 19:22:13 +0800
+Date: Wed, 16 Nov 2022 19:27:01 +0800
 Subject: [PATCH] add qcs610 in src platform layer
 
 Signed-off-by: jiaymao <quic_jiaymao@quicinc.com>
@@ -15,10 +15,10 @@ Signed-off-by: jiaymao <quic_jiaymao@quicinc.com>
  src/platform/qcs610/args.gni                  |   2 +-
  src/platform/qcs610/dbus/openthread/BUILD.gn  |   2 +-
  src/platform/qcs610/dbus/wpa/BUILD.gn         |   2 +-
- src/platform/qcs610/fluoride/AdapterMain.cpp  | 876 ++++++++++++++++++
- src/platform/qcs610/fluoride/AdapterMain.hpp  | 156 ++++
+ src/platform/qcs610/fluoride/AdapterMain.cpp  | 905 ++++++++++++++++++
+ src/platform/qcs610/fluoride/AdapterMain.hpp  | 154 +++
  src/platform/qcs610/fluoride/Types.h          |  49 +-
- 13 files changed, 1246 insertions(+), 209 deletions(-)
+ 13 files changed, 1273 insertions(+), 209 deletions(-)
  create mode 100644 src/platform/qcs610/fluoride/AdapterMain.cpp
  create mode 100644 src/platform/qcs610/fluoride/AdapterMain.hpp
 
@@ -871,10 +871,10 @@ index 5080622..83ba37a 100644
  }
 diff --git a/src/platform/qcs610/fluoride/AdapterMain.cpp b/src/platform/qcs610/fluoride/AdapterMain.cpp
 new file mode 100644
-index 0000000..41abd03
+index 0000000..b4fa454
 --- /dev/null
 +++ b/src/platform/qcs610/fluoride/AdapterMain.cpp
-@@ -0,0 +1,876 @@
+@@ -0,0 +1,905 @@
 +/*
 + * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
 + * Not a Contribution.
@@ -956,6 +956,7 @@ index 0000000..41abd03
 +
 +std::map <std::string, uint16_t> connectedDeviceMap;
 +
++bool is_advertising = false;
 +
 +void adapterGattsCallback::onConnectionStateChange(string deviceAddress, int status,
 +                                                               int newState)
@@ -1143,6 +1144,7 @@ index 0000000..41abd03
 +        ALOGD(LOGTAG"Failure case unknown");
 +     }
 +    chip::DeviceLayer::Internal::BLEManagerImpl::NotifyBLEPeripheralAdvStartComplete(status==AdvertisingSetCallback::ADVERTISE_SUCCESS, nullptr);
++    is_advertising = true;
 +  }
 +
 +  void  onAdvertisingDataSet(AdvertisingSet *advertisingset,int status)
@@ -1158,6 +1160,7 @@ index 0000000..41abd03
 +  {
 +    ALOGD(LOGTAG"%s Advertiser ID  %d",__FUNCTION__,advertisingSet->getAdvertiserId());
 +    chip::DeviceLayer::Internal::BLEManagerImpl::NotifyBLEPeripheralAdvStopComplete(true, nullptr);
++    is_advertising = false;
 +  }
 +
 +  void onAdvertisingEnabled (AdvertisingSet *advertisingSet, bool enable, int status)
@@ -1251,7 +1254,7 @@ index 0000000..41abd03
 +    }  else if (!threadInfo[thread_type].thread_handler) {
 +        ALOGE(TAG " Missing thread message handler %d", thread_type);
 +    } else {
-+        ALOGE(TAG "%s Thread Name = %s", __func__, threadInfo[thread_type].thread_name);
++        ALOGE(TAG " %s Thread Name = %s", __func__, threadInfo[thread_type].thread_name);
 +        thread_post(threadInfo[thread_type].thread_id, threadInfo[thread_type].
 +                thread_handler, msg);
 +    }
@@ -1308,6 +1311,7 @@ index 0000000..41abd03
 +        bt_interface->cleanup ();
 +        bt_interface = NULL;
 +    }
++    ALOGI (LOGTAG " bt_interface->cleanup done");
 +
 +    if (bt_device_) {
 +        bt_device_->common.close ((hw_device_t *) & bt_device_->common);
@@ -1329,14 +1333,18 @@ index 0000000..41abd03
 +
 +void deInitialize(void)
 +{
-+    if (bt_state == BT_STATE_ON) {
-+        BtEvent *event = new BtEvent;
-+        event->event_id = GAP_API_DISABLE;
-+        ALOGV (LOGTAG " Posting disable to GAP thread");
-+        PostMessage (THREAD_ID_GAP, event);
++    ALOGI (LOGTAG " deInitialize enter");
++    if (is_advertising) {
++        g_adapter->StopAdvertisement();
 +    }
-+
-+    DeInitHandler();
++    if (mgattServer != nullptr) {
++      mgattServer->close();
++      usleep(30000); // 30ms for gatt server to deregister
++    }
++    // SendDisableCmdToGap();
++    // exithandler_waitbtoff = true;
++    // DeInitHandler();
++    ALOGI (LOGTAG " deInitialize done");
 +}
 +
 +inline config_t * initChipConfig()
@@ -1397,24 +1405,45 @@ index 0000000..41abd03
 +        if ( g_gap != NULL)
 +            delete g_gap;
 +    }
++    ALOGI (LOGTAG " free gap done");
 +
 +    if (threadInfo[THREAD_ID_GATT].thread_id != NULL){
 +        thread_free(threadInfo[THREAD_ID_GATT].thread_id);
 +        if (g_gatt != NULL)
 +            delete g_gatt;
 +    }
++    ALOGI (LOGTAG " free gatt done");
 +
 +    // Stop SDP Client Thread
 +    if (threadInfo[THREAD_ID_SDP_CLIENT].thread_id != NULL) {
 +        thread_free (threadInfo[THREAD_ID_SDP_CLIENT].thread_id);
 +    }
++    ALOGI (LOGTAG " free sdp done");
 +
 +    if (threadInfo[THREAD_ID_MAIN].thread_id != NULL){
 +        thread_free(threadInfo[THREAD_ID_MAIN].thread_id);
 +    }
++    ALOGI (LOGTAG " free main done");
++
++    if(g_gap && g_gap->IsEnabled()) {
++        // SendDisableCmdToGap();
++
++        ALOGI (LOGTAG " unloading BT stack");
++        UnLoadBtStack ();
++    }
++    ALOGI (LOGTAG " unload BT stack done");
 +}
 +
-+
++static void SendDisableCmdToGap() {
++    if (bt_state == BT_STATE_ON) {
++        BtEvent *event = new BtEvent;
++        event->event_id = GAP_API_DISABLE;
++        ALOGV (LOGTAG " Posting disable to GAP thread");
++        PostMessage (THREAD_ID_GAP, event);
++    } else {
++        fprintf( stdout, "Currently BT is already OFF\n");
++    }
++}
 +
 +void BtMainMsgHandler (void *context) {
 +    BtEvent *event = NULL;
@@ -1753,10 +1782,10 @@ index 0000000..41abd03
 +
 diff --git a/src/platform/qcs610/fluoride/AdapterMain.hpp b/src/platform/qcs610/fluoride/AdapterMain.hpp
 new file mode 100644
-index 0000000..b5eb80f
+index 0000000..85d7c77
 --- /dev/null
 +++ b/src/platform/qcs610/fluoride/AdapterMain.hpp
-@@ -0,0 +1,156 @@
+@@ -0,0 +1,154 @@
 +/*
 + * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
 + * Not a Contribution.
@@ -1851,7 +1880,6 @@ index 0000000..b5eb80f
 +    const std::string UUID16_CHIPoBLEService = "FFF6";
 +    const std::string UUID16_CHIPoBLECharacteristic_1 = "18ee2ef5-263d-4559-959f-4f9c429f9d11";
 +    const std::string UUID16_CHIPoBLECharacteristic_2 = "18ee2ef5-263d-4559-959f-4f9c429f9d12";
-+    bool is_restarting_adv = false;
 +    AdapterMain(GattLibService* );
 +    ~AdapterMain();
 +    void AddMatterService(void);
@@ -1864,7 +1892,6 @@ index 0000000..b5eb80f
 +    bool ReadAdvertiserConfigFile();
 +    void ParseAdvertiserDetails(string);
 +    bool DisableGATTSTEST();
-+    // bool StartAdvertisement(string);
 +    bool BuildAdvertisingParameters(uint8_t mode, bool enable, uint32_t duration);
 +    bool BuildAdvertisingData(string uuid);
 +    bool UnregisterServer(string);
