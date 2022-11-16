@@ -1,6 +1,6 @@
-From 247b4e65c888ec81cd3feb63af93f515ba2a1130 Mon Sep 17 00:00:00 2001
+From c143a41f9ab9e4864eeb84f352ff8af1fe6ca8bb Mon Sep 17 00:00:00 2001
 From: jiaymao <quic_jiaymao@quicinc.com>
-Date: Wed, 16 Nov 2022 19:18:00 +0800
+Date: Wed, 16 Nov 2022 19:22:13 +0800
 Subject: [PATCH] add qcs610 in src platform layer
 
 Signed-off-by: jiaymao <quic_jiaymao@quicinc.com>
@@ -10,6 +10,7 @@ Signed-off-by: jiaymao <quic_jiaymao@quicinc.com>
  src/platform/qcs610/BUILD.gn                  |  79 +-
  src/platform/qcs610/BlePlatformConfig.h       |   3 +-
  src/platform/qcs610/CHIPLinuxStorage.h        |   6 +-
+ src/platform/qcs610/CHIPPlatformConfig.h      |   2 +-
  .../qcs610/ConnectivityManagerImpl.cpp        |   2 +-
  src/platform/qcs610/args.gni                  |   2 +-
  src/platform/qcs610/dbus/openthread/BUILD.gn  |   2 +-
@@ -17,7 +18,7 @@ Signed-off-by: jiaymao <quic_jiaymao@quicinc.com>
  src/platform/qcs610/fluoride/AdapterMain.cpp  | 876 ++++++++++++++++++
  src/platform/qcs610/fluoride/AdapterMain.hpp  | 156 ++++
  src/platform/qcs610/fluoride/Types.h          |  49 +-
- 12 files changed, 1245 insertions(+), 208 deletions(-)
+ 13 files changed, 1246 insertions(+), 209 deletions(-)
  create mode 100644 src/platform/qcs610/fluoride/AdapterMain.cpp
  create mode 100644 src/platform/qcs610/fluoride/AdapterMain.hpp
 
@@ -812,6 +813,17 @@ index 61945cd..075d3f1 100644
  #endif
  
  #define CHIP_DEFAULT_FACTORY_PATH                                                                                                  \
+diff --git a/src/platform/qcs610/CHIPPlatformConfig.h b/src/platform/qcs610/CHIPPlatformConfig.h
+index 788fe9b..a051d42 100644
+--- a/src/platform/qcs610/CHIPPlatformConfig.h
++++ b/src/platform/qcs610/CHIPPlatformConfig.h
+@@ -67,5 +67,5 @@ using CHIP_CONFIG_PERSISTED_STORAGE_KEY_TYPE = const char *;
+ // ==================== Security Configuration Overrides ====================
+ 
+ #ifndef CHIP_CONFIG_KVS_PATH
+-#define CHIP_CONFIG_KVS_PATH "/tmp/chip_kvs"
++#define CHIP_CONFIG_KVS_PATH "/data/chip_kvs"
+ #endif // CHIP_CONFIG_KVS_PATH
 diff --git a/src/platform/qcs610/ConnectivityManagerImpl.cpp b/src/platform/qcs610/ConnectivityManagerImpl.cpp
 index afadf3e..d289b2a 100644
 --- a/src/platform/qcs610/ConnectivityManagerImpl.cpp
