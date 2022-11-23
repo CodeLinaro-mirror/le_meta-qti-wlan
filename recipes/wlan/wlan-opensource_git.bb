@@ -5,7 +5,7 @@ SECTION = "kernel/modules"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/BSD;md5=3775480a712fc46a69647678acb234cb"
 LICENSE = "BSD"
 
-FILES_${PN}     += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/wlan.ko"
+FILES:${PN}     += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/wlan.ko"
 do_unpack[deptask] = "do_populate_sysroot"
 PR = "r2"
 
@@ -36,7 +36,7 @@ do_install () {
 }
 
 # Remove dependency for wrong kernel version
-python split_kernel_module_packages_append() {
+python split_kernel_module_packages:append() {
         if modules:
                 metapkg = d.getVar('KERNEL_MODULES_META_PACKAGE', True)
                 d.delVar('RDEPENDS_' + metapkg)

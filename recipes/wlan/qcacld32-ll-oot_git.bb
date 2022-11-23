@@ -4,10 +4,10 @@ DESCRIPTION = "Qualcomm Technologies, Inc. WLAN CLD3.0 low latency driver"
 LICENSE = "ISC"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=f3b90e78ea0cffb20bf5cca7947a896d"
 
-FILES_${PN}     += "lib/firmware/wlan/*"
-FILES_${PN}     += "lib/modules/${KERNEL_VERSION}/extra/wlan.ko"
+FILES:${PN}     += "lib/firmware/wlan/*"
+FILES:${PN}     += "lib/modules/${KERNEL_VERSION}/extra/wlan.ko"
 PROVIDES_NAME   = "kernel-module-wlan"
-RPROVIDES_${PN} += "${PROVIDES_NAME}-${KERNEL_VERSION}"
+RPROVIDES:${PN} += "${PROVIDES_NAME}-${KERNEL_VERSION}"
 do_unpack[deptask] = "do_populate_sysroot"
 PR = "r8"
 PV = "2.0"
@@ -33,7 +33,7 @@ S = "${WORKDIR}/wlan/qcacld-3.0/"
 
 FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld"
 
-do_configure_append_sxrneo() {
+do_configure:append:sxrneo() {
     sed -i '1i CONFIG_CLD_HL_SDIO_CORE=n' ${WORKDIR}/wlan/qcacld-3.0/configs/default_defconfig
     sed -i '1i CONFIG_CNSS_SDIO=n' ${WORKDIR}/wlan/qcacld-3.0/configs/default_defconfig
     sed -i '1i CONFIG_CNSS_QCA6750=y' ${WORKDIR}/wlan/qcacld-3.0/configs/default_defconfig
@@ -74,7 +74,7 @@ do_deploy () {
     install -m 0755 ${S}/unstripped/wlan.ko ${DEPLOYDIR}/kernel_modules/wlan.ko
 }
 
-FILES_${PN} += "${sysconfdir}/*"
-FILES_${PN} += "${nonarch_base_libdir}/modules/*"
+FILES:${PN} += "${sysconfdir}/*"
+FILES:${PN} += "${nonarch_base_libdir}/modules/*"
 
 addtask do_deploy after do_install

@@ -13,7 +13,7 @@ SRC_URI += "file://misc/"
 DEPENDS = "pkgconfig libnl openssl wpa-supplicant-8-lib liblog"
 
 LDFLAGS +="-L${RECIPE_SYSROOT}/usr/lib -llog"
-CFLAGS_append_sxrneo +="-DCONFIG_ANDROID_LOG"
+CFLAGS:append:sxrneo +="-DCONFIG_ANDROID_LOG"
 
 S = "${WORKDIR}/external/wpa_supplicant_8/hostapd/"
 PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"
@@ -35,11 +35,11 @@ do_configure() {
     fi
 }
 
-do_configure_append_sdxlemur() {
+do_configure:append:sdxlemur() {
     echo "CONFIG_WEP=y" >> .config
 }
 
-do_configure_append_sxrneo() {
+do_configure:append:sxrneo() {
     echo "LIBS_c +=-llog" >> .config
     echo "LIBS +=-llog" >> .config
 }
