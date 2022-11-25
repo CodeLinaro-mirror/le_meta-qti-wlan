@@ -91,19 +91,10 @@ define Build/Compile
         $(MAKE) -j32 $(WPA_SUPPLICANT_MAKEOPTS)
 endef
 
-define Build/InstallDev
-	$(INSTALL_DIR) $(STAGING_DIR)
-	mkdir -p  $(1)/usr/sbin
-	$(CP) $(PKG_BUILD_DIR)/wpa_supplicant/wpa_supplicant $(1)/usr/sbin/
-	$(CP) $(PKG_BUILD_DIR)/wpa_supplicant/wpa_cli $(1)/usr/sbin/
-endef
-
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/sbin
-	mkdir -p  $(1)/lib
-	$(CP) $(STAGING_DIR)/usr/lib/libwpa_supplicant_8_lib* $(1)/lib
-	$(CP) $(PKG_BUILD_DIR)/wpa_supplicant/wpa_supplicant $(1)/usr/sbin/
-	$(CP) $(PKG_BUILD_DIR)/wpa_supplicant/wpa_cli $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/wpa_supplicant/wpa_supplicant $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/wpa_supplicant/wpa_cli $(1)/usr/sbin/
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
