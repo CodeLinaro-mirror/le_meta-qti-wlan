@@ -22,5 +22,5 @@ RDEPENDS_${PN} += "\
     ${@bb.utils.contains('MACHINE', 'sa415m', '', 'qcacld32-ll-hsp', d)} \
     ${@bb.utils.contains('MACHINE', 'sa415m', '', 'qcacld32-cnss2', d)} \
     wpa-supplicant-qcacld \
-    ${@bb.utils.contains('MACHINE', 'sa415m', '', 'wlan-conf', d)} \
+    wlan-conf \
     "
