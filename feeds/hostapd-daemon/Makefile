@@ -15,6 +15,9 @@ HOSTAPD_CONFIG_FILE := $(PKG_BUILD_DIR)/hostapd/.config
 ifeq ($(TARGET_MACHINE),sdx65)
 	TARGET_ADD_CONFIG += echo -e "\nCONFIG_WEP=y" >> $(HOSTAPD_CONFIG_FILE)
 	TARGET_LOCAL_NAME :=sdxlemur
+else ifeq ($(TARGET_MACHINE),sdx75)
+	TARGET_ADD_CONFIG += echo -e "\nCONFIG_WEP=y" >> $(HOSTAPD_CONFIG_FILE)
+	TARGET_LOCAL_NAME :=sdxpinn
 else ifeq ($(TARGET_MACHINE),sxrneo)
 	TARGET_ADD_CONFIG += echo -e "\nLIBS_c +=-llog" >> $(HOSTAPD_CONFIG_FILE) && \
 			     echo -e "\nLIBS +=-llog" >> $(HOSTAPD_CONFIG_FILE)
@@ -75,17 +78,10 @@ define Build/Compile
         $(MAKE) -j32 $(HOSTAPD_MAKEOPTS)
 endef
 
-define Build/InstallDev
-	$(INSTALL_DIR) $(STAGING_DIR)
-	mkdir -p  $(1)/usr/sbin
-	$(CP) $(PKG_BUILD_DIR)/hostapd/hostapd $(1)/usr/sbin/
-	$(CP) $(PKG_BUILD_DIR)/hostapd/hostapd_cli $(1)/usr/sbin/
-endef
-
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(CP) $(PKG_BUILD_DIR)/hostapd/hostapd $(1)/usr/sbin/
-	$(CP) $(PKG_BUILD_DIR)/hostapd/hostapd_cli $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hostapd/hostapd $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hostapd/hostapd_cli $(1)/usr/sbin/
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
