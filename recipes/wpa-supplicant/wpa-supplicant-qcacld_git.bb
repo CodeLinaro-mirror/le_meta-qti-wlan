@@ -11,6 +11,7 @@ SRC_URI += "file://${MACHINE}/"
 SRC_URI += "file://misc/"
 
 DEPENDS += "glib-2.0 wpa-supplicant-8-lib dbus liblog"
+DEPENDS:append:kalama = " qmi-framework "
 DEPENDS:append:sdxlemur = " qmi qmi-framework"
 
 FILES:${PN} += "/usr/include/*"

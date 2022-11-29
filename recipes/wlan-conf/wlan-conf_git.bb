@@ -19,6 +19,7 @@ SRC_URI:append:sxrneo+= "file://sxrneo/wlan-conf_systemd_tmpfiles.conf"
 SRC_URI:append:sxrneo+= "file://sxrneo/fi.w1.wpa_supplicant1.service"
 SRC_URI:append:sxrneo+= "file://sxrneo/dbus-wpa_supplicant.conf"
 SRC_URI:append:sxrneo+= "file://sxrneo/dbus-wpa_supplicant_testing.conf"
+SRC_URI:append:kalama+= "file://sxrneo/wlan_daemon.service"
 
 # Update for each machine
 S = "${WORKDIR}/mdm-init/"
@@ -110,6 +111,18 @@ do_install:append:neo(){
 	fi
 }
 
+do_install:append:kalama(){
+	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
+		install -d ${D}/etc/initscripts
+		cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
+		install -d ${D}/etc/systemd/system/
+		install -m 0644 ${WORKDIR}/sxrneo/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
+		install -d ${D}/etc/systemd/system/multi-user.target.wants/
+		ln -sf /etc/systemd/system/wlan_daemon.service \
+			${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
+	fi
+}
+
 FILES:${PN} += "${userfsdatadir}/misc/wifi/*"
 FILES:${PN} += "${base_libdir}/firmware/wlan/qca_cld/*"
 FILES:${PN} += "/lib/firmware/wlan/qca_cld/* ${sysconfdir}/init.d/* "
@@ -135,6 +148,7 @@ EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'qcs605', '--enable-target-
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'apq8053', '--enable-pronto-wlan=yes', '', d)}"
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'apq8017', '--enable-pronto-wlan=yes', '', d)}"
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'neo', '--enable-target-sxrneo=yes', '', d)}"
+EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'kalama', '--enable-target-kalama=yes', '', d)}"
 
 # Enable qsap-wlan in place of pronto-wlan for Drones
 EXTRA_OECONF:append:qsap += "--enable-snap-wlan=yes --enable-qsap-wlan=yes --enable-naples-wlan=yes"
