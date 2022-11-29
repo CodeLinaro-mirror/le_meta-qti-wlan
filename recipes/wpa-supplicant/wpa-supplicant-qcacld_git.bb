@@ -7,7 +7,7 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://external/wpa_supplicant_8/"
-SRC_URI += "file://${MACHINE}/"
+SRC_URI += "file://${@bb.utils.contains('BASEMACHINE', 'sdxlemur','${BASEMACHINE}','${MACHINE}', d)}/"
 SRC_URI += "file://misc/"
 
 DEPENDS += "glib-2.0 wpa-supplicant-8-lib dbus liblog"
@@ -35,6 +35,17 @@ do_configure() {
         bbwarn "picking ${WORKDIR}/misc"
         bbwarn "============================================================"
         install -m 0644 ${WORKDIR}/misc/defconfig-qcacld .config
+        echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
+    fi
+}
+
+do_configure_sdxlemur() {
+    if [ "$(ls -A "${WORKDIR}/${BASEMACHINE}")" ]
+    then
+        bbwarn "============================================================"
+        bbwarn "picking ${WORKDIR}/${BASEMACHINE}"
+        bbwarn "============================================================"
+        install -m 0644 ${WORKDIR}/${BASEMACHINE}/defconfig-qcacld .config
         echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
     fi
 }
@@ -70,3 +81,14 @@ do_patch() {
     fi
 }
 
+do_patch_sdxlemur() {
+    cd ${PATCH_DIR}
+    if [ "$(ls -A "${WORKDIR}/${BASEMACHINE}")" ]
+    then
+        bbwarn "============================================================"
+        bbwarn "picking ${WORKDIR}/${BASEMACHINE}"
+        bbwarn "============================================================"
+        patch -p1 < ${WORKDIR}/${BASEMACHINE}/p2p_tmp_config.patch
+        patch -p1 < ${WORKDIR}/${BASEMACHINE}/driver_cmd.patch
+    fi
+}
