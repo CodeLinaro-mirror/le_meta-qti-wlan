@@ -79,8 +79,6 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(STAGING_DIR)
 	mkdir -p $(1)/$(EXTRA_ADDR)
 	mkdir -p $(1)/usr/include/qcacld
-	$(CP) $(PKG_BUILD_DIR)/qcacld-3.0/wlan.ko $(PKG_BUILD_DIR)/qcacld-3.0/wlan.ko.unstripped
-	$(TOOLCHAIN_DIR)/aarch64-openwrt-linux-musl/bin/strip --strip-unneed $(PKG_BUILD_DIR)/qcacld-3.0/wlan.ko
 	$(CP) $(PKG_BUILD_DIR)/qca-wifi-host-cmn/utils/nlink/inc/wlan_nlink_common.h $(1)/usr/include/qcacld/
 endef
 
