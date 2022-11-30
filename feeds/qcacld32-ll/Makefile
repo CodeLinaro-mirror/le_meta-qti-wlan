@@ -17,7 +17,7 @@ EXTRA_ADDR :=lib/modules/$(LINUX_VERSION)-${COMPILE_MODE}/extra
 
 include $(INCLUDE_DIR)/package.mk
 
-ifeq ($(TARGET_MACHINE),sdx75)
+ifeq ($(BOARD),sdx75)
 TARGET_DEPENDS := kmod-wlan-cnss
 
 TARGET_MAKEOPTS := CONFIG_ARCH_SDXPINN=y \

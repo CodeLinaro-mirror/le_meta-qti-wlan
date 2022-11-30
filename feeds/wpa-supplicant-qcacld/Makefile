@@ -20,7 +20,7 @@ ifeq ($(TARGET_MACHINE),sdx65)
 		echo -e "\nCONFIG_EAP_PROXY_DUAL_SIM=true" >> $(SUPPLICANT_CONFIG_FILE) && \
 		echo -e "\nCONFIG_EAP_PROXY_AKA_PRIME:=true" >> $(SUPPLICANT_CONFIG_FILE) && \
 		echo -e "\nCONFIG_WEP=y" >> $(SUPPLICANT_CONFIG_FILE)
-else ifeq ($(TARGET_MACHINE),sdx75)
+else ifeq ($(BOARD),sdx75)
 	TARGET_LOCAL_NAME :=sdxpinn
 	TARGET_CPPFLAGS += -I$(STAGING_DIR)/usr/include/qmi
 	TARGET_DEPENDS := +qmi +qmi-framework
