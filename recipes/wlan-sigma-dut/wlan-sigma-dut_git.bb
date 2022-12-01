@@ -8,7 +8,9 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5
 
 PR = "r0"
 
+FILESPATH =+ "${WORKSPACE}:"
 SRC_DIR = "${WORKSPACE}/wlan/utils/sigma-dut/"
+SRC_URI = "file://wlan/utils/sigma-dut"
 
 S = "${WORKDIR}/wlan/utils/sigma-dut"
 
