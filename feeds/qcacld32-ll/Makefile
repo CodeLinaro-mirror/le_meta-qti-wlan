@@ -18,7 +18,6 @@ EXTRA_ADDR :=lib/modules/$(LINUX_VERSION)-${COMPILE_MODE}/extra
 include $(INCLUDE_DIR)/package.mk
 
 ifeq ($(BOARD),sdx75)
-TARGET_DEPENDS := kmod-wlan-cnss
 
 TARGET_MAKEOPTS := CONFIG_ARCH_SDXPINN=y \
 		   CONFIG_CNSS_KIWI_V2=y \
@@ -42,7 +41,7 @@ define KernelPackage/$(PKG_NAME)
   SECTION:=Kernel Modules
   CATEGORY:=External Kernel Modules
   TITLE:=WLAN HOST DRIVER
-  DEPENDS := +${TARGET_DEPENDS}
+  DEPENDS := +kmod-wlan-cnss
 endef
 
 QCACLD32_LL_MAKEOPTS=  M="$(PKG_BUILD_DIR)/qcacld-3.0" \
