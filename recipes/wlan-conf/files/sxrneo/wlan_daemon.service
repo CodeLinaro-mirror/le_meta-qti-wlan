@@ -34,7 +34,7 @@
 [Unit]
 Description=Wlan Service
 SourcePath=/etc/init.d/wlan
-After=persist.mount firmware-links.service usb.service
+After=run-postinsts.service
 
 [Service]
 Restart=no
