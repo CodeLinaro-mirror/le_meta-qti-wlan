@@ -47,6 +47,8 @@ do_configure_append_sxrneo() {
 
 do_compile() {
     cd ${WORKDIR}/kernel-5.10/kernel_platform  && \
+    export WLAN_COMMON_ROOT=cmn && \
+    export WLAN_COMMON_INC=../../../wlan/qcacld-3.0/${WLAN_COMMON_ROOT} && \
     BUILD_CONFIG=msm-kernel/${KERNEL_CONFIG} \
     EXT_MODULES=../../wlan/qcacld-3.0 \
     ROOTDIR=${WORKDIR}/ \

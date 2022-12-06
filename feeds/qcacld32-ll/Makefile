@@ -17,8 +17,7 @@ EXTRA_ADDR :=lib/modules/$(LINUX_VERSION)-${COMPILE_MODE}/extra
 
 include $(INCLUDE_DIR)/package.mk
 
-ifeq ($(TARGET_MACHINE),sdx75)
-TARGET_DEPENDS := kmod-wlan-cnss
+ifeq ($(BOARD),sdx75)
 
 TARGET_MAKEOPTS := CONFIG_ARCH_SDXPINN=y \
 		   CONFIG_CNSS_KIWI_V2=y \
@@ -42,7 +41,7 @@ define KernelPackage/$(PKG_NAME)
   SECTION:=Kernel Modules
   CATEGORY:=External Kernel Modules
   TITLE:=WLAN HOST DRIVER
-  DEPENDS := +${TARGET_DEPENDS}
+  DEPENDS := +kmod-wlan-cnss
 endef
 
 QCACLD32_LL_MAKEOPTS=  M="$(PKG_BUILD_DIR)/qcacld-3.0" \
@@ -79,8 +78,6 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(STAGING_DIR)
 	mkdir -p $(1)/$(EXTRA_ADDR)
 	mkdir -p $(1)/usr/include/qcacld
-	$(CP) $(PKG_BUILD_DIR)/qcacld-3.0/wlan.ko $(PKG_BUILD_DIR)/qcacld-3.0/wlan.ko.unstripped
-	$(TOOLCHAIN_DIR)/aarch64-openwrt-linux-musl/bin/strip --strip-unneed $(PKG_BUILD_DIR)/qcacld-3.0/wlan.ko
 	$(CP) $(PKG_BUILD_DIR)/qca-wifi-host-cmn/utils/nlink/inc/wlan_nlink_common.h $(1)/usr/include/qcacld/
 endef
 
