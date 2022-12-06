@@ -16,10 +16,11 @@ RDEPENDS_${PN} += "\
     hostap-daemon-qcacld \
     wireless-tools \
     iw \
-    qcacld32-ll-hasting \
-    qcacld32-ll-genoa \
+    ${@bb.utils.contains('MACHINE', 'sa415m', '', 'qcacld32-ll-hasting', d)} \
+    ${@bb.utils.contains('MACHINE', 'sa415m', '', 'qcacld32-ll-genoa', d)} \
     qcacld32-ll-rome \
-    qcacld32-ll-hsp \
+    ${@bb.utils.contains('MACHINE', 'sa415m', '', 'qcacld32-ll-hsp', d)} \
+    ${@bb.utils.contains('MACHINE', 'sa415m', '', 'qcacld32-cnss2', d)} \
     wpa-supplicant-qcacld \
     wlan-conf \
     "
