@@ -1,0 +1,2027 @@
+From 9124f5f9e51d0c94595c5f04e096afa861233cd6 Mon Sep 17 00:00:00 2001
+From: jiaymao <quic_jiaymao@quicinc.com>
+Date: Wed, 16 Nov 2022 19:27:01 +0800
+Subject: [PATCH] add qcs610 in src platform layer
+
+Signed-off-by: jiaymao <quic_jiaymao@quicinc.com>
+---
+ src/platform/qcs610/BLEManagerImpl.cpp        | 240 ++---
+ src/platform/qcs610/BLEManagerImpl.h          |  36 +-
+ src/platform/qcs610/BUILD.gn                  |  79 +-
+ src/platform/qcs610/BlePlatformConfig.h       |   3 +-
+ src/platform/qcs610/CHIPLinuxStorage.h        |   6 +-
+ src/platform/qcs610/CHIPPlatformConfig.h      |   2 +-
+ .../qcs610/ConnectivityManagerImpl.cpp        |   2 +-
+ src/platform/qcs610/args.gni                  |   2 +-
+ src/platform/qcs610/dbus/openthread/BUILD.gn  |   2 +-
+ src/platform/qcs610/dbus/wpa/BUILD.gn         |   2 +-
+ src/platform/qcs610/fluoride/AdapterMain.cpp  | 905 ++++++++++++++++++
+ src/platform/qcs610/fluoride/AdapterMain.hpp  | 154 +++
+ src/platform/qcs610/fluoride/Types.h          |  49 +-
+ 13 files changed, 1273 insertions(+), 209 deletions(-)
+ create mode 100644 src/platform/qcs610/fluoride/AdapterMain.cpp
+ create mode 100644 src/platform/qcs610/fluoride/AdapterMain.hpp
+
+diff --git a/src/platform/qcs610/BLEManagerImpl.cpp b/src/platform/qcs610/BLEManagerImpl.cpp
+index 426f6ca..e42aba3 100644
+--- a/src/platform/qcs610/BLEManagerImpl.cpp
++++ b/src/platform/qcs610/BLEManagerImpl.cpp
+@@ -36,7 +36,7 @@
+ 
+ #if CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE
+ 
+-#include "bluez/Helper.h"
++#include "fluoride/AdapterMain.hpp"
+ 
+ using namespace ::nl;
+ using namespace ::chip::Ble;
+@@ -49,6 +49,7 @@ namespace {
+ 
+ static constexpr System::Clock::Timeout kNewConnectionScanTimeout = System::Clock::Seconds16(10);
+ static constexpr System::Clock::Timeout kConnectTimeout           = System::Clock::Seconds16(10);
++static constexpr System::Clock::Timeout kFastAdvertiseTimeout     = System::Clock::Seconds16(30);
+ 
+ const ChipBleUUID ChipUUID_CHIPoBLEChar_RX = { { 0x18, 0xEE, 0x2E, 0xF5, 0x26, 0x3D, 0x45, 0x59, 0x95, 0x9F, 0x4F, 0x9C, 0x42, 0x9F,
+                                                  0x9D, 0x11 } };
+@@ -59,7 +60,7 @@ void HandleConnectTimeout(chip::System::Layer *, void * apEndpoint)
+ {
+     assert(apEndpoint != nullptr);
+ 
+-    CancelConnect(static_cast<BluezEndpoint *>(apEndpoint));
++    //CancelConnect(static_cast<BleAdpterInfo *>(apEndpoint));
+     BLEManagerImpl::HandleConnectFailed(CHIP_ERROR_TIMEOUT);
+ }
+ 
+@@ -76,6 +77,7 @@ CHIP_ERROR BLEManagerImpl::_Init()
+ {
+     CHIP_ERROR err;
+ 
++    ChipLogProgress(DeviceLayer, "CHIPoBLE Init");
+     err = BleLayer::Init(this, this, this, &DeviceLayer::SystemLayer());
+     SuccessOrExit(err);
+ 
+@@ -87,6 +89,9 @@ CHIP_ERROR BLEManagerImpl::_Init()
+ 
+     OnChipBleConnectReceived = HandleIncomingBleConnection;
+ 
++    ConfigureBle(0, 0);
++    initialize();
++    mFlags.Set(Flags::kBluezBLELayerInitialized);
+     PlatformMgr().ScheduleWork(DriveBLEState, 0);
+ 
+ exit:
+@@ -96,38 +101,46 @@ exit:
+ void BLEManagerImpl::_Shutdown()
+ {
+     // ensure scan resources are cleared (e.g. timeout timers)
+-    mDeviceScanner.reset();
++    //mDeviceScanner.reset();
++    ChipLogProgress(DeviceLayer, "CHIPoBLE deInit");
++    deInitialize();
+ }
+ 
+ CHIP_ERROR BLEManagerImpl::_SetAdvertisingEnabled(bool val)
+ {
++    ChipLogProgress(DeviceLayer, "_SetAdvertisingEnabled = %d", val);
++
+     CHIP_ERROR err = CHIP_NO_ERROR;
+ 
+     if (mFlags.Has(Flags::kAdvertisingEnabled) != val)
+     {
+         mFlags.Set(Flags::kAdvertisingEnabled, val);
+     }
+-
+     PlatformMgr().ScheduleWork(DriveBLEState, 0);
+-
++    // DriveBLEState();
+     return err;
+ }
+ 
+ CHIP_ERROR BLEManagerImpl::_SetAdvertisingMode(BLEAdvertisingMode mode)
+ {
++    ChipLogProgress(DeviceLayer, "_SetAdvertisingMode = %d", mode);
+     switch (mode)
+     {
+     case BLEAdvertisingMode::kFastAdvertising:
++        mBLEAdvConfig.mAdvMode = 2; // 100ms interval
+         mFlags.Set(Flags::kFastAdvertisingEnabled, true);
+         break;
+     case BLEAdvertisingMode::kSlowAdvertising:
++        mBLEAdvConfig.mAdvMode = 0; // 1s interval
+         mFlags.Set(Flags::kFastAdvertisingEnabled, false);
+         break;
+     default:
+-        return CHIP_ERROR_INVALID_ARGUMENT;
++        mBLEAdvConfig.mAdvMode = 1;
++        mFlags.Set(Flags::kFastAdvertisingEnabled, false);
+     }
+     mFlags.Set(Flags::kAdvertisingRefreshNeeded);
+     PlatformMgr().ScheduleWork(DriveBLEState, 0);
++    // DriveBLEState();
+     return CHIP_NO_ERROR;
+ }
+ 
+@@ -148,6 +161,8 @@ CHIP_ERROR BLEManagerImpl::_SetDeviceName(const char * deviceName)
+ 
+     VerifyOrExit(mServiceMode != ConnectivityManager::kCHIPoBLEServiceMode_NotSupported, err = CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE);
+ 
++    ChipLogProgress(DeviceLayer, "Set Device Name to: %s", deviceName);
++
+     if (deviceName != nullptr && deviceName[0] != 0)
+     {
+         VerifyOrExit(strlen(deviceName) < kMaxDeviceNameLength, err = CHIP_ERROR_INVALID_ARGUMENT);
+@@ -162,6 +177,7 @@ CHIP_ERROR BLEManagerImpl::_SetDeviceName(const char * deviceName)
+         mDeviceName[kMaxDeviceNameLength] = 0;
+         mFlags.Clear(Flags::kUseCustomDeviceName);
+     }
++    SetDeivceName(deviceName);
+ 
+ exit:
+     return err;
+@@ -177,30 +193,47 @@ CHIP_ERROR BLEManagerImpl::ConfigureBle(uint32_t aAdapterId, bool aIsCentral)
+ {
+     CHIP_ERROR err                  = CHIP_NO_ERROR;
+     mBLEAdvConfig.mpBleName         = mDeviceName;
+-    mBLEAdvConfig.mAdapterId        = aAdapterId;
+-    mBLEAdvConfig.mMajor            = 1;
+-    mBLEAdvConfig.mMinor            = 1;
+-    mBLEAdvConfig.mVendorId         = 1;
+-    mBLEAdvConfig.mProductId        = 1;
+-    mBLEAdvConfig.mDeviceId         = 1;
+-    mBLEAdvConfig.mDuration         = 2;
+-    mBLEAdvConfig.mPairingStatus    = 0;
+-    mBLEAdvConfig.mType             = ChipAdvType::BLUEZ_ADV_TYPE_UNDIRECTED_CONNECTABLE_SCANNABLE;
+-    mBLEAdvConfig.mpAdvertisingUUID = "0xFFF6";
++    mBLEAdvConfig.connectableflag   = true;
++    mBLEAdvConfig.mDuration = 0;
++    mBLEAdvConfig.mAdvMode = 2;     // ADVERTISE_MODE_LOW_LATENCY
++    mBLEAdvConfig.mpAdvertisingUUID = "F6FF";
+ 
+     mIsCentral = aIsCentral;
++    ChipLogProgress(DeviceLayer, "BLE configured, aAdapterId=%d, aIsCentral=%d",
++                    aAdapterId, aAdapterId);
+ 
+     return err;
+ }
+ 
+-CHIP_ERROR BLEManagerImpl::StartBLEAdvertising()
++CHIP_ERROR BLEManagerImpl::_StartBLEAdvertising()
++{
++    ChipLogProgress(DeviceLayer, "BLEManagerImpl::_StartBLEAdvertising");
++    bool ret;
++    ret = StartBLEAdvertising(true, mBLEAdvConfig.mAdvMode, mBLEAdvConfig.connectableflag,
++                              mBLEAdvConfig.mDuration, mBLEAdvConfig.mpAdvertisingUUID);
++    if (mFlags.Has(Flags::kFastAdvertisingEnabled))
++    {
++        DeviceLayer::SystemLayer().StartTimer(kFastAdvertiseTimeout, _ReconfigureBLEAdvertising, mpEndpoint);
++    }
++    return CHIP_NO_ERROR;
++}
++
++CHIP_ERROR BLEManagerImpl::_StopBLEAdvertising()
+ {
+-    return StartBluezAdv(mpEndpoint);
++    ChipLogProgress(DeviceLayer, "BLEManagerImpl::_StopBLEAdvertising");
++    bool ret;
++    ret = StartBLEAdvertising(false, mBLEAdvConfig.mAdvMode, mBLEAdvConfig.connectableflag,
++                               mBLEAdvConfig.mDuration, mBLEAdvConfig.mpAdvertisingUUID);
++    DeviceLayer::SystemLayer().CancelTimer(_ReconfigureBLEAdvertising, mpEndpoint);
++    return CHIP_NO_ERROR;
+ }
+ 
+-CHIP_ERROR BLEManagerImpl::StopBLEAdvertising()
++void BLEManagerImpl::_ReconfigureBLEAdvertising(chip::System::Layer *, void * apEndpoint)
+ {
+-    return StopBluezAdv(mpEndpoint);
++    assert(apEndpoint != nullptr);
++    ChipLogProgress(DeviceLayer, "BLEManagerImpl::_ReconfigureBLEAdvertising");
++    bool ret;
++    sInstance._SetAdvertisingMode(BLEAdvertisingMode::kSlowAdvertising);
+ }
+ 
+ void BLEManagerImpl::_OnPlatformEvent(const ChipDeviceEvent * event)
+@@ -249,6 +282,7 @@ void BLEManagerImpl::HandlePlatformSpecificBLEEvent(const ChipDeviceEvent * apEv
+     CHIP_ERROR err         = CHIP_NO_ERROR;
+     bool controlOpComplete = false;
+     ChipLogDetail(DeviceLayer, "HandlePlatformSpecificBLEEvent %d", apEvent->Type);
++    ChipLogDetail(DeviceLayer, "kPlatformLinuxEvent = %d", DeviceEventType::kPlatformLinuxEvent);
+     switch (apEvent->Type)
+     {
+     case DeviceEventType::kPlatformLinuxBLECentralConnected:
+@@ -285,6 +319,11 @@ void BLEManagerImpl::HandlePlatformSpecificBLEEvent(const ChipDeviceEvent * apEv
+         VerifyOrExit(apEvent->Platform.BLEPeripheralAdvConfiguredComplete.mIsSuccess, err = CHIP_ERROR_INCORRECT_STATE);
+         sInstance.mFlags.Set(Flags::kAdvertisingConfigured).Clear(Flags::kControlOpInProgress);
+         controlOpComplete = true;
++		// if (mFlags.Has(Flags::kAdvertisingEnabled)) {
++        //     StartBLEAdvertising(true, mBLEAdvConfig.mAdvMode, mBLEAdvConfig.connectableflag,
++        //         mBLEAdvConfig.mDuration, mBLEAdvConfig.mpAdvertisingUUID);
++        //     mFlags.Clear(Flags::kAdvertisingEnabled);
++        // }
+         ChipLogProgress(DeviceLayer, "CHIPoBLE advertising config complete");
+         break;
+     case DeviceEventType::kPlatformLinuxBLEPeripheralAdvStartComplete:
+@@ -300,7 +339,7 @@ void BLEManagerImpl::HandlePlatformSpecificBLEEvent(const ChipDeviceEvent * apEv
+     case DeviceEventType::kPlatformLinuxBLEPeripheralAdvStopComplete:
+         VerifyOrExit(apEvent->Platform.BLEPeripheralAdvStopComplete.mIsSuccess, err = CHIP_ERROR_INCORRECT_STATE);
+ 
+-        sInstance.mFlags.Clear(Flags::kControlOpInProgress).Clear(Flags::kAdvertisingRefreshNeeded);
++        sInstance.mFlags.Clear(Flags::kControlOpInProgress);
+ 
+         // Transition to the not Advertising state...
+         if (sInstance.mFlags.Has(Flags::kAdvertising))
+@@ -308,6 +347,10 @@ void BLEManagerImpl::HandlePlatformSpecificBLEEvent(const ChipDeviceEvent * apEv
+             sInstance.mFlags.Clear(Flags::kAdvertising);
+             ChipLogProgress(DeviceLayer, "CHIPoBLE advertising stopped");
+         }
++        if (sInstance.mFlags.Has(Flags::kAdvertisingRefreshNeeded))
++        {
++            controlOpComplete = true;
++        }
+         break;
+     case DeviceEventType::kPlatformLinuxBLEPeripheralRegisterAppComplete:
+         VerifyOrExit(apEvent->Platform.BLEPeripheralRegisterAppComplete.mIsSuccess, err = CHIP_ERROR_INCORRECT_STATE);
+@@ -335,62 +378,45 @@ exit:
+ 
+ uint16_t BLEManagerImpl::GetMTU(BLE_CONNECTION_OBJECT conId) const
+ {
+-    BluezConnection * connection = static_cast<BluezConnection *>(conId);
+-    return (connection != nullptr) ? connection->mMtu : 0;
++    //BluezConnection * connection = static_cast<BluezConnection *>(conId);
++    //return (connection != nullptr) ? connection->mMtu : 0;
++    return 255;
+ }
+ 
+ bool BLEManagerImpl::SubscribeCharacteristic(BLE_CONNECTION_OBJECT conId, const ChipBleUUID * svcId, const ChipBleUUID * charId)
+ {
+-    bool result = false;
+-
+-    VerifyOrExit(Ble::UUIDsMatch(svcId, &CHIP_BLE_SVC_ID),
+-                 ChipLogError(DeviceLayer, "SubscribeCharacteristic() called with invalid service ID"));
+-    VerifyOrExit(Ble::UUIDsMatch(charId, &ChipUUID_CHIPoBLEChar_TX),
+-                 ChipLogError(DeviceLayer, "SubscribeCharacteristic() called with invalid characteristic ID"));
+-
+-    result = BluezSubscribeCharacteristic(conId);
+-exit:
+-    return result;
++    ChipLogProgress(DeviceLayer, "BLEManagerImpl::SubscribeCharacteristic() not supported");
++    return false;
+ }
+ 
+ bool BLEManagerImpl::UnsubscribeCharacteristic(BLE_CONNECTION_OBJECT conId, const ChipBleUUID * svcId, const ChipBleUUID * charId)
+ {
+-    bool result = false;
+-
+-    VerifyOrExit(Ble::UUIDsMatch(svcId, &CHIP_BLE_SVC_ID),
+-                 ChipLogError(DeviceLayer, "UnsubscribeCharacteristic() called with invalid service ID"));
+-    VerifyOrExit(Ble::UUIDsMatch(charId, &ChipUUID_CHIPoBLEChar_TX),
+-                 ChipLogError(DeviceLayer, "UnsubscribeCharacteristic() called with invalid characteristic ID"));
+-
+-    result = BluezUnsubscribeCharacteristic(conId);
+-exit:
+-    return result;
++    ChipLogProgress(DeviceLayer, "BLEManagerImpl::UnsubscribeCharacteristic() not supported");
++    return false;
+ }
+ 
+ bool BLEManagerImpl::CloseConnection(BLE_CONNECTION_OBJECT conId)
+ {
+     ChipLogProgress(DeviceLayer, "Closing BLE GATT connection (con %p)", conId);
+-    return CloseBluezConnection(conId);
++    ChipLogError(Ble, "CloseConnection: Not implemented");
++    return true;
+ }
+ 
+ bool BLEManagerImpl::SendIndication(BLE_CONNECTION_OBJECT conId, const ChipBleUUID * svcId, const Ble::ChipBleUUID * charId,
+                                     chip::System::PacketBufferHandle pBuf)
+ {
+-    return SendBluezIndication(conId, std::move(pBuf));
++    if (!pBuf.IsNull()) {
++        ChipLogError(Ble, "SendIndication: connId: %d, Len: %d", conId, pBuf->DataLength());
++        return SendBLEIndication(conId, svcId->bytes, charId->bytes, pBuf->Start(), pBuf->DataLength());
++    }
++    return true;
+ }
+ 
+ bool BLEManagerImpl::SendWriteRequest(BLE_CONNECTION_OBJECT conId, const Ble::ChipBleUUID * svcId, const Ble::ChipBleUUID * charId,
+                                       chip::System::PacketBufferHandle pBuf)
+ {
+     bool result = false;
+-
+-    VerifyOrExit(Ble::UUIDsMatch(svcId, &CHIP_BLE_SVC_ID),
+-                 ChipLogError(DeviceLayer, "SendWriteRequest() called with invalid service ID"));
+-    VerifyOrExit(Ble::UUIDsMatch(charId, &ChipUUID_CHIPoBLEChar_RX),
+-                 ChipLogError(DeviceLayer, "SendWriteRequest() called with invalid characteristic ID"));
+-
+-    result = BluezSendWriteRequest(conId, std::move(pBuf));
+-exit:
++    ChipLogProgress(DeviceLayer, "BLEManagerImpl::SendWriteRequest() not supported");
+     return result;
+ }
+ 
+@@ -404,7 +430,7 @@ bool BLEManagerImpl::SendReadRequest(BLE_CONNECTION_OBJECT conId, const Ble::Chi
+ bool BLEManagerImpl::SendReadResponse(BLE_CONNECTION_OBJECT conId, BLE_READ_REQUEST_CONTEXT requestContext,
+                                       const Ble::ChipBleUUID * svcId, const Ble::ChipBleUUID * charId)
+ {
+-    ChipLogError(Ble, "SendReadRBluezonse: Not implemented");
++    ChipLogError(Ble, "SendReadResponse: Not implemented");
+     return true;
+ }
+ 
+@@ -416,6 +442,7 @@ void BLEManagerImpl::HandleNewConnection(BLE_CONNECTION_OBJECT conId)
+         event.Type                                     = DeviceEventType::kPlatformLinuxBLECentralConnected;
+         event.Platform.BLECentralConnected.mConnection = conId;
+         PlatformMgr().PostEventOrDie(&event);
++        ChipLogDetail(DeviceLayer, "%s: conId %d", __func__, conId);
+     }
+ }
+ 
+@@ -438,15 +465,13 @@ void BLEManagerImpl::HandleWriteComplete(BLE_CONNECTION_OBJECT conId)
+     PlatformMgr().PostEventOrDie(&event);
+ }
+ 
+-void BLEManagerImpl::HandleSubscribeOpComplete(BLE_CONNECTION_OBJECT conId, bool subscribed)
++void BLEManagerImpl::HandleIndicationSentComplete(BLE_CONNECTION_OBJECT conn)
+ {
+-    ChipDeviceEvent event;
+-    event.Type                                          = DeviceEventType::kPlatformLinuxBLESubscribeOpComplete;
+-    event.Platform.BLESubscribeOpComplete.mConnection   = conId;
+-    event.Platform.BLESubscribeOpComplete.mIsSubscribed = subscribed;
+-    PlatformMgr().PostEventOrDie(&event);
++    ChipLogDetail(Ble, "Indication confirmation, %p", conn);
++    BLEManagerImpl::HandleTXComplete(conn);
+ }
+ 
++
+ void BLEManagerImpl::HandleTXCharChanged(BLE_CONNECTION_OBJECT conId, const uint8_t * value, size_t len)
+ {
+     CHIP_ERROR err                 = CHIP_NO_ERROR;
+@@ -480,7 +505,7 @@ void BLEManagerImpl::HandleRXCharWrite(BLE_CONNECTION_OBJECT conId, const uint8_
+     {
+         ChipDeviceEvent event;
+         event.Type = DeviceEventType::kCHIPoBLEWriteReceived;
+-        ChipLogProgress(Ble, "Write request received debug %p", conId);
++        ChipLogProgress(Ble, "Write request received debug %p, len: %d", conId, len);
+         event.CHIPoBLEWriteReceived.ConId = conId;
+         event.CHIPoBLEWriteReceived.Data  = std::move(buf).UnsafeRelease();
+         PlatformMgr().PostEventOrDie(&event);
+@@ -493,9 +518,9 @@ exit:
+     }
+ }
+ 
+-void BLEManagerImpl::CHIPoBluez_ConnectionClosed(BLE_CONNECTION_OBJECT conId)
++void BLEManagerImpl::CHIPoBleConnectionClosed(BLE_CONNECTION_OBJECT conId)
+ {
+-    ChipLogProgress(DeviceLayer, "Bluez notify CHIPoBluez connection disconnected");
++    ChipLogProgress(DeviceLayer, "Notify CHIPoBluez connection disconnected");
+ 
+     // If this was a CHIPoBLE connection, post an event to deliver a connection error to the CHIPoBLE layer.
+     {
+@@ -507,27 +532,22 @@ void BLEManagerImpl::CHIPoBluez_ConnectionClosed(BLE_CONNECTION_OBJECT conId)
+     }
+ }
+ 
+-void BLEManagerImpl::HandleTXCharCCCDWrite(BLE_CONNECTION_OBJECT conId)
++void BLEManagerImpl::HandleTXCharCCCDWrite(BLE_CONNECTION_OBJECT user_data, const uint8_t * value, size_t len)
+ {
+     CHIP_ERROR err = CHIP_NO_ERROR;
+ 
+-    BluezConnection * connection = static_cast<BluezConnection *>(conId);
+-
+-    VerifyOrExit(connection != nullptr, ChipLogError(DeviceLayer, "Connection is NULL in HandleTXCharCCCDWrite"));
+-    VerifyOrExit(connection->mpC2 != nullptr, ChipLogError(DeviceLayer, "C2 is NULL in HandleTXCharCCCDWrite"));
+-
++    ChipLogProgress(DeviceLayer, "%s: size:%d, value:%d", __func__, len, *value);
+     // Post an event to the Chip queue to process either a CHIPoBLE Subscribe or Unsubscribe based on
+     // whether the client is enabling or disabling indications.
+     {
+         ChipDeviceEvent event;
+-        event.Type = connection->mIsNotify ? DeviceEventType::kCHIPoBLESubscribe : DeviceEventType::kCHIPoBLEUnsubscribe;
+-        event.CHIPoBLESubscribe.ConId = connection;
++        event.Type = value[0] ? DeviceEventType::kCHIPoBLESubscribe : DeviceEventType::kCHIPoBLEUnsubscribe;
++        event.CHIPoBLESubscribe.ConId = user_data;
+         PlatformMgr().PostEventOrDie(&event);
+     }
+ 
+-    ChipLogProgress(DeviceLayer, "CHIPoBLE %s received", connection->mIsNotify ? "subscribe" : "unsubscribe");
++    ChipLogProgress(DeviceLayer, "CHIPoBLE %s received", value[0]? "subscribe" : "unsubscribe");
+ 
+-exit:
+     if (err != CHIP_NO_ERROR)
+     {
+         ChipLogError(DeviceLayer, "HandleTXCharCCCDWrite() failed: %s", ErrorStr(err));
+@@ -547,72 +567,56 @@ void BLEManagerImpl::HandleTXComplete(BLE_CONNECTION_OBJECT conId)
+ void BLEManagerImpl::DriveBLEState()
+ {
+     CHIP_ERROR err = CHIP_NO_ERROR;
+-
++    ChipLogProgress(DeviceLayer, "DriveBLEState");
++#if 0
+     // Perform any initialization actions that must occur after the Chip task is running.
+     if (!mFlags.Has(Flags::kAsyncInitCompleted))
+     {
++        ChipLogProgress(DeviceLayer, "DriveBLEState-ExitNow");
+         mFlags.Set(Flags::kAsyncInitCompleted);
+         ExitNow();
+     }
+ 
+     // If there's already a control operation in progress, wait until it completes.
+     VerifyOrExit(!mFlags.Has(Flags::kControlOpInProgress), /* */);
+-
+-    // Initializes the Bluez BLE layer if needed.
++#endif
++    // Initializes the BLE layer if needed.
+     if (mServiceMode == ConnectivityManager::kCHIPoBLEServiceMode_Enabled && !mFlags.Has(Flags::kBluezBLELayerInitialized))
+     {
+-        err = InitBluezBleLayer(mIsCentral, nullptr, mBLEAdvConfig, mpEndpoint);
++        ChipLogProgress(DeviceLayer, "BLE Initiation Needed");
++        err = _Init();
+         SuccessOrExit(err);
+         mFlags.Set(Flags::kBluezBLELayerInitialized);
+     }
+ 
+-    // Register the CHIPoBLE application with the Bluez BLE layer if needed.
+-    if (!mIsCentral && mServiceMode == ConnectivityManager::kCHIPoBLEServiceMode_Enabled && !mFlags.Has(Flags::kAppRegistered))
+-    {
+-        err = BluezGattsAppRegister(mpEndpoint);
+-        mFlags.Set(Flags::kControlOpInProgress);
+-        ExitNow();
+-    }
+-
+     // If the application has enabled CHIPoBLE and BLE advertising...
+     if (mServiceMode == ConnectivityManager::kCHIPoBLEServiceMode_Enabled && mFlags.Has(Flags::kAdvertisingEnabled))
+     {
+-        // Start/re-start advertising if not already advertising, or if the advertising state of the
+-        // Bluez BLE layer needs to be refreshed.
+-        if (!mFlags.Has(Flags::kAdvertising) || mFlags.Has(Flags::kAdvertisingRefreshNeeded))
++        if (!mFlags.Has(Flags::kAdvertising))
+         {
+-            mFlags.Clear(Flags::kAdvertisingRefreshNeeded);
+-
+-            // Configure advertising data if it hasn't been done yet.  This is an asynchronous step which
+-            // must complete before advertising can be started.  When that happens, this method will
+-            // be called again, and execution will proceed to the code below.
+-            if (!mFlags.Has(Flags::kAdvertisingConfigured))
+-            {
+-                err = BluezAdvertisementSetup(mpEndpoint);
+-                ExitNow();
+-            }
+-
+-            // Start advertising.  This is also an asynchronous step.
+-            err = StartBLEAdvertising();
++            ChipLogProgress(DeviceLayer, "Start Advertising");
++            err = _StartBLEAdvertising();
+             SuccessOrExit(err);
+-
+-            sInstance.mFlags.Set(Flags::kAdvertising);
++            // sInstance.mFlags.Set(Flags::kAdvertising);
+             ExitNow();
+         }
+-    }
+-
+-    // Otherwise stop advertising if needed...
+-    else
+-    {
+-        if (mFlags.Has(Flags::kAdvertising))
++        else if (mFlags.Has(Flags::kAdvertisingRefreshNeeded))
+         {
+-            err = StopBLEAdvertising();
++            // mFlags.Clear(Flags::kAdvertisingRefreshNeeded);
++            ChipLogProgress(DeviceLayer, "Refresh Advertising, stop first");
++            err = _StopBLEAdvertising();
+             SuccessOrExit(err);
+-            mFlags.Set(Flags::kControlOpInProgress);
+-
+-            ExitNow();
+         }
+     }
++    else if (mFlags.Has(Flags::kAdvertising))
++    {
++        ChipLogProgress(DeviceLayer, "Stop Advertising");
++
++        err = _StopBLEAdvertising();
++        SuccessOrExit(err);
++        mFlags.Set(Flags::kControlOpInProgress);
++        ExitNow();
++    }
+ 
+ exit:
+     if (err != CHIP_NO_ERROR)
+@@ -634,8 +638,7 @@ void BLEManagerImpl::NotifyChipConnectionClosed(BLE_CONNECTION_OBJECT conId)
+ 
+ void BLEManagerImpl::InitiateScan(BleScanState scanType)
+ {
+-    DriveBLEState();
+-
++#if 0
+     if (scanType == BleScanState::kNotScanning)
+     {
+         BleConnectionDelegate::OnConnectionError(mBLEScanConfig.mAppState, CHIP_ERROR_INCORRECT_STATE);
+@@ -676,6 +679,7 @@ void BLEManagerImpl::InitiateScan(BleScanState scanType)
+         BleConnectionDelegate::OnConnectionError(mBLEScanConfig.mAppState, err);
+         return;
+     }
++#endif
+ }
+ 
+ void BLEManagerImpl::CleanScanConfig()
+@@ -741,7 +745,8 @@ void BLEManagerImpl::NotifyBLEPeripheralAdvStopComplete(bool aIsSuccess, void *
+     PlatformMgr().PostEventOrDie(&event);
+ }
+ 
+-void BLEManagerImpl::OnDeviceScanned(BluezDevice1 * device, const chip::Ble::ChipBLEDeviceIdentificationInfo & info)
++#if 0
++void BLEManagerImpl::OnDeviceScanned(std::string device, const chip::Ble::ChipBLEDeviceIdentificationInfo & info)
+ {
+     ChipLogProgress(Ble, "New device scanned: %s", bluez_device1_get_address(device));
+ 
+@@ -774,7 +779,9 @@ void BLEManagerImpl::OnDeviceScanned(BluezDevice1 * device, const chip::Ble::Chi
+ 
+     ConnectDevice(device, mpEndpoint);
+ }
++#endif
+ 
++#if 0
+ void BLEManagerImpl::OnScanComplete()
+ {
+     if (mBLEScanConfig.mBleScanState != BleScanState::kScanForDiscriminator &&
+@@ -787,6 +794,7 @@ void BLEManagerImpl::OnScanComplete()
+     BleConnectionDelegate::OnConnectionError(mBLEScanConfig.mAppState, CHIP_ERROR_TIMEOUT);
+     mBLEScanConfig.mBleScanState = BleScanState::kNotScanning;
+ }
++#endif
+ 
+ } // namespace Internal
+ } // namespace DeviceLayer
+diff --git a/src/platform/qcs610/BLEManagerImpl.h b/src/platform/qcs610/BLEManagerImpl.h
+index 8c0d06b..327bcc4 100644
+--- a/src/platform/qcs610/BLEManagerImpl.h
++++ b/src/platform/qcs610/BLEManagerImpl.h
+@@ -23,13 +23,13 @@
+ 
+ #pragma once
+ 
++#include <string>
+ #include <ble/BleLayer.h>
+ #include <platform/internal/BLEManager.h>
+ 
+ #if CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE
+ 
+-#include "bluez/ChipDeviceScanner.h"
+-#include "bluez/Types.h"
++#include "fluoride/Types.h"
+ 
+ namespace chip {
+ namespace DeviceLayer {
+@@ -40,15 +40,11 @@ void HandleIncomingBleConnection(Ble::BLEEndPoint * bleEP);
+ struct BLEAdvConfig
+ {
+     char * mpBleName;
+-    uint32_t mAdapterId;
+-    uint8_t mMajor;
+-    uint8_t mMinor;
+-    uint16_t mVendorId;
+-    uint16_t mProductId;
+-    uint64_t mDeviceId;
+-    uint8_t mPairingStatus;
+     ChipAdvType mType;
++    bool legacyflag;
++    bool connectableflag;
+     uint16_t mDuration;
++    uint8_t mAdvMode;
+     const char * mpAdvertisingUUID;
+ };
+ 
+@@ -82,8 +78,7 @@ class BLEManagerImpl final : public BLEManager,
+                              private Ble::BleLayer,
+                              private Ble::BlePlatformDelegate,
+                              private Ble::BleApplicationDelegate,
+-                             private Ble::BleConnectionDelegate,
+-                             private ChipDeviceScannerDelegate
++                             private Ble::BleConnectionDelegate
+ {
+     // Allow the BLEManager interface class to delegate method calls to
+     // the implementation methods provided by this class.
+@@ -96,11 +91,11 @@ public:
+     static void HandleNewConnection(BLE_CONNECTION_OBJECT conId);
+     static void HandleConnectFailed(CHIP_ERROR error);
+     static void HandleWriteComplete(BLE_CONNECTION_OBJECT conId);
+-    static void HandleSubscribeOpComplete(BLE_CONNECTION_OBJECT conId, bool subscribed);
+     static void HandleTXCharChanged(BLE_CONNECTION_OBJECT conId, const uint8_t * value, size_t len);
+     static void HandleRXCharWrite(BLE_CONNECTION_OBJECT user_data, const uint8_t * value, size_t len);
+-    static void CHIPoBluez_ConnectionClosed(BLE_CONNECTION_OBJECT user_data);
+-    static void HandleTXCharCCCDWrite(BLE_CONNECTION_OBJECT user_data);
++    static void HandleIndicationSentComplete(BLE_CONNECTION_OBJECT conn);
++    static void CHIPoBleConnectionClosed(BLE_CONNECTION_OBJECT user_data);
++    static void HandleTXCharCCCDWrite(BLE_CONNECTION_OBJECT user_data, const uint8_t * value, size_t len);
+     static void HandleTXComplete(BLE_CONNECTION_OBJECT user_data);
+ 
+     static void NotifyBLEPeripheralRegisterAppComplete(bool aIsSuccess, void * apAppstate);
+@@ -152,8 +147,8 @@ private:
+     CHIP_ERROR CancelConnection() override;
+ 
+     // ===== Members that implement virtual methods on ChipDeviceScannerDelegate
+-    void OnDeviceScanned(BluezDevice1 * device, const chip::Ble::ChipBLEDeviceIdentificationInfo & info) override;
+-    void OnScanComplete() override;
++    //void OnDeviceScanned(std::string device, const chip::Ble::ChipBLEDeviceIdentificationInfo & info) override;
++    //void OnScanComplete() override;
+ 
+     // ===== Members for internal use by the following friends.
+ 
+@@ -184,8 +179,9 @@ private:
+         kMaxAdvertismentDataSetSize = 31  // TODO: verify this
+     };
+ 
+-    CHIP_ERROR StartBLEAdvertising();
+-    CHIP_ERROR StopBLEAdvertising();
++    CHIP_ERROR _StartBLEAdvertising();
++    CHIP_ERROR _StopBLEAdvertising();
++    static void _ReconfigureBLEAdvertising(chip::System::Layer *, void * apEndpoint);
+ 
+     void DriveBLEState();
+     static void DriveBLEState(intptr_t arg);
+@@ -200,8 +196,8 @@ private:
+     BitFlags<Flags> mFlags;
+     char mDeviceName[kMaxDeviceNameLength + 1];
+     bool mIsCentral            = false;
+-    BluezEndpoint * mpEndpoint = nullptr;
+-    std::unique_ptr<ChipDeviceScanner> mDeviceScanner;
++    BleAdpterInfo* mpEndpoint = nullptr;
++    //std::unique_ptr<ChipDeviceScanner> mDeviceScanner;
+ };
+ 
+ /**
+diff --git a/src/platform/qcs610/BUILD.gn b/src/platform/qcs610/BUILD.gn
+index 5a66ab0..5ea3d6d 100644
+--- a/src/platform/qcs610/BUILD.gn
++++ b/src/platform/qcs610/BUILD.gn
+@@ -14,18 +14,57 @@
+ 
+ import("//build_overrides/build.gni")
+ import("//build_overrides/chip.gni")
+-
++import("//build_overrides/qcs610.gni")
+ import("${build_root}/config/linux/pkg_config.gni")
+ 
+ import("${chip_root}/src/lib/core/core.gni")
+ import("${chip_root}/src/platform/device.gni")
+ 
+-assert(chip_device_platform == "linux")
++assert(chip_device_platform == "qcs610")
+ 
+ if (chip_use_pw_logging) {
+   import("//build_overrides/pigweed.gni")
+ }
+ 
++pkg_config("glib") {
++    packages = [
++        "glib-2.0",
++        ]
++}
++
++config("fluoride_conf") {
++
++  defines = [
++    "USE_GEN_GATT",
++    "USE_ANDROID_LOGGING",
++  ]
++  cflags = [
++    "-O2",
++    "-std=c++11",
++    #"-Wno-everything"
++  ]
++
++  include_dirs = [
++    "${qcs610_bt_root}/qcom-opensource/bt/bt-app/gatt/framework/include",
++    "${qcs610_bt_root}/qcom-opensource/bt/bt-app/gatt/native/include",
++    "${qcs610_bt_root}/qcom-opensource/bt/bt-app/gatt/lib/include",
++    "${qcs610_bt_root}/qcom-opensource/bt/bt-app/gap/include/",
++    "${qcs610_bt_root}/qcom-opensource/bt/bt-app/utils/include",
++    "${qcs610_bt_root}/qcom-opensource/bt/bt-app/utils/include/bluetooth",
++    "${qcs610_bt_root}/qcom-opensource/bt/bt-app/sdp_client/include",
++    "${qcs610_bt_root}/qcom-opensource/bt/bt-app/include",
++    "${qcs610_bt_root}/qcom-opensource/bt/bt-app/",
++    "${qcs610_bt_root}/hardware/libhardware/include",
++    "${qcs610_bt_root}/vendor/qcom/opensource/bluetooth/hal/include",
++    "${qcs610_bt_root}/vendor/qcom/opensource/bluetooth_ext/vhal/include",
++    "${qcs610_bt_root}/system/core/include",
++    "${qcs610_bt_root}/vendor/qcom/opensource/system/bt",
++    "${qcs610_bt_root}/vendor/qcom/opensource/system/bt/include",
++    "${qcs610_bt_root}/vendor/qcom/opensource/system/bt/types",
++    "${qcs610_sdk}/chrome/",
++  ]
++}
++
+ if (chip_enable_openthread) {
+   import("//build_overrides/openthread.gni")
+   import("//build_overrides/ot_br_posix.gni")
+@@ -37,7 +76,7 @@ if (chip_mdns == "platform") {
+   }
+ }
+ 
+-static_library("Linux") {
++static_library("qcs610") {
+   sources = [
+     "../DeviceSafeQueue.cpp",
+     "../DeviceSafeQueue.h",
+@@ -84,15 +123,25 @@ static_library("Linux") {
+ 
+   if (chip_enable_ble) {
+     sources += [
+-      "bluez/AdapterIterator.cpp",
+-      "bluez/AdapterIterator.h",
+-      "bluez/ChipDeviceScanner.cpp",
+-      "bluez/ChipDeviceScanner.h",
+-      "bluez/Helper.cpp",
+-      "bluez/Helper.h",
+-      "bluez/MainLoop.cpp",
+-      "bluez/MainLoop.h",
+-      "bluez/Types.h",
++      "fluoride/AdapterMain.cpp",
++      "fluoride/AdapterMain.hpp",
++      "fluoride/Types.h",
++    ]
++
++    configs += [
++      ":fluoride_conf",
++    ]
++
++    libs = [
++      "chrome",
++      "log",
++      "bttypes",
++      "btvendorhal",
++      "btappgap",
++      "gengatt",
++      "btappuuid",
++      "btapposi",
++      "btobex",
+     ]
+   }
+ 
+@@ -104,7 +153,7 @@ static_library("Linux") {
+     "${chip_root}/third_party/inipp",
+   ]
+ 
+-  public_configs = []
++  public_configs = [ ":glib"]
+ 
+   if (chip_mdns == "platform") {
+     sources += [
+@@ -146,8 +195,4 @@ static_library("Linux") {
+ 
+     public_deps += [ "dbus/wpa" ]
+   }
+-
+-  if (chip_enable_ble) {
+-    public_deps += [ "dbus/bluez" ]
+-  }
+ }
+diff --git a/src/platform/qcs610/BlePlatformConfig.h b/src/platform/qcs610/BlePlatformConfig.h
+index 4c1ffd4..6f0fec3 100644
+--- a/src/platform/qcs610/BlePlatformConfig.h
++++ b/src/platform/qcs610/BlePlatformConfig.h
+@@ -33,7 +33,8 @@ struct BluezConnection;
+ } // namespace chip
+ 
+ // ==================== Platform Adaptations ====================
+-#define BLE_CONNECTION_UNINITIALIZED nullptr
++#define BLE_CONNECTION_OBJECT uint16_t
++#define BLE_CONNECTION_UNINITIALIZED ((uint16_t) 0xFFFF)
+ // ========== Platform-specific Configuration Overrides =========
+ 
+ /* none so far */
+diff --git a/src/platform/qcs610/CHIPLinuxStorage.h b/src/platform/qcs610/CHIPLinuxStorage.h
+index 61945cd..075d3f1 100644
+--- a/src/platform/qcs610/CHIPLinuxStorage.h
++++ b/src/platform/qcs610/CHIPLinuxStorage.h
+@@ -37,15 +37,15 @@
+ #include <platform/qcs610/CHIPLinuxStorageIni.h>
+ 
+ #ifndef FATCONFDIR
+-#define FATCONFDIR "/tmp"
++#define FATCONFDIR "/data"
+ #endif
+ 
+ #ifndef SYSCONFDIR
+-#define SYSCONFDIR "/tmp"
++#define SYSCONFDIR "/data"
+ #endif
+ 
+ #ifndef LOCALSTATEDIR
+-#define LOCALSTATEDIR "/tmp"
++#define LOCALSTATEDIR "/data"
+ #endif
+ 
+ #define CHIP_DEFAULT_FACTORY_PATH                                                                                                  \
+diff --git a/src/platform/qcs610/CHIPPlatformConfig.h b/src/platform/qcs610/CHIPPlatformConfig.h
+index 788fe9b..a051d42 100644
+--- a/src/platform/qcs610/CHIPPlatformConfig.h
++++ b/src/platform/qcs610/CHIPPlatformConfig.h
+@@ -67,5 +67,5 @@ using CHIP_CONFIG_PERSISTED_STORAGE_KEY_TYPE = const char *;
+ // ==================== Security Configuration Overrides ====================
+ 
+ #ifndef CHIP_CONFIG_KVS_PATH
+-#define CHIP_CONFIG_KVS_PATH "/tmp/chip_kvs"
++#define CHIP_CONFIG_KVS_PATH "/data/chip_kvs"
+ #endif // CHIP_CONFIG_KVS_PATH
+diff --git a/src/platform/qcs610/ConnectivityManagerImpl.cpp b/src/platform/qcs610/ConnectivityManagerImpl.cpp
+index afadf3e..d289b2a 100644
+--- a/src/platform/qcs610/ConnectivityManagerImpl.cpp
++++ b/src/platform/qcs610/ConnectivityManagerImpl.cpp
+@@ -62,7 +62,7 @@
+ #endif
+ 
+ #ifndef CHIP_DEVICE_CONFIG_LINUX_DHCPC_CMD
+-#define CHIP_DEVICE_CONFIG_LINUX_DHCPC_CMD "dhclient -nw %s"
++#define CHIP_DEVICE_CONFIG_LINUX_DHCPC_CMD "dhcpcd -nw %s"
+ #endif
+ 
+ using namespace ::chip;
+diff --git a/src/platform/qcs610/args.gni b/src/platform/qcs610/args.gni
+index f9f97ee..5794587 100644
+--- a/src/platform/qcs610/args.gni
++++ b/src/platform/qcs610/args.gni
+@@ -12,4 +12,4 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ 
+-chip_device_platform = "linux"
++chip_device_platform = "qcs610"
+diff --git a/src/platform/qcs610/dbus/openthread/BUILD.gn b/src/platform/qcs610/dbus/openthread/BUILD.gn
+index b18b534..ded2860 100644
+--- a/src/platform/qcs610/dbus/openthread/BUILD.gn
++++ b/src/platform/qcs610/dbus/openthread/BUILD.gn
+@@ -21,5 +21,5 @@ gdbus_library("openthread") {
+ 
+   c_namespace = "Openthread"
+   c_generate_object_manager = false
+-  dbus_out_dir = "platform/Linux/dbus/openthread"
++  dbus_out_dir = "platform/qcs610/dbus/openthread"
+ }
+diff --git a/src/platform/qcs610/dbus/wpa/BUILD.gn b/src/platform/qcs610/dbus/wpa/BUILD.gn
+index 5080622..83ba37a 100644
+--- a/src/platform/qcs610/dbus/wpa/BUILD.gn
++++ b/src/platform/qcs610/dbus/wpa/BUILD.gn
+@@ -26,5 +26,5 @@ gdbus_library("wpa") {
+ 
+   c_namespace = "Wpa"
+   c_generate_object_manager = false
+-  dbus_out_dir = "platform/Linux/dbus/wpa"
++  dbus_out_dir = "platform/qcs610/dbus/wpa"
+ }
+diff --git a/src/platform/qcs610/fluoride/AdapterMain.cpp b/src/platform/qcs610/fluoride/AdapterMain.cpp
+new file mode 100644
+index 0000000..b4fa454
+--- /dev/null
++++ b/src/platform/qcs610/fluoride/AdapterMain.cpp
+@@ -0,0 +1,905 @@
++/*
++ * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
++ * Not a Contribution.
++ * Copyright (C) 2014 Google, Inc.
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at:
++ *
++ * http://www.apache.org/licenses/LICENSE-2.0
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ *
++ *  Changes from Qualcomm Innovation Center are provided under the following license:
++ *
++ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
++ *  SPDX-License-Identifier: BSD-3-Clause-Clear
++ *
++ */
++
++#include <fcntl.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <algorithm>
++#include <sstream>
++#include <sys/stat.h>
++#include <sys/types.h>
++#include <sys/wait.h>
++#include <sys/time.h>
++#include <unistd.h>
++#include <dlfcn.h>
++#include <sys/socket.h>
++#include <netinet/in.h>
++#include <map>
++
++#include <ble/BleUUID.h>
++#include <ble/CHIPBleServiceData.h>
++#include <lib/support/BitFlags.h>
++#include <lib/support/CHIPMem.h>
++#include <lib/support/CHIPMemString.h>
++#include <platform/CHIPDeviceLayer.h>
++#include <protocols/Protocols.h>
++#include <setup_payload/AdditionalDataPayloadGenerator.h>
++#include <platform/qcs610/BLEManagerImpl.h>
++
++#include <hardware/hardware.h>
++#include "osi/include/semaphore.h"
++#include "osi/include/reactor.h"
++#include <hardware/bluetooth.h>
++#include "ipc.hpp"
++#include "GattLibService.hpp"
++#include "Gap.hpp"
++#include "GattLeAdvertiser.hpp"
++#include "GattClient.hpp"
++#include "SdpClient.hpp"
++#include "AdapterMain.hpp"
++#define LOGTAG  "AdapterMain "
++
++const char *CONFIG_FILE_PATH           = "/etc/bluetooth/bt_chip.conf";
++const char *CONFIG_DEFAULT_DEVICE_NAME = "QCS610_CHIP";
++#define BTM_MAX_LOC_BD_NAME_LEN 248
++#define AUTO_CONNECT 0
++
++using namespace gatt;
++
++const bt_interface_t *bt_interface;
++bluetooth_device_t *bt_device_;
++extern Gap *g_gap;
++AdapterMain *g_adapter = NULL;
++GattLibService *g_gatt;
++bt_state_t bt_state;
++GattLeAdvertiser *madvertiser = NULL;
++GattServer *mgattServer = NULL;
++const btsdp_interface_t *sdp_client_interface;
++
++std::map <std::string, uint16_t> connectedDeviceMap;
++
++bool is_advertising = false;
++
++void adapterGattsCallback::onConnectionStateChange(string deviceAddress, int status,
++                                                               int newState)
++{
++    static uint8_t devIdx = 1;
++  ALOGD(LOGTAG"%s status = %d newState = %d", __FUNCTION__ , status , newState);
++  ALOGD(LOGTAG"%s device address: %s",__FUNCTION__, deviceAddress.c_str());
++  if (newState == GattDevice::STATE_CONNECTED) {
++      if (status == GattClient::GATT_SUCCESS) {
++        mgattServer->connect(deviceAddress,AUTO_CONNECT);
++        auto it = connectedDeviceMap.find(deviceAddress);
++        if (it == connectedDeviceMap.end()) {
++            connectedDeviceMap[deviceAddress] = devIdx++;
++        }
++
++        uint16_t connId = connectedDeviceMap[deviceAddress];
++        chip::DeviceLayer::Internal::BLEManagerImpl::HandleNewConnection(static_cast<BLE_CONNECTION_OBJECT>(connId));
++      }
++      else {
++          chip::DeviceLayer::Internal::BLEManagerImpl::HandleConnectFailed(CHIP_ERROR_INTERNAL);
++    }
++  } else if(newState == GattDevice::STATE_DISCONNECTED) {
++    auto it = connectedDeviceMap.find(deviceAddress);
++    if (it != connectedDeviceMap.end()) {
++        chip::DeviceLayer::Internal::BLEManagerImpl::CHIPoBleConnectionClosed(it->second);
++        connectedDeviceMap.erase(it);
++    }
++  }
++}
++
++void adapterGattsCallback::onServiceAdded(int status,GattService *service)
++{
++  ALOGD(LOGTAG"%s status: %d",__FUNCTION__,status);
++}
++
++void adapterGattsCallback::onCharacteristicReadRequest(string deviceAddress, int requestId,
++                                          int offset, GattCharacteristic *characteristic)
++{
++  ALOGD(LOGTAG"%s ",__FUNCTION__);
++  uint8_t *value = NULL;
++  value = characteristic->getValue();
++  GattService *mService = characteristic->getService();
++  Uuid s_uuid = mService->getUuid();
++  Uuid c_uuid = characteristic->getUuid();
++  ALOGD(LOGTAG"%s value = %s", __FUNCTION__, value);
++  ALOGD(LOGTAG"%s service Uuid = %s", __FUNCTION__, s_uuid.ToString().c_str());
++  ALOGD(LOGTAG"%s characteristic uuid = %s", __FUNCTION__, c_uuid.ToString().c_str());
++  bool status = mgattServer->sendResponse(deviceAddress,requestId,0,offset,value + offset);
++  if(status) {
++    ALOGD(LOGTAG"%s response sent ", __FUNCTION__);
++  }
++}
++
++void adapterGattsCallback::onCharacteristicWriteRequest(string deviceAddress,int requestId,
++                            GattCharacteristic *characteristic,bool preparedWrite,bool responseNeeded,
++                            int offset,uint8_t* value, int length)
++{
++
++  ALOGD(LOGTAG"%s ",__FUNCTION__);
++  bool confirm  = false;
++  characteristic->setValue(value, length);
++  if (responseNeeded) {
++    mgattServer->sendResponse(deviceAddress,requestId,0,offset,value);
++  }
++  int d = characteristic->getProperties() & GattCharacteristic::PROPERTY_NOTIFY;
++  if((characteristic->getProperties() & GattCharacteristic::PROPERTY_NOTIFY) != 0) {
++    confirm = false;
++    mgattServer->notifyCharacteristicChanged(deviceAddress,*characteristic,confirm);
++  } else if((characteristic->getProperties() & GattCharacteristic::PROPERTY_INDICATE) != 0) {
++    confirm = true;
++    mgattServer->notifyCharacteristicChanged(deviceAddress,*characteristic,confirm);
++  }
++
++  auto it = connectedDeviceMap.find(deviceAddress);
++  if (it != connectedDeviceMap.end()) {
++      chip::DeviceLayer::Internal::BLEManagerImpl::HandleRXCharWrite(it->second, value, length);
++  }
++}
++
++void adapterGattsCallback::onDescriptorReadRequest(string deviceAddress, int requestId,
++                                                              int offset, GattDescriptor *descriptor)
++{
++  ALOGD(LOGTAG"%s ",__FUNCTION__);
++  uint8_t *value = NULL;
++  Uuid desc_uuid = descriptor->getUuid();
++  value = descriptor->getValue();
++  ALOGD(LOGTAG"%s Descriptor UUID: %s  value = %s", __FUNCTION__, desc_uuid.ToString().c_str(),descriptor->getValue());
++    bool status = mgattServer->sendResponse(deviceAddress,requestId,0,offset,value+offset);
++    if(status) {
++        ALOGD(LOGTAG"%s response sent ", __FUNCTION__);
++    }
++}
++
++void adapterGattsCallback::onDescriptorWriteRequest(string deviceAddress, int requestId,
++                                                    GattDescriptor *descriptor,bool preparedWrite,
++                                                    bool responseNeeded, int offset, uint8_t * value,
++                                                    int length)
++{
++  ALOGD(LOGTAG"%s ",__FUNCTION__);
++  string temp((char *)value);
++  GattCharacteristic *characteristic = descriptor->getCharacteristic();
++  Uuid d_uid = descriptor->getUuid();
++  Uuid c_uid = characteristic->getUuid();
++  ALOGD(LOGTAG"%s  descriptor_uuid: %s value = %s", __FUNCTION__, d_uid.ToString().c_str(),
++                                                    descriptor->getValue());
++  if (responseNeeded) {
++    bool status = mgattServer->sendResponse(deviceAddress,requestId,0,offset,value+offset);
++    if (status) {
++      ALOGD(LOGTAG"%s response sent ", __FUNCTION__);
++    }
++  }
++  auto it = connectedDeviceMap.find(deviceAddress);
++  if (it != connectedDeviceMap.end()) {
++      chip::DeviceLayer::Internal::BLEManagerImpl::HandleTXCharCCCDWrite(it->second, value, length);
++  }
++
++}
++
++void adapterGattsCallback::onExecuteWrite(string deviceAddress, int requestId, bool execute)
++{
++  ALOGD(LOGTAG"%s deviceAddress: %s, requestID: %d execute %d", __FUNCTION__, deviceAddress.c_str(), requestId, execute);
++}
++
++void adapterGattsCallback::onNotificationSent(string deviceAddress, int status)
++{
++  auto it = connectedDeviceMap.find(deviceAddress);
++  ALOGD(LOGTAG"%s deviceAddress %s status %d", __FUNCTION__, deviceAddress.c_str(), status);
++  if (it != connectedDeviceMap.end()) {
++      chip::DeviceLayer::Internal::BLEManagerImpl::HandleIndicationSentComplete(it->second);
++  }
++}
++
++void adapterGattsCallback::onMtuChanged(string deviceAddress, int mtu)
++{
++  ALOGD(LOGTAG"%s deviceAddress: %s mtu %d",__FUNCTION__,deviceAddress.c_str(), mtu);
++}
++
++void adapterGattsCallback::onPhyUpdate(string deviceAddress,int txPhy, int rxPhy, int status)
++{
++  ALOGD(LOGTAG"%s deviceAddress: %s txphy: %d rxPhy: %d   status: %d",__FUNCTION__,
++                                                    deviceAddress.c_str(),txPhy,rxPhy,status);
++}
++
++void adapterGattsCallback::onPhyRead(string deviceAddress,int txPhy,int rxPhy,int status)
++{
++  fprintf(stdout,"%s deviceAddress: %s, txPhy: %d rxPhy: %d status: %d", __FUNCTION__,
++                                                    deviceAddress.c_str(), txPhy, rxPhy, status);
++  ALOGD(LOGTAG"%s deviceAddress: %s, txPhy: %d rxPhy: %d status: %d",__FUNCTION__,
++                                                    deviceAddress.c_str(), txPhy, rxPhy, status);
++}
++
++void adapterGattsCallback::onConnectionUpdated(string deviceAddress,int interval,int latency,int timeout,int status)
++{
++  ALOGD(LOGTAG"%s deviceAddress: %s,interval: %d,latency %d,timeout %d, status:%d", __FUNCTION__,
++                                        deviceAddress.c_str(), interval, latency, timeout, status);
++}
++
++
++class adapterAdvertiserCallback  :public AdvertisingSetCallback
++{
++  public:
++  void onAdvertisingSetStarted (AdvertisingSet *advertisingSet, int txPower, int status) {
++    ALOGD(LOGTAG"%s status: %d  txpower: %d", __FUNCTION__, status, txPower);
++    switch (status) {
++      case AdvertisingSetCallback::ADVERTISE_SUCCESS:
++        ALOGD(LOGTAG"Advertising Set Success");
++        ALOGD(LOGTAG"AdvertiserID: %d", advertisingSet->getAdvertiserId());
++      break;
++      case AdvertisingSetCallback::ADVERTISE_FAILED_ALREADY_STARTED:
++        ALOGD(LOGTAG"Advertising Already started");
++      break;
++      case AdvertisingSetCallback::ADVERTISE_FAILED_DATA_TOO_LARGE:
++        ALOGD(LOGTAG"Advertising Failed: Data too Large");
++      break;
++      case AdvertisingSetCallback::ADVERTISE_FAILED_FEATURE_UNSUPPORTED:
++        ALOGD(LOGTAG"Advertising Failed: Feature Unsupported");
++      break;
++      case AdvertisingSetCallback::ADVERTISE_FAILED_INTERNAL_ERROR:
++        ALOGD(LOGTAG"Advertising Failed: Internal Error");
++      break;
++      case AdvertisingSetCallback::ADVERTISE_FAILED_TOO_MANY_ADVERTISERS:
++        ALOGD(LOGTAG"Advertising Failed: Too Many Advertisers");
++      break;
++      default:
++        ALOGD(LOGTAG"Failure case unknown");
++     }
++    chip::DeviceLayer::Internal::BLEManagerImpl::NotifyBLEPeripheralAdvStartComplete(status==AdvertisingSetCallback::ADVERTISE_SUCCESS, nullptr);
++    is_advertising = true;
++  }
++
++  void  onAdvertisingDataSet(AdvertisingSet *advertisingset,int status)
++  {
++    ALOGD(LOGTAG"%s status: %d", __FUNCTION__, status);
++    if (status == AdvertisingSetCallback::ADVERTISE_SUCCESS) {
++      ALOGD(LOGTAG"Advertising Data is set successfully");
++      ALOGD(LOGTAG"Advertiser ID  %d", advertisingset->getAdvertiserId());
++    }
++  }
++
++  void onAdvertisingSetStopped (AdvertisingSet *advertisingSet)
++  {
++    ALOGD(LOGTAG"%s Advertiser ID  %d",__FUNCTION__,advertisingSet->getAdvertiserId());
++    chip::DeviceLayer::Internal::BLEManagerImpl::NotifyBLEPeripheralAdvStopComplete(true, nullptr);
++    is_advertising = false;
++  }
++
++  void onAdvertisingEnabled (AdvertisingSet *advertisingSet, bool enable, int status)
++  {
++    ALOGD(LOGTAG"%s  enable: %d status %d",__FUNCTION__,enable,status);
++    if (status == AdvertisingSetCallback::ADVERTISE_SUCCESS) {
++      ALOGD(LOGTAG"AdvertiserID: %d Advertising Enabled Succesfully", advertisingSet->getAdvertiserId());
++    }
++  }
++
++  void onScanResponseDataSet (AdvertisingSet *advertisingSet, int status)
++  {
++    ALOGD(LOGTAG"onScanResponseDataSet status: %d", status);
++  }
++
++  void onAdvertisingParametersUpdated (AdvertisingSet *advertisingSet, int txPower, int status)
++  {
++    ALOGD(LOGTAG"onAdvertisingParametersUpdated txpower: %d status %d", txPower, status);
++  }
++
++  void onPeriodicAdvertisingParametersUpdated (AdvertisingSet *advertisingSet, int status)
++  {
++    ALOGD(LOGTAG"onPeriodicParametersUpdated  status: %d", status);
++  }
++
++  void onPeriodicAdvertisingDataSet (AdvertisingSet *advertisingSet, int status)
++  {
++    ALOGD(LOGTAG"onPeriodicAAdvertisingDataSet status: %d", status);
++  }
++
++  void onPeriodicAdvertisingEnabled (AdvertisingSet *advertisingSet, bool enable, int status)
++  {
++    ALOGD(LOGTAG"onPeriodicAdvertisingEnabled enable : %d status: %d Advertiser id: %d", enable,
++                                                      status, advertisingSet->getAdvertiserId());
++  }
++
++  void onOwnAddressRead (AdvertisingSet *advertisingSet, int addressType, string address)
++  {
++    ALOGD(LOGTAG"onOwnAddressRead  addressType: %d  address: %s advertiser id: %d", addressType,
++                                                address.c_str(), advertisingSet->getAdvertiserId());
++  }
++
++  void onStartSuccess(AdvertiseSettings *settingsInEffect)
++  {
++    ALOGD(LOGTAG "onStartSuccess()");
++  }
++
++  void onStartFailure(int errorCode)
++  {
++    ALOGE(LOGTAG "onStartFailure() %d", errorCode);
++    fprintf(stdout," onStartFailure errorCode = %d", errorCode);
++  }
++
++};
++
++
++
++
++adapterAdvertiserCallback *adapterAdvCb;
++void DeInitHandler (void);
++static void SendDisableCmdToGap();
++
++ThreadInfo threadInfo[THREAD_ID_MAX] = {
++    //thread_id thread type            Thread Message Handler    Thread Name
++    { NULL ,    THREAD_ID_MAIN,        &BtMainMsgHandler,        "Main_Thread" } ,
++    { NULL ,    THREAD_ID_GAP,         &BtGapMsgHandler,         "Gap_Thread" } ,
++    { NULL ,    THREAD_ID_A2DP_SINK,   NULL,    "A2dp_Sink_Thread" } ,
++    { NULL ,    THREAD_ID_A2DP_SINK_SPLIT,   NULL,    "A2dp_Sink_Split_Thread" } ,
++    { NULL ,    THREAD_ID_HFP_CLIENT,  NULL,   "Hfp_Client_Thread" } ,
++    { NULL ,    THREAD_ID_PAN,         NULL,         "Pan_Thread" } ,
++#ifdef USE_GEN_GATT
++    { NULL ,    THREAD_ID_GATT,        &BtGattMsgHandler,        "Gatt_Thread" } ,
++#endif
++    { NULL ,    THREAD_ID_BT_AM,       NULL,   "BT_AUDIO_MANAGER_Thread" } ,
++    { NULL ,    THREAD_ID_SDP_CLIENT,  &BtSdpClientMsgHandler,   "Sdp_Client_Thread" } ,
++#ifdef USE_BT_OBEX
++    { NULL ,    THREAD_ID_PBAP_CLIENT, NULL,  "Pbap_Client_Thread" } ,
++    { NULL ,    THREAD_ID_OPP,         NULL,         "Opp_Thread" } ,
++#endif
++    { NULL ,    THREAD_ID_HFP_AG,      NULL,       "Hfp_AG_Thread" } ,
++    { NULL ,    THREAD_ID_A2DP_SOURCE, NULL,  "A2dp_Source_Thread" } ,
++    { NULL ,    THREAD_ID_AVRCP,       NULL,       "Avrcp_Thread" } ,
++    { NULL ,    THREAD_ID_HID,         NULL,         "HID_Thread" } ,
++};
++
++void PostMessage(ThreadIdType thread_type, void *msg) {
++    if (thread_type >= THREAD_ID_MAX) {
++        ALOGE(TAG " Invalid thread type %d", thread_type);
++    } else if (!threadInfo[thread_type].thread_id) {
++        ALOGE(TAG " Invalid thread id %d", threadInfo[thread_type].thread_id);
++    }  else if (!threadInfo[thread_type].thread_handler) {
++        ALOGE(TAG " Missing thread message handler %d", thread_type);
++    } else {
++        ALOGE(TAG " %s Thread Name = %s", __func__, threadInfo[thread_type].thread_name);
++        thread_post(threadInfo[thread_type].thread_id, threadInfo[thread_type].
++                thread_handler, msg);
++    }
++}
++
++#define BLUETOOTH_LIBRARY_NAME "/usr/lib/libbluetoothdefault.so.0.0.0"
++bool LoadBtStack (void) {
++    const char* sym = BLUETOOTH_INTERFACE_STRING;
++    bt_interface_t* itf = nullptr;
++    // Always try to load the default Bluetooth stack on GN builds.
++    const char* path = BLUETOOTH_LIBRARY_NAME;
++#if 0
++    void* handle = dlopen(path, RTLD_NOW);
++    if (!handle) {
++        ALOGE(TAG "%s can't open so %s", __func__, path);
++        return false;
++    }
++
++    // Get the address of the bt_interface_t.
++    bt_interface = (bt_interface_t*)dlsym(handle, sym);
++    if (!bt_interface) {
++        ALOGE(TAG "%s can't find symble %s", __func__, sym);
++        return false;
++    }
++
++    return true;
++
++#else
++    hw_module_t *module;
++    struct hw_device_t *device_;
++
++    if (hw_get_module (BT_STACK_MODULE_ID, (hw_module_t const **) &module)) {
++        return false;
++    }
++
++    if (module->methods->open (module, BT_STACK_MODULE_ID, &device_)) {
++        return false;
++    }
++
++    bt_device_ = (bluetooth_device_t *) device_;
++    bt_interface = bt_device_->get_bluetooth_interface ();
++    if (!bt_interface) {
++        bt_device_->common.close ((hw_device_t *) & bt_device_->common);
++        bt_device_ = NULL;
++        return false;
++    }
++    return true;
++#endif
++}
++
++void UnLoadBtStack (void)
++{
++    if (bt_interface) {
++        bt_interface->cleanup ();
++        bt_interface = NULL;
++    }
++    ALOGI (LOGTAG " bt_interface->cleanup done");
++
++    if (bt_device_) {
++        bt_device_->common.close ((hw_device_t *) & bt_device_->common);
++        bt_device_ = NULL;
++    }
++    ALOGI (LOGTAG " bt_device_->common.close done");
++}
++
++void initialize(void)
++{
++    ThreadInfo *main_thread = &threadInfo[THREAD_ID_MAIN];
++    main_thread->thread_id = thread_new (main_thread->thread_name);
++    if (main_thread->thread_id) {
++        BtEvent *event = new BtEvent;
++        event->event_id = MAIN_API_INIT;
++        PostMessage (THREAD_ID_MAIN, event);
++    }
++}
++
++void deInitialize(void)
++{
++    ALOGI (LOGTAG " deInitialize enter");
++    if (is_advertising) {
++        g_adapter->StopAdvertisement();
++    }
++    if (mgattServer != nullptr) {
++      mgattServer->close();
++      usleep(30000); // 30ms for gatt server to deregister
++    }
++    // SendDisableCmdToGap();
++    // exithandler_waitbtoff = true;
++    // DeInitHandler();
++    ALOGI (LOGTAG " deInitialize done");
++}
++
++inline config_t * initChipConfig()
++{
++    config_t * config = config_new (CONFIG_FILE_PATH);
++    if (NULL == config) {
++        ALOGE (LOGTAG " config file does not exist, generate a default one");
++        config = config_new_empty();
++        config_set_string(config, CONFIG_DEFAULT_SECTION, "BtLocalDeviceName", CONFIG_DEFAULT_DEVICE_NAME);
++        config_save(config, CONFIG_FILE_PATH);
++    } else {
++        ALOGE(LOGTAG "read config file, dev name is %s", config_get_string(config, CONFIG_DEFAULT_SECTION, "BtLocalDeviceName", "MDM"));
++    }
++    return config;
++}
++
++void InitHandler(void)
++{
++    config_t * config = initChipConfig();
++    if (NULL == config) {
++        ALOGE (LOGTAG " Error in Loading config file");
++    }
++
++    if (!LoadBtStack()) {
++        return;
++    }
++    // Starting GAP Thread
++    threadInfo[THREAD_ID_GAP].thread_id = thread_new (
++            threadInfo[THREAD_ID_GAP].thread_name);
++
++    if (threadInfo[THREAD_ID_GAP].thread_id) {
++        g_gap = new Gap (bt_interface, config);
++    }
++
++    threadInfo[THREAD_ID_SDP_CLIENT].thread_id = thread_new (
++            threadInfo[THREAD_ID_SDP_CLIENT].thread_name);
++
++    ALOGV (LOGTAG "  Starting GATT thread");
++    threadInfo[THREAD_ID_GATT].thread_id = thread_new (
++            threadInfo[THREAD_ID_GATT].thread_name);
++
++    if (threadInfo[THREAD_ID_GATT].thread_id) {
++        g_gatt = GattLibService::getInstance(bt_interface);
++    }
++
++    BtEvent *event = new BtEvent;
++    event->event_id = GAP_API_ENABLE;
++    PostMessage (THREAD_ID_GAP, event);
++}
++
++
++void DeInitHandler (void) {
++    ALOGI (LOGTAG " DeInitHandler");
++
++    // Stop GAP Thread
++    if (threadInfo[THREAD_ID_GAP].thread_id != NULL) {
++        thread_free (threadInfo[THREAD_ID_GAP].thread_id);
++        if ( g_gap != NULL)
++            delete g_gap;
++    }
++    ALOGI (LOGTAG " free gap done");
++
++    if (threadInfo[THREAD_ID_GATT].thread_id != NULL){
++        thread_free(threadInfo[THREAD_ID_GATT].thread_id);
++        if (g_gatt != NULL)
++            delete g_gatt;
++    }
++    ALOGI (LOGTAG " free gatt done");
++
++    // Stop SDP Client Thread
++    if (threadInfo[THREAD_ID_SDP_CLIENT].thread_id != NULL) {
++        thread_free (threadInfo[THREAD_ID_SDP_CLIENT].thread_id);
++    }
++    ALOGI (LOGTAG " free sdp done");
++
++    if (threadInfo[THREAD_ID_MAIN].thread_id != NULL){
++        thread_free(threadInfo[THREAD_ID_MAIN].thread_id);
++    }
++    ALOGI (LOGTAG " free main done");
++
++    if(g_gap && g_gap->IsEnabled()) {
++        // SendDisableCmdToGap();
++
++        ALOGI (LOGTAG " unloading BT stack");
++        UnLoadBtStack ();
++    }
++    ALOGI (LOGTAG " unload BT stack done");
++}
++
++static void SendDisableCmdToGap() {
++    if (bt_state == BT_STATE_ON) {
++        BtEvent *event = new BtEvent;
++        event->event_id = GAP_API_DISABLE;
++        ALOGV (LOGTAG " Posting disable to GAP thread");
++        PostMessage (THREAD_ID_GAP, event);
++    } else {
++        fprintf( stdout, "Currently BT is already OFF\n");
++    }
++}
++
++void BtMainMsgHandler (void *context) {
++    BtEvent *event = NULL;
++    if (!context) {
++        ALOGI (LOGTAG " Msg is null, return.\n");
++        return;
++    }
++    event = (BtEvent *) context;
++
++    ALOGI (LOGTAG " %s: event_id: %d.\n", __func__,  event->event_id);
++    switch (event->event_id) {
++        case MAIN_API_INIT:
++        {
++            InitHandler();
++            break;
++        }
++        case MAIN_API_DEINIT:
++        {
++            DeInitHandler();
++            break;
++        }
++        case MAIN_EVENT_ENABLED:
++        {
++            bt_state = event->state_event.status;
++            if (event->state_event.status == BT_STATE_OFF) {
++                ALOGD(LOGTAG " Error in Enabling BT\n");
++            } else {
++              ALOGD (LOGTAG " BT State is ON : %d",event->state_event.status);
++              g_adapter = new AdapterMain(g_gatt);
++              if (g_adapter != NULL) {
++                  g_adapter->AddMatterService();
++                  chip::DeviceLayer::Internal::BLEManagerImpl::NotifyBLEPeripheralAdvConfiguredComplete(true, nullptr);
++              }
++            }
++            break;
++        }
++
++        case MAIN_EVENT_DISABLED:
++        {
++            bt_state = event->state_event.status;
++            if (event->state_event.status == BT_STATE_ON) {
++                ALOGD(LOGTAG " Error in Disabling BT\n");
++            } else {
++                // clear the inquiry related cmds
++                // clearing bond_devices list and inquiry_list
++                connectedDeviceMap.clear();
++                system("killall -KILL wcnssfilter");
++                usleep(200);
++                ALOGD (LOGTAG " BT State is OFF : %d",bt_state);
++            }
++            ALOGD (LOGTAG " MAIN_EVENT_DISABLED");
++        }
++        break;
++        default:
++            break;
++    }
++}
++
++void BtSdpClientMsgHandler(void *context)
++{
++    BtEvent *event = NULL;
++    if (!context) {
++        ALOGI (LOGTAG " Msg is null, return.\n");
++        return;
++    }
++    event = (BtEvent *) context;
++
++    ALOGI (LOGTAG " %s: event_id: %d.\n", __func__,  event->event_id);
++    switch (event->event_id) {
++        case PROFILE_API_START:
++        {
++            uint8_t status = true;
++            if ((sdp_client_interface = (btsdp_interface_t *)
++                       bt_interface->get_profile_interface(BT_PROFILE_SDP_CLIENT_ID)) != NULL) {
++                sdp_client_interface->init(NULL);
++            }
++            else
++            {
++                ALOGE(LOGTAG "%s: Failed to get Bluetooth Sdp Client Interface", __FUNCTION__);
++            }
++
++            BtEvent *start_event = new BtEvent;
++            start_event->profile_start_event.event_id = PROFILE_EVENT_START_DONE;
++            start_event->profile_start_event.profile_id = PROFILE_ID_SDP_CLIENT;
++            start_event->profile_start_event.status = status;
++            PostMessage(THREAD_ID_GAP, start_event);
++            break;
++        }
++        case PROFILE_API_STOP:
++        {
++            uint8_t status = true;
++            if (sdp_client_interface) {
++                status = sdp_client_interface->deinit();
++            }
++            BtEvent *stop_event = new BtEvent;
++            stop_event->profile_start_event.event_id = PROFILE_EVENT_STOP_DONE;
++            stop_event->profile_start_event.profile_id = PROFILE_ID_SDP_CLIENT;
++            stop_event->profile_start_event.status = true;
++            PostMessage(THREAD_ID_GAP, stop_event);
++            break;
++        }
++        default:
++            break;
++    }
++}
++
++
++void SetDeivceName(const char *name)
++{
++    if ( bt_state == BT_STATE_ON ) {
++        if (strlen(name) < BTM_MAX_LOC_BD_NAME_LEN) {
++            bt_bdname_t bd_name;
++            BtEvent* event = new BtEvent;
++            event->event_id = GAP_API_SET_BDNAME;
++            event->set_device_name_event.prop.type = BT_PROPERTY_BDNAME;
++            g_strlcpy((char*)&bd_name.name[0], name, strlen(name));
++            event->set_device_name_event.prop.val = &bd_name;
++            event->set_device_name_event.prop.len = strlen((char*)bd_name.name);
++            PostMessage (THREAD_ID_GAP, event);
++            ALOGD(LOGTAG " BD Name is %s", name);
++        } else {
++            ALOGE(LOGTAG " BD Name is NULL/more than required legnth");
++        }
++    } else {
++            ALOGE(LOGTAG " Currently BT is OFF");
++    }
++}
++
++bool StartBLEAdvertising(bool val, uint8_t mode, bool connectable, uint32_t duration, string uuid)
++{
++  ALOGD(LOGTAG " StartBLEAdvertising");
++    if (g_adapter == NULL) {
++        ALOGE(LOGTAG " Adapter is OFF");
++        return false;
++    }
++    if (val) {
++        return g_adapter->StartBLEAdvertising(mode, connectable, duration, uuid);
++    }
++    else {
++        g_adapter->StopAdvertisement();
++        return true;
++    }
++}
++
++bool SendBLEIndication(uint16_t conId, const uint8_t *svcId, const uint8_t *charId, uint8_t *buf, uint16_t len)
++{
++    bool status = false;
++    string deviceAddress;
++    if (mgattServer) {
++        for (auto it= connectedDeviceMap.begin(); it != connectedDeviceMap.end(); ++it) {
++            if (it->second == conId) {
++                deviceAddress = it->first;
++                status = true;
++                break;
++            }
++        }
++        if (status) {
++            Uuid srvcUuid = Uuid::From128BitBE(svcId);
++            GattService* srv = mgattServer->getService(srvcUuid);
++            status = false;
++            if (srv) {
++                Uuid charUuid = Uuid::From128BitBE(charId);
++                GattCharacteristic *chr = srv->getCharacteristic(charUuid);
++                if (chr) {
++                    chr->setValue(buf, len);
++                    status = mgattServer->notifyCharacteristicChanged(deviceAddress, *chr, true);
++                }
++                else {
++                    ALOGD(LOGTAG"Characteristic UUID:%s is not found\n", charUuid.ToString().c_str());
++                }
++            }
++            else {
++                ALOGD(LOGTAG"Service UUID:%s is not found\n", srvcUuid.ToString().c_str());
++            }
++        }
++
++    }
++    ALOGD(LOGTAG"%s: %d\n", __func__, status);
++    return status;
++}
++
++void AdapterMain::StopAdvertisement(void)
++{
++    ALOGD(LOGTAG"StopAdvertisement \n");
++    madvertiser->stopAdvertising(adapterAdvCb);
++}
++
++bool AdapterMain::StartBLEAdvertising(uint8_t mode, bool connectable, uint32_t duration, string uuid)
++{
++    ALOGD(LOGTAG"%s",__FUNCTION__);
++    bool status = false;
++    status = BuildAdvertisingParameters(mode, connectable, duration);
++    if(!status) {
++        ALOGD(LOGTAG "Advertising Parameters not set \n");
++        return false;
++    }
++    status = BuildAdvertisingData(uuid);
++    if(!status) {
++        fprintf(stdout,"Advertising Data not set \n");
++        return false;
++    }
++
++    ALOGD(LOGTAG"Legacy StartAdvertisement");
++    madvertiser->startAdvertising(mAdvertiseSettings, mAdvertiseData, mAdvertiseData, adapterAdvCb);
++    return true;
++}
++
++bool AdapterMain::BuildAdvertisingParameters(uint8_t mode, bool connectable, uint32_t duration)
++{
++    /* set adv paramter */
++    if (mAdvertiseSettings != NULL) {
++        delete mAdvertiseSettings;
++    }
++    ALOGD(LOGTAG" Legacy Advertising will be used \n");
++
++    mAdvertiseSettings = AdvertiseSettings::Builder()
++                         .setAdvertiseMode(mode)
++                         //.setTxPowerLevel(setParams->tx_power)
++                         .setConnectable(connectable)
++                         .setTimeout(duration)
++                         .build();
++
++    ALOGD(LOGTAG"Advertising Settings connectable = %d \
++          TxPowerLevel = %d AdvertiseMode =%d TimeOut = %d",
++          mAdvertiseSettings->isConnectable(),
++          mAdvertiseSettings->getTxPowerLevel(), mAdvertiseSettings->getMode(),
++          mAdvertiseSettings->getTimeout());
++    return true;
++}
++
++bool AdapterMain::BuildAdvertisingData(string service_data_uuid)
++{
++  string service1_uuid;
++  string service_data= "CHIP";
++  Uuid mUuid;
++  ALOGD(LOGTAG"%s",__FUNCTION__);
++  if (mAdvertiseData != NULL) {
++      delete mAdvertiseData;
++  }
++
++  chip::Ble::ChipBLEDeviceIdentificationInfo deviceIdInfo;
++  CHIP_ERROR err = chip::DeviceLayer::ConfigurationMgr().GetBLEDeviceIdentificationInfo(deviceIdInfo);
++  if (err != CHIP_NO_ERROR) {
++      return false;
++  }
++
++  uint8_t char_val[sizeof(deviceIdInfo)];
++  memcpy(char_val, &deviceIdInfo, sizeof(deviceIdInfo));
++
++  AdvertiseData::Builder builder = AdvertiseData::Builder().setIncludeDeviceName(true);
++  mUuid = Uuid::FromString(service_data_uuid);
++  //builder.addServiceUuid(mUuid);
++  mUuid = Uuid::FromString(service_data_uuid);
++  std::vector<uint8_t> vec(char_val, char_val + sizeof(deviceIdInfo));
++  builder.addServiceData(mUuid,vec);
++  mAdvertiseData = builder.build();
++  ALOGD(LOGTAG"AdvertiseData IncludeDevicename: %d ", mAdvertiseData->getIncludeDeviceName());
++  ALOGD(LOGTAG"serviceData size:  %d", mAdvertiseData->getServiceData().size());
++  ALOGD(LOGTAG"uuid:  %s", service_data_uuid.c_str());
++  return true;
++}
++
++
++AdapterMain::AdapterMain(GattLibService* g_gatt)
++{
++    ALOGD(LOGTAG"gattstest instantiated ");
++    mlibservice = g_gatt->getGatt();
++    madvertiser = GattLeAdvertiser::getGattLeAdvertiser();
++}
++
++
++GattCharacteristic * AdapterMain::AddCharacteristics(Uuid uid,int property, int permissions, string val)
++{
++  ALOGD(LOGTAG"%s",__FUNCTION__);
++  GattCharacteristic  *gattCharacteristic = new GattCharacteristic(uid,property,permissions);
++  uint8_t char_val[val.length()+1];
++  std::copy(val.begin(),val.end(),char_val);
++  gattCharacteristic->setValue(char_val, val.length() + 1);
++  ALOGD(LOGTAG"CharacteristicUUID: %s  ", uid.ToString().c_str());
++  ALOGD(LOGTAG"Characteristic Property: %d ", gattCharacteristic->getProperties());
++  ALOGD(LOGTAG"characteristic Permissions: %d ", gattCharacteristic->getPermissions());
++  ALOGD(LOGTAG"characteristic value: %s", gattCharacteristic->getValue());
++  return gattCharacteristic;
++}
++
++GattDescriptor *AdapterMain::AddDescriptors(Uuid uid,int permissions,string value)
++{
++  ALOGD(LOGTAG"%s",__FUNCTION__);
++  ALOGD(LOGTAG"string value =  %s", value.c_str());
++  GattDescriptor *desp = new GattDescriptor(uid,permissions);
++  uint8_t dsc_val[value.length()+1];
++  std::copy(value.begin(),value.end(),dsc_val);
++  desp->setValue(dsc_val, value.length() + 1);
++  ALOGD(LOGTAG"Descriptor UUID: %s  ", uid.ToString().c_str());
++  ALOGD(LOGTAG"Descriptor Permissions: %d ", desp->getPermissions());
++  return desp;
++}
++
++
++void AdapterMain::AddMatterService()
++{
++  Uuid  temp_UUID;
++  string uid;
++  GattService *mService = NULL;
++  string desc_val = "DESC";
++
++  ALOGD(LOGTAG"%s",__FUNCTION__);
++  ALOGD(LOGTAG"Adding Matter Server Instance");
++  if (mgattServer == NULL) {
++    mgattServer = new GattServer(g_gatt,GattDevice::TRANSPORT_LE);
++    ALOGD(LOGTAG"Adding Matter Server CallBack");
++    adapterGattsCallback *adapterGattsCb = new adapterGattsCallback();
++    mgattServer->registerCallback(*adapterGattsCb);
++    ALOGD(LOGTAG"Adding Advertiser Callback");
++    adapterAdvCb    = new adapterAdvertiserCallback();
++
++
++    temp_UUID = Uuid::FromString(UUID16_CHIPoBLEService);
++    mService  = new GattService(temp_UUID,GattService::SERVICE_TYPE_PRIMARY);
++    temp_UUID = Uuid::FromString(UUID16_CHIPoBLECharacteristic_1);
++    GattCharacteristic *chr = AddCharacteristics(temp_UUID, GattCharacteristic::PROPERTY_WRITE,
++            GattCharacteristic::PERMISSION_READ|GattCharacteristic::PERMISSION_WRITE, "0x08");
++    mService->addCharacteristic(chr);
++    uint8_t permissions = GattCharacteristic::PERMISSION_READ|GattCharacteristic::PERMISSION_WRITE;
++    temp_UUID = Uuid::FromString(UUID16_CHIPoBLECharacteristic_2);
++    chr = AddCharacteristics(temp_UUID, GattCharacteristic::PROPERTY_READ|GattCharacteristic::PROPERTY_INDICATE,
++            GattCharacteristic::PERMISSION_READ|GattCharacteristic::PERMISSION_WRITE, "0x0a");
++    temp_UUID = Uuid::FromString("2902");
++    GattDescriptor *desp = AddDescriptors(temp_UUID,permissions,desc_val);
++    chr->addDescriptor(desp);
++    mService->addCharacteristic(chr);
++    mgattServer->addService(*mService);
++  }
++}
++
++
+diff --git a/src/platform/qcs610/fluoride/AdapterMain.hpp b/src/platform/qcs610/fluoride/AdapterMain.hpp
+new file mode 100644
+index 0000000..85d7c77
+--- /dev/null
++++ b/src/platform/qcs610/fluoride/AdapterMain.hpp
+@@ -0,0 +1,154 @@
++/*
++ * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
++ * Not a Contribution.
++ * Copyright (C) 2014 Google, Inc.
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at:
++ *
++ * http://www.apache.org/licenses/LICENSE-2.0
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ *
++ *  Changes from Qualcomm Innovation Center are provided under the following license:
++ *
++ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
++ *  SPDX-License-Identifier: BSD-3-Clause-Clear
++ *
++ */
++
++
++#ifndef ADAPTER_MAIN_H
++#define ADAPTER_MAIN_H
++
++#pragma once
++
++#include <vector>
++#include <string>
++#include <map>
++
++#include "osi/include/log.h"
++#include "osi/include/thread.h"
++#include "osi/include/config.h"
++#include "GattServer.hpp"
++#include "GattServerCallback.hpp"
++#include "uuid.h"
++#include "GattDescriptor.hpp"
++
++
++#define LOGTAG "GATTSTEST "
++
++
++
++using namespace std;
++using namespace gatt;
++
++bool split (const string &s, char c,vector<string> &v);
++class AdapterMain {
++  private:
++    GattLibService *mlibservice;
++    list <GattService> mServiceList;
++
++    struct Service {
++      string s_uuid;
++      string c_uuid;
++      int c_property;
++      int c_permissions;
++      string d_uuid;
++      int d_permissions;
++    };
++
++    struct AdvertiseSet {
++      int tx_power;
++      int legacyflag;
++      int periodicflag;
++      int connectableflag;
++      int scannableflag;
++      int anonymousflag;
++      int includeTxPowerflag;
++      int primary_phy;
++      int secondary_phy;
++      int interval;
++      int timeout_legacy;
++      int advertise_mode;
++    };
++
++    vector <AdvertiseSet*> AdvSet_list;
++    AdvertiseSet *set_temp= NULL;
++    vector <Service*> service_list[5];
++    vector <int> manufacturerId_list;
++    vector <string> manufacturerData_list;
++    string manufacturer_ID;
++    string manufacturer_data;
++    int manufacturerID;
++
++  public:
++    AdvertiseSettings *mAdvertiseSettings;
++    AdvertiseData *mAdvertiseData;
++    const std::string UUID16_CHIPoBLEService = "FFF6";
++    const std::string UUID16_CHIPoBLECharacteristic_1 = "18ee2ef5-263d-4559-959f-4f9c429f9d11";
++    const std::string UUID16_CHIPoBLECharacteristic_2 = "18ee2ef5-263d-4559-959f-4f9c429f9d12";
++    AdapterMain(GattLibService* );
++    ~AdapterMain();
++    void AddMatterService(void);
++    bool StartBLEAdvertising(uint8_t mode, bool connectable, uint32_t duration, std::string uuid);
++    void StopAdvertisement(void);
++    void ReadServerConfigurationFile();
++    bool ParseServiceDetails(string,int);
++    void ParseServiceElement(int);
++    void AddServer();
++    bool ReadAdvertiserConfigFile();
++    void ParseAdvertiserDetails(string);
++    bool DisableGATTSTEST();
++    bool BuildAdvertisingParameters(uint8_t mode, bool enable, uint32_t duration);
++    bool BuildAdvertisingData(string uuid);
++    bool UnregisterServer(string);
++    bool AddService(string,string);
++    GattDescriptor* AddDescriptors(Uuid uid,int permissions,string value);
++    GattCharacteristic* AddCharacteristics(Uuid uid,int property, int permissions, string val);
++    bool SetPreferredPhy(string,string,string,string,int);
++    bool ReadPhy(string,string);
++    bool EnablePeriodicAdvertising(bool);
++    bool SetPeriodicAdvertisingData(int);
++    bool SetPeriodicAdvertisingParameters(int);
++    bool SetScanResponseData(int);
++    void CancelConnection(string);
++};
++
++
++class adapterGattsCallback :public GattServerCallback
++{
++
++  public:
++  void onConnectionStateChange(string deviceAddress, int status, int newState);
++  void onServiceAdded(int status,GattService *service);
++  void onCharacteristicReadRequest(string deviceAddress, int requestId, int offset,
++                                      GattCharacteristic *characteristic);
++  void onCharacteristicWriteRequest(string deviceAddress,int requestId,
++                                      GattCharacteristic *characteristic,bool preparedWrite,
++                                      bool responseNeeded,int offset,uint8_t* value, int length);
++  void onDescriptorReadRequest(string deviceAddress, int requestId, int offset,
++                                      GattDescriptor *descriptor);
++  void onDescriptorWriteRequest(string deviceAddress, int requestId,
++                                      GattDescriptor *descriptor,bool preparedWrite,
++                                      bool responseNeeded, int offset, uint8_t * value, int length);
++  void onExecuteWrite(string deviceAddress, int requestId, bool execute);
++  void onNotificationSent(string deviceAddress, int status);
++  void onMtuChanged(string deviceAddress, int mtu);
++  void onPhyUpdate(string deviceAddress,int txPhy, int rxPhy, int status);
++  void onPhyRead(string deviceAddress,int txPhy,int rxPhy,int status);
++  void onConnectionUpdated(string deviceAddress,int interval,int latency,
++                                    int timeout,int status);
++};
++
++void initialize(void);
++void deInitialize(void);
++bool StartBLEAdvertising(bool val, uint8_t mode, bool connectable, uint32_t duration, string uuid);
++void SetDeivceName(const char *name);
++bool SendBLEIndication(uint16_t conId, const uint8_t *svcId, const uint8_t *charId, uint8_t *buf, uint16_t len);
++#endif
++
+diff --git a/src/platform/qcs610/fluoride/Types.h b/src/platform/qcs610/fluoride/Types.h
+index eff2813..cdbf8c1 100644
+--- a/src/platform/qcs610/fluoride/Types.h
++++ b/src/platform/qcs610/fluoride/Types.h
+@@ -50,10 +50,10 @@
+ #if CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE
+ 
+ #include <ble/CHIPBleServiceData.h>
+-#include <platform/qcs610/dbus/bluez/DbusBluez.h>
+ 
+ #include <cstdint>
+ #include <string>
++#include <glib.h>
+ 
+ namespace chip {
+ namespace DeviceLayer {
+@@ -128,32 +128,12 @@ struct IOChannel
+     guint mWatch;
+ };
+ 
+-struct BluezEndpoint
++struct BleAdpterInfo
+ {
+-    char * mpOwningName; // Bus owning name
+-
+     // Adapter properties
+     char * mpAdapterName;
+     char * mpAdapterAddr;
+ 
+-    // Paths for objects published by this service
+-    char * mpRootPath;
+-    char * mpAdvPath;
+-    char * mpServicePath;
+-
+-    // Objects (interfaces) subscibed to by this service
+-    GDBusObjectManager * mpObjMgr = nullptr;
+-    BluezAdapter1 * mpAdapter     = nullptr;
+-    BluezDevice1 * mpDevice       = nullptr;
+-
+-    // Objects (interfaces) published by this service
+-    GDBusObjectManagerServer * mpRoot;
+-    BluezGattService1 * mpService;
+-    BluezGattCharacteristic1 * mpC1;
+-    BluezGattCharacteristic1 * mpC2;
+-    // additional data characteristics
+-    BluezGattCharacteristic1 * mpC3;
+-
+     // map device path to the connection
+     GHashTable * mpConnMap;
+     uint32_t mAdapterId;
+@@ -163,31 +143,6 @@ struct BluezEndpoint
+     ChipAdvType mType;  ///< Advertisement type.
+     uint16_t mDuration; ///< Advertisement interval (in ms).
+     bool mIsAdvertising;
+-    char * mpPeerDevicePath;
+-    GCancellable * mpConnectCancellable = nullptr;
+-};
+-
+-struct BluezConnection
+-{
+-    char * mpPeerAddress;
+-    BluezDevice1 * mpDevice;
+-    BluezGattService1 * mpService;
+-    BluezGattCharacteristic1 * mpC1;
+-    BluezGattCharacteristic1 * mpC2;
+-    // additional data characteristics
+-    BluezGattCharacteristic1 * mpC3;
+-
+-    bool mIsNotify;
+-    uint16_t mMtu;
+-    struct IOChannel mC1Channel;
+-    struct IOChannel mC2Channel;
+-    BluezEndpoint * mpEndpoint;
+-};
+-
+-struct ConnectionDataBundle
+-{
+-    BluezConnection * mpConn;
+-    GVariant * mpVal;
+ };
+ 
+ } // namespace Internal
+-- 
+2.17.1
+

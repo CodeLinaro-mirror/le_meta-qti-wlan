@@ -1,0 +1,219 @@
+From c246868bbd13ea3d5bd358cc891f6f8709fcb603 Mon Sep 17 00:00:00 2001
+From: Cheng Jiang <quic_chejiang@quicinc.com>
+Date: Tue, 11 Oct 2022 10:22:36 +0800
+Subject: [PATCH] add platform qcs610 in Matter
+
+Signed-off-by: Cheng Jiang <quic_chejiang@quicinc.com>
+---
+ build_overrides/qcs610.gni          | 21 +++++++++++++++++++++
+ examples/build_overrides/qcs610.gni | 21 +++++++++++++++++++++
+ src/platform/BUILD.gn               | 23 ++++++++++++++++++-----
+ src/platform/device.gni             | 13 ++++++++-----
+ src/system/BUILD.gn                 |  2 ++
+ 5 files changed, 70 insertions(+), 10 deletions(-)
+ create mode 100644 build_overrides/qcs610.gni
+ create mode 100644 examples/build_overrides/qcs610.gni
+
+diff --git a/build_overrides/qcs610.gni b/build_overrides/qcs610.gni
+new file mode 100644
+index 0000000..be855d0
+--- /dev/null
++++ b/build_overrides/qcs610.gni
+@@ -0,0 +1,21 @@
++# Copyright (c) 2021 Project CHIP Authors
++#
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++# http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++
++declare_args() {
++  # Root directory for Tizen.
++  qcs610_bt_root = ""
++
++  # Root directory for Tizen SDK build support.
++  qcs610_sdk = ""
++}
+diff --git a/examples/build_overrides/qcs610.gni b/examples/build_overrides/qcs610.gni
+new file mode 100644
+index 0000000..be855d0
+--- /dev/null
++++ b/examples/build_overrides/qcs610.gni
+@@ -0,0 +1,21 @@
++# Copyright (c) 2021 Project CHIP Authors
++#
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++# http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++
++declare_args() {
++  # Root directory for Tizen.
++  qcs610_bt_root = ""
++
++  # Root directory for Tizen SDK build support.
++  qcs610_sdk = ""
++}
+diff --git a/src/platform/BUILD.gn b/src/platform/BUILD.gn
+index fbfe42f..023c5cf 100644
+--- a/src/platform/BUILD.gn
++++ b/src/platform/BUILD.gn
+@@ -25,7 +25,8 @@ import("device.gni")
+ if (chip_enable_openthread) {
+   import("//build_overrides/openthread.gni")
+
+-  if (chip_device_platform == "linux" || chip_device_platform == "darwin") {
++  if (chip_device_platform == "linux" || chip_device_platform == "darwin" ||
++      chip_device_platform == "qcs610") {
+     import("//build_overrides/ot_br_posix.gni")
+   }
+ }
+@@ -51,7 +52,8 @@ if (chip_device_platform != "none" && chip_device_platform != "external") {
+     # === FOR TRANSITION UNTIL ALL EXAMPLES PROVIDE THEIR OWN ===
+     # Linux platform has already transitioned.
+     chip_use_transitional_commissionable_data_provider =
+-        chip_device_platform != "linux" && chip_device_platform != "android"
++        chip_device_platform != "linux" && chip_device_platform != "android" &&
++        chip_device_platform != "qcs610"
+
+     # lock tracking: none/log/fatal or auto for a platform-dependent choice
+     chip_stack_lock_tracking = "auto"
+@@ -70,7 +72,8 @@ if (chip_device_platform != "none" && chip_device_platform != "external") {
+   if (chip_stack_lock_tracking == "auto") {
+     if (chip_device_platform == "linux" || chip_device_platform == "tizen" ||
+         chip_device_platform == "android" || current_os == "freertos" ||
+-        chip_device_platform == "webos" || chip_device_platform == "darwin") {
++        chip_device_platform == "webos" || chip_device_platform == "darwin" ||
++        chip_device_platform == "qcs610") {
+       # TODO: should be fatal for development. Change once bugs are fixed
+       chip_stack_lock_tracking = "fatal"
+     } else {
+@@ -111,7 +114,8 @@ if (chip_device_platform != "none" && chip_device_platform != "external") {
+
+     if (chip_device_platform == "linux" || chip_device_platform == "darwin" ||
+         chip_device_platform == "tizen" || chip_device_platform == "android" ||
+-        chip_device_platform == "k32w0" || chip_device_platform == "webos") {
++        chip_device_platform == "k32w0" || chip_device_platform == "webos" ||
++        chip_device_platform == "qcs610") {
+       defines += [ "CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE=${chip_enable_ble}" ]
+     }
+
+@@ -279,6 +283,12 @@ if (chip_device_platform != "none" && chip_device_platform != "external") {
+         "CHIP_DEVICE_LAYER_TARGET=mt793x",
+         "CHIP_DEVICE_CONFIG_ENABLE_WIFI=${chip_enable_wifi}",
+       ]
++    } else if (chip_device_platform == "qcs610") {
++      defines += [
++        "CHIP_DEVICE_LAYER_TARGET_LINUX=1",
++        "CHIP_DEVICE_LAYER_TARGET=qcs610",
++        "CHIP_DEVICE_CONFIG_ENABLE_WIFI=${chip_enable_wifi}",
++      ]
+     }
+
+     if (chip_device_config_device_software_version_string != "") {
+@@ -387,7 +397,8 @@ if (chip_device_platform != "none") {
+
+     # Linux has its own NetworkCommissioningThreadDriver
+     if (chip_enable_openthread && chip_device_platform != "linux" &&
+-        chip_device_platform != "tizen" && chip_device_platform != "webos") {
++        chip_device_platform != "tizen" && chip_device_platform != "webos" &&
++        chip_device_platform != "qcs610") {
+       sources += [
+         "OpenThread/GenericNetworkCommissioningThreadDriver.cpp",
+         "OpenThread/GenericNetworkCommissioningThreadDriver.h",
+@@ -454,6 +465,8 @@ if (chip_device_platform != "none") {
+       _platform_target = "Beken"
+     } else if (chip_device_platform == "mt793x") {
+       _platform_target = "mt793x"
++    } else if (chip_device_platform == "qcs610") {
++      _platform_target = "qcs610"
+     } else {
+       assert(false, "Unknown chip_device_platform: ${chip_device_platform}")
+     }
+diff --git a/src/platform/device.gni b/src/platform/device.gni
+index f32ac03..c9dcb44 100755
+--- a/src/platform/device.gni
++++ b/src/platform/device.gni
+@@ -16,7 +16,7 @@ import("//build_overrides/chip.gni")
+ import("${chip_root}/src/ble/ble.gni")
+
+ declare_args() {
+-  # Device platform layer: cc13x2_26x2, cc32xx, darwin, efr32, esp32, external, freertos, linux, nrfconnect, k32w0, qpg, tizen, cyw30739, bl602, mw320, zephyr, beken, none.
++  # Device platform layer: cc13x2_26x2, cc32xx, darwin, efr32, esp32, external, freertos, linux, nrfconnect, k32w0, qpg, tizen, cyw30739, bl602, mw320, zephyr, beken, qcs610, none.
+
+   chip_device_platform = "auto"
+   chip_platform_target = ""
+@@ -51,7 +51,7 @@ declare_args() {
+       chip_device_platform == "linux" || chip_device_platform == "qpg" ||
+       chip_device_platform == "cc13x2_26x2" ||
+       chip_device_platform == "k32w0" || chip_device_platform == "tizen" ||
+-      chip_device_platform == "webos"
++      chip_device_platform == "webos" || chip_device_platform == "qcs610"
+ }
+
+ declare_args() {
+@@ -65,7 +65,8 @@ declare_args() {
+       chip_device_platform == "webos" || chip_device_platform == "cc32xx" ||
+       chip_device_platform == "bl602" || chip_device_platform == "mw320" ||
+       chip_device_platform == "beken" || chip_device_platform == "mt793x" ||
+-      (chip_device_platform == "darwin" && current_os == "mac")
++      (chip_device_platform == "darwin" && current_os == "mac") ||
++      chip_device_platform == "qcs610"
+
+   # Enable ble support.
+   if (chip_device_platform == "fake") {
+@@ -86,7 +87,7 @@ declare_args() {
+       chip_device_platform == "ameba" || chip_device_platform == "webos" ||
+       chip_device_platform == "cc32xx" || chip_device_platform == "bl602" ||
+       chip_device_platform == "mw320" || chip_device_platform == "beken" ||
+-      chip_device_platform == "mt793x") {
++      chip_device_platform == "mt793x" || chip_device_platform == "qcs610") {
+     chip_mdns = "minimal"
+   } else if (chip_device_platform == "darwin" ||
+              chip_device_platform == "cc13x2_26x2" || current_os == "android" ||
+@@ -151,6 +152,8 @@ if (chip_device_platform == "cc13x2_26x2") {
+   _chip_device_layer = "Beken"
+ } else if (chip_device_platform == "mt793x") {
+   _chip_device_layer = "mt793x"
++} else if (chip_device_platform == "qcs610") {
++  _chip_device_layer = "qcs610"
+ }
+
+ if (chip_device_platform != "external") {
+@@ -212,5 +215,5 @@ assert(
+         chip_device_platform == "webos" || chip_device_platform == "bl602" ||
+         chip_device_platform == "mw320" || chip_device_platform == "zephyr" ||
+         chip_device_platform == "beken" || chip_device_platform == "bl702" ||
+-        chip_device_platform == "mt793x",
++        chip_device_platform == "mt793x" || chip_device_platform == "qcs610",
+     "Please select a valid value for chip_device_platform")
+diff --git a/src/system/BUILD.gn b/src/system/BUILD.gn
+index 76d6423..3907bb4 100644
+--- a/src/system/BUILD.gn
++++ b/src/system/BUILD.gn
+@@ -55,6 +55,8 @@ if (chip_device_platform == "cc13x2_26x2") {
+   import("//build_overrides/cyw30739_sdk.gni")
+ } else if (chip_device_platform == "mt793x") {
+   import("//build_overrides/mt793x_sdk.gni")
++} else if (chip_device_platform == "qcs610") {
++  import("//build_overrides/qcs610.gni")
+ }
+
+ buildconfig_header("system_buildconfig") {
+--
+2.17.1
+

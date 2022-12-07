@@ -1,0 +1,80 @@
+From 0b1400b62ec96287398bc45b5449054356c0a16d Mon Sep 17 00:00:00 2001
+From: Cheng Jiang <quic_chejiang@quicinc.com>
+Date: Mon, 14 Nov 2022 20:09:08 +0800
+Subject: [PATCH] add qcs610 in all clusters app example
+
+Signed-off-by: Cheng Jiang <quic_chejiang@quicinc.com>
+---
+ examples/all-clusters-app/qcs610/BUILD.gn | 15 ++++++++++-----
+ examples/all-clusters-app/qcs610/args.gni |  2 +-
+ 2 files changed, 11 insertions(+), 6 deletions(-)
+
+diff --git a/examples/all-clusters-app/qcs610/BUILD.gn b/examples/all-clusters-app/qcs610/BUILD.gn
+index 6c71b7e..8ef7353 100644
+--- a/examples/all-clusters-app/qcs610/BUILD.gn
++++ b/examples/all-clusters-app/qcs610/BUILD.gn
+@@ -34,7 +34,7 @@ source_set("chip-all-clusters-common") {
+ 
+   deps = [
+     "${chip_root}/examples/all-clusters-app/all-clusters-common",
+-    "${chip_root}/examples/platform/linux:app-main",
++    "${chip_root}/examples/platform/qcs610:app-main",
+     "${chip_root}/src/app/tests/suites/credentials:dac_provider",
+     "${chip_root}/src/lib",
+     "${chip_root}/third_party/jsoncpp",
+@@ -71,7 +71,7 @@ if (is_libfuzzer) {
+     deps = [
+       ":chip-all-clusters-common",
+       ":chip-lock-app-common",
+-      "${chip_root}/examples/platform/linux:app-main",
++      "${chip_root}/examples/platform/qcs610:app-main",
+     ]
+ 
+     cflags = [ "-Wconversion" ]
+@@ -85,7 +85,7 @@ if (is_libfuzzer) {
+     deps = [
+       ":chip-all-clusters-common",
+       ":chip-lock-app-common",
+-      "${chip_root}/examples/platform/linux:app-main",
++      "${chip_root}/examples/platform/qcs610:app-main",
+     ]
+ 
+     cflags = [ "-Wconversion" ]
+@@ -111,10 +111,15 @@ if (is_libfuzzer) {
+       output_name = "codesign_log.txt"
+       outputs = [ "${root_build_dir}/${output_name}" ]
+     }
++    
++    libs = [
++        "chrome",
++        "log",
++        ]
+   }
+ }
+ 
+-group("linux") {
++group("qcs610") {
+   deps = []
+   if (is_libfuzzer) {
+     deps += [ ":chip-all-clusters-app-fuzzing" ]
+@@ -124,5 +129,5 @@ group("linux") {
+ }
+ 
+ group("default") {
+-  deps = [ ":linux" ]
++  deps = [ ":qcs610" ]
+ }
+diff --git a/examples/all-clusters-app/qcs610/args.gni b/examples/all-clusters-app/qcs610/args.gni
+index 703c357..23f00af 100644
+--- a/examples/all-clusters-app/qcs610/args.gni
++++ b/examples/all-clusters-app/qcs610/args.gni
+@@ -21,5 +21,5 @@ chip_project_config_include = "<CHIPProjectAppConfig.h>"
+ chip_system_project_config_include = "<SystemProjectConfig.h>"
+ 
+ chip_project_config_include_dirs =
+-    [ "${chip_root}/examples/all-clusters-app/linux/include" ]
++    [ "${chip_root}/examples/all-clusters-app/qcs610/include" ]
+ chip_project_config_include_dirs += [ "${chip_root}/config/standalone" ]
+-- 
+2.17.1
+

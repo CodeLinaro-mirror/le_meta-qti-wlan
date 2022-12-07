@@ -10,7 +10,7 @@ FILES_SOLIBSDEV=""
 
 INC_PR = "r5"
 
-DEPENDS = "openssl libnl"
+DEPENDS = "openssl libnl dbus"
 
 SRC_URI = "file://${WORKSPACE}/external/hostap"
 

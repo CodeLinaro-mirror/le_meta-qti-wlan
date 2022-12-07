@@ -1,0 +1,48 @@
+From d8a4e49a1c9524788c8ea14d464975e77b16cd0b Mon Sep 17 00:00:00 2001
+From: "Yu Zhang(Yuriy)" <quic_yuzha@quicinc.com>
+Date: Wed, 16 Nov 2022 15:07:31 +0800
+Subject: [PATCH] set default wifi interface wlan0
+
+Signed-off-by: Yu Zhang(Yuriy) <quic_yuzha@quicinc.com>
+---
+ src/platform/Linux/ConnectivityManagerImpl.cpp | 17 +++++++++++++++--
+ 1 file changed, 15 insertions(+), 2 deletions(-)
+
+diff --git a/src/platform/Linux/ConnectivityManagerImpl.cpp b/src/platform/Linux/ConnectivityManagerImpl.cpp
+index 968240c582..3a71a70f5e 100644
+--- a/src/platform/Linux/ConnectivityManagerImpl.cpp
++++ b/src/platform/Linux/ConnectivityManagerImpl.cpp
+@@ -88,6 +88,19 @@ NetworkCommissioning::Internal::WirelessDriver::ConnectCallback * ConnectivityMa
+ uint8_t ConnectivityManagerImpl::sInterestedSSID[Internal::kMaxWiFiSSIDLength];
+ uint8_t ConnectivityManagerImpl::sInterestedSSIDLen;
+ 
++static size_t strlcpy(char *dest, const char *src, size_t size)
++{
++    size_t ret = strlen(src);
++
++    if (size)
++    {
++        size_t len = (ret >= size) ? size - 1 : ret;
++        memcpy(dest, src, len);
++        dest[len] = '\0';
++    }
++    return ret;
++}
++
+ CHIP_ERROR ConnectivityManagerImpl::_Init()
+ {
+ #if CHIP_DEVICE_CONFIG_ENABLE_WPA
+@@ -124,8 +137,8 @@ CHIP_ERROR ConnectivityManagerImpl::_Init()
+     }
+     else
+     {
+-        ChipLogError(DeviceLayer, "Failed to get WiFi interface");
+-        sWiFiIfName[0] = '\0';
++        ChipLogError(DeviceLayer, "Failed to get WiFi interface,set the default wlan0");
++        strlcpy(sWiFiIfName, "wlan0", sizeof("wlan0"));
+     }
+ 
+     if (GetDiagnosticDataProvider().ResetWiFiNetworkDiagnosticsCounts() != CHIP_NO_ERROR)
+-- 
+2.25.1
+
