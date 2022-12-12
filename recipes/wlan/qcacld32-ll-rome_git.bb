@@ -50,6 +50,8 @@ _WLAN_CFG_OVERRIDE_415 = "\
 						CONFIG_MDM_PLATFORM=y \
 						CONFIG_WLAN_CONV_SPECTRAL_ENABLE=n \
 						CONFIG_WLAN_WBUFF=n \
+						CONFIG_NUM_IPA_IFACE=2 \
+						CONFIG_ENABLE_SMMU_S1_TRANSLATION=y \
 						CONFIG_REMOVE_PKT_LOG=y \
 						CONFIG_WDI_EVENT_ENABLE=n \
                         "
@@ -116,12 +118,6 @@ do_install_append() {
     if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}; then
         install -m 0644 ${WORKDIR}/init_qti_wlan_auto.service -D ${D}${systemd_unitdir}/system/init_qti_wlan_auto.service
     fi
-}
-
-do_install_append_sa415m() {
-    install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6174.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
-    chmod -R 0664 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
-    sed -i -e 's/^gIPAConfig=0x7d/gIPAConfig=0/g' ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
 }
 
 do_module_signing() {
