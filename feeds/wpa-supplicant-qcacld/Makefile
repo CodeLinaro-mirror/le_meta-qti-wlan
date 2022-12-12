@@ -89,6 +89,10 @@ define Build/Compile
         $(MAKE) -j32 $(WPA_SUPPLICANT_MAKEOPTS)
 endef
 
+define Build/InstallDev
+	@true
+endef
+
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/wpa_supplicant/wpa_supplicant $(1)/usr/sbin/
