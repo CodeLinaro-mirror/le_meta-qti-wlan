@@ -12,7 +12,7 @@ include $(INCLUDE_DIR)/package.mk
 TARGET_CFLAGS += -DOPENWRT_BUILD
 SUPPLICANT_CONFIG_FILE := $(PKG_BUILD_DIR)/wpa_supplicant/.config
 
-ifeq ($(TARGET_MACHINE),sdx65)
+ifeq ($(BOARD),sdx65)
 	TARGET_LOCAL_NAME :=sdxlemur
 	TARGET_CPPFLAGS += -I$(STAGING_DIR)/usr/include/qmi
 	TARGET_ADD_CONFIG := echo -e "\nCONFIG_EAP_PROXY=qmi" >> $(SUPPLICANT_CONFIG_FILE) && \
@@ -27,7 +27,7 @@ else ifeq ($(BOARD),sdx75)
 		echo -e "\nCONFIG_EAP_PROXY_AKA_PRIME:=true" >> $(SUPPLICANT_CONFIG_FILE) && \
 		echo -e "\nCONFIG_WEP=y" >> $(SUPPLICANT_CONFIG_FILE)
 
-else ifeq ($(TARGET_MACHINE),sxrneo)
+else ifeq ($(BOARD),sxrneo)
 	TARGET_LOCAL_NAME :=sxrneo
 	TARGET_CFLAGS += -DCONFIG_ANDROID_LOG
 	TARGET_LDFLAGS += -L$(STAGING_DIR)/usr/lib/ -llog

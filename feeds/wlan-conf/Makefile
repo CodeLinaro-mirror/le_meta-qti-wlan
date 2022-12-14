@@ -11,7 +11,7 @@ include $(INCLUDE_DIR)/package.mk
 
 TARGET_CFLAGS += -DOPENWRT_BUILD
 
-ifeq ($(TARGET_MACHINE),sdx65)
+ifeq ($(BOARD),sdx65)
 	CONFIGURE_ARGS += --enable-target-sdxlemur=yes
 	WLAN_SUB_ADDR :=wlan_sdxlemur
 else ifeq ($(BOARD),sdx75)
