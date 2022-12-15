@@ -24,4 +24,5 @@ RDEPENDS_${PN} += "\
     qcacld32-cnss2 \
     wpa-supplicant-qcacld \
     wlan-conf \
+    wlan-sigma-dut \
     "
