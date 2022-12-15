@@ -24,6 +24,7 @@ SRC_URI += "file://wlan/qca-wifi-host-cmn/"
 SRC_URI += "file://wlan/fw-api/"
 SRC_URI += "file://device/qcom/wlan/${BASEMACHINE}/"
 SRC_URI += "file://wlan_load.conf"
+SRC_URI += "file://wlan/platform/"
 
 S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn"
 S = "${WORKDIR}/wlan/qcacld-3.0"
@@ -44,7 +45,7 @@ do_compile() {
     EXT_MODULES=../../wlan/qcacld-3.0/ \
     ROOTDIR=${WORKSPACE}/ \
     MODULE_OUT=${S} \
-    OUT_DIR=../out/msm-kernel-kalama-${KERNEL_VARIANT}/ \
+    OUT_DIR=../out/msm-kernel-kalama_le-${KERNEL_VARIANT}/ \
     KERNEL_UAPI_HEADERS_DIR=${STAGING_KERNEL_BUILDDIR} \
     ./build/build_module.sh \
     WLAN_PROFILE=${MODULE_NAME} \
@@ -64,7 +65,7 @@ do_compile() {
     CONFIG_CNSS_UTILS=m \
     KERNEL_SUPPORTS_NESTED_COMPOSITES=n \
     BUILD_DEBUG_VERSION=y \
-    KBUILD_EXTRA_SYMBOLS=../out/msm-kernel-kalama-${KERNEL_VARIANT}/msm-kernel/wlan-platform/Module.symvers
+    KBUILD_EXTRA_SYMBOLS=${STAGING_DIR_HOST}/lib/modules/${KERNEL_VERSION}/cnsswlan-kernel/Module.symvers
 }
 
 do_install() {
@@ -72,11 +73,10 @@ do_install() {
     install -m 0755 ${S}/${MODULE_NAME}.ko -D ${S}/unstripped
     install -d ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}
 
-    ${STAGING_DIR_NATIVE}/usr/libexec/aarch64-oe-linux/gcc/aarch64-oe-linux/11.3.0/strip \
+    ${STAGING_DIR_NATIVE}/usr/bin/aarch64-oe-linux/aarch64-oe-linux-strip \
              --strip-debug ${S}/unstripped/${MODULE_NAME}.ko -o ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/${MODULE_NAME}.ko
 
-    mkdir -p ${TOPDIR}/../src/kernel-${PREFERRED_VERSION_linux-msm}/out/msm-kernel-kalama-gki/msm-kernel/${MODULE_NAME}
-    cp ${WORKDIR}/wlan/qcacld-3.0/Module.symvers ${TOPDIR}/../src/kernel-${PREFERRED_VERSION_linux-msm}/out/msm-kernel-kalama-gki/msm-kernel/${MODULE_NAME}
+    install ${WORKDIR}/wlan/qcacld-3.0/Module.symvers -D ${D}${base_libdir}/modules/${KERNEL_VERSION}/wlan-kernel/Module.symvers
 
     #auto load
     install -d ${D}${sysconfdir}/modules-load.d
