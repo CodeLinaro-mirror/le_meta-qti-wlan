@@ -21,6 +21,7 @@ RDEPENDS_${PN} += "\
     qcacld32-ll-genoa \
     qcacld32-ll-rome \
     qcacld32-ll-hsp \
+    qcacld32-cnss2 \
     wpa-supplicant-qcacld \
     wlan-conf \
     "
