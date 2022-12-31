@@ -19,6 +19,7 @@ RDEPENDS_${PN} += "\
     wireless-tools \
     iw \
     qcacld32-cnss2 \
+    qcacld32-ll-rome \
     wpa-supplicant-qcacld \
     wlan-conf \
     "
