@@ -32,20 +32,24 @@ FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld/${TARGET_WLAN_CHIP}"
 
 BUILD_FLAGS = "CONFIG_QCA_CLD_WLAN_PROFILE=${TARGET_WLAN_CHIP} MODNAME=${WLAN_CHIP}_${TARGET_WLAN_CHIP}"
 
-KERNEL_VERSION="${@get_kernelversion_file("${STAGING_KERNEL_BUILDDIR}")}"
+KERNEL_VERSION = "${@get_kernelversion_file("${STAGING_KERNEL_BUILDDIR}")}"
+EXT_MODULES = "${@os.path.relpath("${S}", "${KERNEL_PLATFORM_PATH}")}"
 
 do_configure:append:sxrneo() {
     sed -i '1i DYNAMIC_SINGLE_CHIP=${TARGET_WLAN_CHIP}' ${WORKDIR}/wlan/qcacld-3.0/configs/${TARGET_WLAN_CHIP}_defconfig
     sed -i 's/CONFIG_WLAN_FEATURE_COAP := y/#CONFIG_WLAN_FEATURE_COAP := y/g' ${WORKDIR}/wlan/qcacld-3.0/configs/${TARGET_WLAN_CHIP}_defconfig
 }
 
+do_compile[depends] += "virtual/kernel:do_shared_workdir"
+do_compile[cleandirs] += "${WORKDIR}/out/${KERNEL_DEFCONFIG}"
 do_compile() {
-    cd ${TOPDIR}/../src/kernel-${PREFERRED_VERSION_linux-msm}/kernel_platform && \
+    cd ${KERNEL_PLATFORM_PATH}
     BUILD_CONFIG=msm-kernel/${KERNEL_CONFIG} \
-    EXT_MODULES=../../wlan/qcacld-3.0/ \
-    ROOTDIR=${WORKSPACE}/ \
+    EXT_MODULES=${EXT_MODULES} \
+    KERNEL_KIT=${KERNEL_PREBUILT_PATH} \
     MODULE_OUT=${S} \
-    OUT_DIR=../out/msm-kernel-kalama_le-${KERNEL_VARIANT}/ \
+    OUT_DIR=${WORKDIR}/out/${KERNEL_DEFCONFIG} \
+    INPLACE_COMPILE=y \
     KERNEL_UAPI_HEADERS_DIR=${STAGING_KERNEL_BUILDDIR} \
     ./build/build_module.sh \
     WLAN_PROFILE=${MODULE_NAME} \

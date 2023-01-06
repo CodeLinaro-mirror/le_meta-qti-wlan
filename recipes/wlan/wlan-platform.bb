@@ -4,14 +4,11 @@ DESCRIPTION = "QTI WLAN platform driver"
 LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=801f80980d171dd6425610833a22dbe6"
 
-DEPENDS += "qmi-framework"
+DEPENDS += "virtual/kernel qmi-framework"
 do_unpack[deptask] = "do_populate_sysroot"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/platform/"
-
-SRC_URI += "file://kernel-5.15/kernel_platform"
-SRC_URI += "file://kernel-5.15/out/msm-kernel-kalama_le-${KERNEL_VARIANT}"
 
 S = "${WORKDIR}/wlan/platform"
 
@@ -23,14 +20,18 @@ MODULE_NAME = "wlan-platform"
 MODULE_LIST = "cnss_prealloc.ko cnss_utils.ko cnss_nl.ko cnss_plat_ipc_qmi_svc.ko wlan_firmware_service.ko cnss2.ko"
 
 KERNEL_VERSION = "${@get_kernelversion_file("${STAGING_KERNEL_BUILDDIR}")}"
+EXT_MODULES = "${@os.path.relpath("${S}", "${KERNEL_PLATFORM_PATH}")}"
 
+do_compile[depends] += "virtual/kernel:do_shared_workdir"
+do_compile[cleandirs] += "${WORKDIR}/out/${KERNEL_DEFCONFIG}"
 do_compile() {
-    cd ${WORKDIR}/kernel-${PREFERRED_VERSION_linux-msm}/kernel_platform && \
+    cd ${KERNEL_PLATFORM_PATH}
     BUILD_CONFIG=msm-kernel/${KERNEL_CONFIG} \
-    EXT_MODULES=../../wlan/platform \
-    ROOTDIR=${WORKSPACE}/ \
+    EXT_MODULES=${EXT_MODULES} \
+    KERNEL_KIT=${KERNEL_PREBUILT_PATH} \
     MODULE_OUT=${S} \
-    OUT_DIR=${WORKDIR}/kernel-5.15/out/msm-kernel-kalama_le-${KERNEL_VARIANT}/ \
+    OUT_DIR=${WORKDIR}/out/${KERNEL_DEFCONFIG} \
+    INPLACE_COMPILE=y \
     KERNEL_UAPI_HEADERS_DIR=${STAGING_KERNEL_BUILDDIR} \
     ./build/build_module.sh
 }
