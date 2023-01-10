@@ -15,7 +15,7 @@ HOSTAPD_CONFIG_FILE := $(PKG_BUILD_DIR)/hostapd/.config
 ifeq ($(TARGET_MACHINE),sdx65)
 	TARGET_ADD_CONFIG += echo -e "\nCONFIG_WEP=y" >> $(HOSTAPD_CONFIG_FILE)
 	TARGET_LOCAL_NAME :=sdxlemur
-else ifeq ($(TARGET_MACHINE),sdx75)
+else ifeq ($(BOARD),sdx75)
 	TARGET_ADD_CONFIG += echo -e "\nCONFIG_WEP=y" >> $(HOSTAPD_CONFIG_FILE)
 	TARGET_LOCAL_NAME :=sdxpinn
 else ifeq ($(TARGET_MACHINE),sxrneo)
@@ -76,6 +76,10 @@ HOSTAPD_MAKEOPTS= $(TARGET_CONFIGURE_OPTS) \
 
 define Build/Compile
         $(MAKE) -j32 $(HOSTAPD_MAKEOPTS)
+endef
+
+define Build/InstallDev
+	@true
 endef
 
 define Package/$(PKG_NAME)/install
