@@ -120,6 +120,8 @@ do_install:append:kalama(){
 		install -d ${D}/etc/systemd/system/multi-user.target.wants/
 		ln -sf /etc/systemd/system/wlan_daemon.service \
 			${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
+		install -d ${D}/etc/systemd/network/
+		ln -sf /dev/null ${D}/etc/systemd/network/99-default.link
 	fi
 }
 
