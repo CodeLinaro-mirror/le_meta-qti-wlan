@@ -12,24 +12,22 @@ include $(INCLUDE_DIR)/package.mk
 TARGET_CFLAGS += -DOPENWRT_BUILD
 SUPPLICANT_CONFIG_FILE := $(PKG_BUILD_DIR)/wpa_supplicant/.config
 
-ifeq ($(TARGET_MACHINE),sdx65)
+ifeq ($(BOARD),sdx65)
 	TARGET_LOCAL_NAME :=sdxlemur
 	TARGET_CPPFLAGS += -I$(STAGING_DIR)/usr/include/qmi
-	TARGET_DEPENDS := +qmi +qmi-framework
 	TARGET_ADD_CONFIG := echo -e "\nCONFIG_EAP_PROXY=qmi" >> $(SUPPLICANT_CONFIG_FILE) && \
 		echo -e "\nCONFIG_EAP_PROXY_DUAL_SIM=true" >> $(SUPPLICANT_CONFIG_FILE) && \
 		echo -e "\nCONFIG_EAP_PROXY_AKA_PRIME:=true" >> $(SUPPLICANT_CONFIG_FILE) && \
 		echo -e "\nCONFIG_WEP=y" >> $(SUPPLICANT_CONFIG_FILE)
-else ifeq ($(TARGET_MACHINE),sdx75)
+else ifeq ($(BOARD),sdx75)
 	TARGET_LOCAL_NAME :=sdxpinn
 	TARGET_CPPFLAGS += -I$(STAGING_DIR)/usr/include/qmi
-	TARGET_DEPENDS := +qmi +qmi-framework
 	TARGET_ADD_CONFIG := echo -e "\nCONFIG_EAP_PROXY=qmi" >> $(SUPPLICANT_CONFIG_FILE) && \
 		echo -e "\nCONFIG_EAP_PROXY_DUAL_SIM=true" >> $(SUPPLICANT_CONFIG_FILE) && \
 		echo -e "\nCONFIG_EAP_PROXY_AKA_PRIME:=true" >> $(SUPPLICANT_CONFIG_FILE) && \
 		echo -e "\nCONFIG_WEP=y" >> $(SUPPLICANT_CONFIG_FILE)
 
-else ifeq ($(TARGET_MACHINE),sxrneo)
+else ifeq ($(BOARD),sxrneo)
 	TARGET_LOCAL_NAME :=sxrneo
 	TARGET_CFLAGS += -DCONFIG_ANDROID_LOG
 	TARGET_LDFLAGS += -L$(STAGING_DIR)/usr/lib/ -llog
@@ -57,7 +55,7 @@ define Package/$(PKG_NAME)
   SECTION:=QTI
   CATEGORY:=QTI-PACKAGES
   TITLE:=SIGMA DUT
-  DEPENDS:= +libnl-tiny +openssl-util +wpa-supplicant-8-lib $(TARGET_DEPENDS)
+  DEPENDS:= +libnl-tiny +openssl-util +wpa-supplicant-8-lib +qmi +qmi-framework
 endef
 
 define Package/$(PKG_NAME)/Description
@@ -89,6 +87,10 @@ WPA_SUPPLICANT_MAKEOPTS= $(TARGET_CONFIGURE_OPTS) \
 
 define Build/Compile
         $(MAKE) -j32 $(WPA_SUPPLICANT_MAKEOPTS)
+endef
+
+define Build/InstallDev
+	@true
 endef
 
 define Package/$(PKG_NAME)/install
