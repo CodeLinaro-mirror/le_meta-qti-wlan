@@ -82,8 +82,8 @@ FILES_${PN} += "/usr/share/dbus-1/system-services/*"
 FILES_${PN} += "/usr/share/dbus-1/system.d/*"
 
 do_install_append_sxr2130(){
-      if [ -e "${WORKDIR}/device/qcom/wlan/${SOC_FAMILY}/WCNSS_qcom_cfg_qca6490.ini" ];then
-            install -m 0644 ${WORKDIR}/device/qcom/wlan/${SOC_FAMILY}/WCNSS_qcom_cfg_qca6490.ini ${D}/lib/firmware/wlan/qca_cld/WCNSS_qcom_cfg.ini
+      if [ -e "${WORKDIR}/device/qcom/wlan/${SOC_FAMILY}/WCNSS_qcom_cfg_qca6490_le.ini" ];then
+            install -m 0644 ${WORKDIR}/device/qcom/wlan/${SOC_FAMILY}/WCNSS_qcom_cfg_qca6490_le.ini ${D}/lib/firmware/wlan/qca_cld/WCNSS_qcom_cfg.ini
       fi
 }
 
