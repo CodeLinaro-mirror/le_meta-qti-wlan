@@ -12,19 +12,19 @@ include $(INCLUDE_DIR)/package.mk
 TARGET_CFLAGS += -DOPENWRT_BUILD
 HOSTAPD_CONFIG_FILE := $(PKG_BUILD_DIR)/hostapd/.config
 
-ifeq ($(TARGET_MACHINE),sdx65)
+ifeq ($(BOARD),sdx65)
 	TARGET_ADD_CONFIG += echo -e "\nCONFIG_WEP=y" >> $(HOSTAPD_CONFIG_FILE)
 	TARGET_LOCAL_NAME :=sdxlemur
 else ifeq ($(BOARD),sdx75)
 	TARGET_ADD_CONFIG += echo -e "\nCONFIG_WEP=y" >> $(HOSTAPD_CONFIG_FILE)
 	TARGET_LOCAL_NAME :=sdxpinn
-else ifeq ($(TARGET_MACHINE),sxrneo)
+else ifeq ($(BOARD),sxrneo)
 	TARGET_ADD_CONFIG += echo -e "\nLIBS_c +=-llog" >> $(HOSTAPD_CONFIG_FILE) && \
 			     echo -e "\nLIBS +=-llog" >> $(HOSTAPD_CONFIG_FILE)
 	TARGET_LOCAL_NAME :=sxrneo
 	TARGET_CFLAGS += -DCONFIG_ANDROID_LOG
 else
-	TARGET_LOCAL_NAME :=$(TARGET_MACHINE)
+	TARGET_LOCAL_NAME :=$(BOARD)
 endif
 
 TARGET_PATCH_EXIST := $(shell if [ -d "./files/$(TARGET_LOCAL_NAME)" ]; then \
@@ -76,6 +76,10 @@ HOSTAPD_MAKEOPTS= $(TARGET_CONFIGURE_OPTS) \
 
 define Build/Compile
         $(MAKE) -j32 $(HOSTAPD_MAKEOPTS)
+endef
+
+define Build/InstallDev
+	@true
 endef
 
 define Package/$(PKG_NAME)/install

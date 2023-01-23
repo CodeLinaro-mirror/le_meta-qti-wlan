@@ -46,6 +46,10 @@ define Build/Compile
 	$(MAKE) -C "$(LINUX_DIR)" $(CNSS_MAKEOPTS)
 endef
 
+define Build/InstallDev
+	@true
+endef
+
 define KernelPackage/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/$(EXTRA_ADDR)/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss2/cnss2.ko $(1)/$(EXTRA_ADDR)/

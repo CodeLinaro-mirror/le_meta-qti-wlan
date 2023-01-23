@@ -29,6 +29,10 @@ define Build/Prepare
 	$(Build/Patch)
 endef
 
+define Build/InstallDev
+	@true
+endef
+
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/sigma_dut $(1)/usr/sbin/
