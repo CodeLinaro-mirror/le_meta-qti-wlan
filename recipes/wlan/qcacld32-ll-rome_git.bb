@@ -62,7 +62,6 @@ _WLAN_CFG_OVERRIDE_410 = "\
 						CONFIG_IPA_OFFLOAD=n \
 						CONFIG_CNSS_GENL=m \
 						CONFIG_CNSS_UTILS=m \
-						CONFIG_BUS_AUTO_SUSPEND=y \
 						CONFIG_WLAN_CONV_SPECTRAL_ENABLE=n \
                         "
 
