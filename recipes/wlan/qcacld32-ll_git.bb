@@ -22,17 +22,11 @@ DEPENDS_remove_sdmsteppe = "rtsp-alg"
 DEPENDS_remove_qrbx210-rbx = "rtsp-alg"
 DEPENDS_remove_qrb5165 = "rtsp-alg"
 
-QCACMN_REV = "LU.UM.3.3.1.r1-00300-QRB5165.0"
-QCAAPI_REV = "LU.UM.3.3.1.r1-00300-QRB5165.0"
-
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/qcacld-3.0/"
+SRC_URI += "file://wlan/qca-wifi-host-cmn/"
+SRC_URI += "file://wlan/fw-api/"
 SRC_URI += "file://qcacld-kbuild.patch"
-
-SRC_URI += "https://git.codelinaro.org/clo/la/platform/vendor/qcom-opensource/wlan/fw-api/-/archive/${QCAAPI_REV}/fw-api-${QCAAPI_REV}.tar.gz;subdir=wlan;name=api"
-SRC_URI += "https://git.codelinaro.org/clo/la/platform/vendor/qcom-opensource/wlan/qca-wifi-host-cmn/-/archive/${QCACMN_REV}/qca-wifi-host-cmn-${QCACMN_REV}.tar.gz;subdir=wlan;name=cmn"
-SRC_URI[api.sha256sum] = "e810aea43c0e6173b435e2af4519575271571c00a682ca2616fc497e673f1f83"
-SRC_URI[cmn.sha256sum] = "b807fc3d4bb7c359274f31771c59b24eb83675a7cd208f3a01f8efe8220206ef"
 
 S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn/"
 S = "${WORKDIR}/wlan/qcacld-3.0/"
@@ -52,19 +46,8 @@ SSTATE_DUPWHITELIST += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wlan_nlink
 NF_PERF = "${@oe.utils.conditional('MACHINE', 'qcs403-som2', oe.utils.conditional('PERF_BUILD', '1', '1', '0', d), '0', d)}"
 
 do_patch() {
-    cd ${WORKDIR}/wlan/qca-wifi-host-cmn-${QCACMN_REV}
-    wget https://git.codelinaro.org/clo/la/platform/vendor/qcom-opensource/wlan/qca-wifi-host-cmn/-/commit/918e46deec2ad759e59d6bfcd0f9421e0877dfde.diff
-    wget https://git.codelinaro.org/clo/la/platform/vendor/qcom-opensource/wlan/qca-wifi-host-cmn/-/commit/31f4e86ecb7551696255c289a9fac20ef1f5b5cb.diff
-    wget https://git.codelinaro.org/clo/la/platform/vendor/qcom-opensource/wlan/qca-wifi-host-cmn/-/commit/a29108516fab259a7c637b6dbf32af3bac2bc855.diff
-    wget https://git.codelinaro.org/clo/la/platform/vendor/qcom-opensource/wlan/qca-wifi-host-cmn/-/commit/3e3a071188d84bf7cda5590520ae78cc8d312dc2.diff
-    patch -p1 < 918e46deec2ad759e59d6bfcd0f9421e0877dfde.diff
-    patch -p1 < 31f4e86ecb7551696255c289a9fac20ef1f5b5cb.diff
-    patch -p1 < a29108516fab259a7c637b6dbf32af3bac2bc855.diff
-    patch -p1 < 3e3a071188d84bf7cda5590520ae78cc8d312dc2.diff
     cd ${S}
     patch -p1 < ${WORKDIR}/qcacld-kbuild.patch
-    mv ${WORKDIR}/wlan/fw-api-${QCAAPI_REV} ${WORKDIR}/wlan/fw-api
-    mv ${WORKDIR}/wlan/qca-wifi-host-cmn-${QCACMN_REV} ${WORKDIR}/wlan/qca-wifi-host-cmn
 }
 
 do_install () {
