@@ -7,19 +7,19 @@ DESCRIPTION = "Qualcomm Atheros WLAN CLD3.0 low latency driver"
 LICENSE = "ISC"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=f3b90e78ea0cffb20bf5cca7947a896d"
 
-FILES_${PN}     += "lib/firmware/wlan/*"
-FILES_${PN}     += "lib/modules/${KERNEL_VERSION}/extra/wlan.ko"
+FILES:${PN}     += "lib/firmware/wlan/*"
+FILES:${PN}     += "lib/modules/${KERNEL_VERSION}/extra/wlan.ko"
 PROVIDES_NAME   = "kernel-module-wlan"
-RPROVIDES_${PN} += "${PROVIDES_NAME}-${KERNEL_VERSION}"
+RPROVIDES:${PN} += "${PROVIDES_NAME}-${KERNEL_VERSION}"
 
 do_unpack[deptask] = "do_populate_sysroot"
 PR = "r8"
 # This DEPENDS is to serialize kernel module builds
 DEPENDS = "rtsp-alg"
-DEPENDS_append_sdmsteppe = " virtual/kernel"
-DEPENDS_remove_sdmsteppe = "rtsp-alg"
-DEPENDS_remove_kona = "rtsp-alg"
-DEPENDS_remove_waipio = "rtsp-alg"
+DEPENDS:append:sdmsteppe = " virtual/kernel"
+DEPENDS:remove:sdmsteppe = "rtsp-alg"
+DEPENDS:remove:kona = "rtsp-alg"
+DEPENDS:remove:_waipio = "rtsp-alg"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/qcacld-3.0/"
@@ -38,8 +38,8 @@ EXTRA_OEMAKE += "${@oe.utils.conditional('MACHINE', 'sxrneo', 'CONFIG_CNSS_QCA67
 
 # The common header file, 'wlan_nlink_common.h' can be installed from other
 # qcacld recipes too. To suppress the duplicate detection error, add it to
-# SSTATE_DUPWHITELIST.
-SSTATE_DUPWHITELIST += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wlan_nlink_common.h"
+# SSTATE_ALLOW_OVERLAP_FILES.
+SSTATE_ALLOW_OVERLAP_FILES += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wlan_nlink_common.h"
 
 # NF perf image select WLAN perf config
 NF_PERF = "${@oe.utils.conditional('MACHINE', 'qcs403-som2', oe.utils.conditional('PERF_BUILD', '1', '1', '0', d), '0', d)}"
@@ -105,7 +105,7 @@ do_compile() {
     fi
 }
 
-do_deploy_append_neo () {
+do_deploy:append:neo () {
         install -m 0644 ${S}/wlan.ko ${DEPLOYDIR}/kernel_modules/
 }
 

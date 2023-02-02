@@ -11,16 +11,16 @@ SRC_URI += "file://${MACHINE}/"
 SRC_URI += "file://misc/"
 
 DEPENDS += "glib-2.0 wpa-supplicant-8-lib dbus liblog"
-DEPENDS_append_sdxlemur = " qmi qmi-framework"
+DEPENDS:append:kalama = " qmi-framework "
+DEPENDS:append:sdxlemur = " qmi qmi-framework"
 
-FILES_${PN} += "/usr/include/*"
+FILES:${PN} += "/usr/include/*"
 
 S = "${WORKDIR}/external/wpa_supplicant_8/wpa_supplicant"
 PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"
 
-LDFLAGS_append_sxrneo += " -Wl,--no-as-needed"
-LDFLAGS_append_sxrneo +="-L${RECIPE_SYSROOT}/usr/lib -llog"
-CFLAGS_append_sxrneo +="-DCONFIG_ANDROID_LOG"
+LDFLAGS:append:sxrneo = " -Wl,--no-as-needed -L${RECIPE_SYSROOT}/usr/lib -llog"
+CFLAGS:append:sxrneo ="-DCONFIG_ANDROID_LOG"
 
 do_configure() {
     if [ "$(ls -A "${WORKDIR}/${MACHINE}")" ]
@@ -39,14 +39,14 @@ do_configure() {
     fi
 }
 
-do_configure_append_sdxlemur() {
+do_configure:append:sdxlemur() {
     echo "CONFIG_EAP_PROXY=qmi" >> .config
     echo "CONFIG_EAP_PROXY_DUAL_SIM := true" >> .config
     echo "CONFIG_EAP_PROXY_AKA_PRIME := true" >> .config
     echo "CONFIG_WEP=y" >> .config
 }
 
-do_configure_append_sxrneo() {
+do_configure:append:sxrneo() {
 	rm -rf ${STAGING_LIBDIR}/libwpa_supplicant_8_lib.so*
         echo "EXTRALIBS +=\"-llog\"" >> .config
         echo "LIBS +=\"-llog\"" >> .config

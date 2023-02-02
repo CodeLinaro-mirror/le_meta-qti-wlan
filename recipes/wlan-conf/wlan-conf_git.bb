@@ -12,18 +12,19 @@ SRC_URI = "file://mdm-init/"
 SRC_URI += "file://wlan_daemon.service"
 SRC_URI += "file://cnss.service"
 SRC_URI += "file://device/qcom/wlan/${BASEMACHINE}/"
-SRC_URI_append_sxrneo+= "file://sxrneo/dhcpcd.service"
-SRC_URI_append_sxrneo+= "file://sxrneo/wlan_daemon.service"
-SRC_URI_append_sxrneo+= "file://sxrneo/wpa_supplicant.service"
-SRC_URI_append_sxrneo+= "file://sxrneo/wlan-conf_systemd_tmpfiles.conf"
-SRC_URI_append_sxrneo+= "file://sxrneo/fi.w1.wpa_supplicant1.service"
-SRC_URI_append_sxrneo+= "file://sxrneo/dbus-wpa_supplicant.conf"
-SRC_URI_append_sxrneo+= "file://sxrneo/dbus-wpa_supplicant_testing.conf"
+SRC_URI:append:sxrneo+= "file://sxrneo/dhcpcd.service"
+SRC_URI:append:sxrneo+= "file://sxrneo/wlan_daemon.service"
+SRC_URI:append:sxrneo+= "file://sxrneo/wpa_supplicant.service"
+SRC_URI:append:sxrneo+= "file://sxrneo/wlan-conf_systemd_tmpfiles.conf"
+SRC_URI:append:sxrneo+= "file://sxrneo/fi.w1.wpa_supplicant1.service"
+SRC_URI:append:sxrneo+= "file://sxrneo/dbus-wpa_supplicant.conf"
+SRC_URI:append:sxrneo+= "file://sxrneo/dbus-wpa_supplicant_testing.conf"
+SRC_URI:append:kalama+= "file://sxrneo/wlan_daemon.service"
 
 # Update for each machine
 S = "${WORKDIR}/mdm-init/"
 
-do_install_append_mdm(){
+do_install:append:mdm(){
 	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
 		if grep -q "CONFIG_CNSS2=m" ${STAGING_KERNEL_BUILDDIR}/.config
 		then
@@ -41,7 +42,7 @@ do_install_append_mdm(){
 	fi
 }
 
-do_install_append_sdxlemur(){
+do_install:append:sdxlemur(){
 	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
 		if grep -q "CONFIG_CNSS2=m" ${STAGING_KERNEL_BUILDDIR}/.config
 		then
@@ -59,7 +60,7 @@ do_install_append_sdxlemur(){
 	fi
 }
 
-do_install_append_msm(){
+do_install:append:msm(){
   if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
       install -d ${D}/etc/initscripts
       cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
@@ -78,7 +79,7 @@ do_install_append_msm(){
   fi
 }
 
-do_install_append_neo(){
+do_install:append:neo(){
 	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
 		if grep -q "CONFIG_ICNSS2=m" ${STAGING_KERNEL_BUILDDIR}/.config
 		then
@@ -110,12 +111,26 @@ do_install_append_neo(){
 	fi
 }
 
-FILES_${PN} += "${userfsdatadir}/misc/wifi/*"
-FILES_${PN} += "${base_libdir}/firmware/wlan/qca_cld/*"
-FILES_${PN} += "/lib/firmware/wlan/qca_cld/* ${sysconfdir}/init.d/* "
-FILES_${PN}_append_sxrneo += "/usr/share/dbus-1/system-services/*"
-FILES_${PN}_append_sxrneo += "/usr/share/dbus-1/system.d/*"
-FILES_${PN}_append_sxrneo += "/etc/dbus-1/system.d/*"
+do_install:append:kalama(){
+	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
+		install -d ${D}/etc/initscripts
+		cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
+		install -d ${D}/etc/systemd/system/
+		install -m 0644 ${WORKDIR}/sxrneo/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
+		install -d ${D}/etc/systemd/system/multi-user.target.wants/
+		ln -sf /etc/systemd/system/wlan_daemon.service \
+			${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
+		install -d ${D}/etc/systemd/network/
+		ln -sf /dev/null ${D}/etc/systemd/network/99-default.link
+	fi
+}
+
+FILES:${PN} += "${userfsdatadir}/misc/wifi/*"
+FILES:${PN} += "${base_libdir}/firmware/wlan/qca_cld/*"
+FILES:${PN} += "/lib/firmware/wlan/qca_cld/* ${sysconfdir}/init.d/* "
+FILES:${PN}:append:sxrneo += "/usr/share/dbus-1/system-services/*"
+FILES:${PN}:append:sxrneo += "/usr/share/dbus-1/system.d/*"
+FILES:${PN}:append:sxrneo += "/etc/dbus-1/system.d/*"
 
 BASEPRODUCT = "${@d.getVar('PRODUCT', False)}"
 
@@ -135,23 +150,24 @@ EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'qcs605', '--enable-target-
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'apq8053', '--enable-pronto-wlan=yes', '', d)}"
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'apq8017', '--enable-pronto-wlan=yes', '', d)}"
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'neo', '--enable-target-sxrneo=yes', '', d)}"
+EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'kalama', '--enable-target-kalama=yes', '', d)}"
 
 # Enable qsap-wlan in place of pronto-wlan for Drones
-EXTRA_OECONF_append_qsap += "--enable-snap-wlan=yes --enable-qsap-wlan=yes --enable-naples-wlan=yes"
+EXTRA_OECONF:append:qsap += "--enable-snap-wlan=yes --enable-qsap-wlan=yes --enable-naples-wlan=yes"
 
 # Enable drone-wlan in place of pronto-wlan for Drones
-EXTRA_OECONF_append_drone += "'--enable-drone-wlan=yes"
+EXTRA_OECONF:append:drone += "'--enable-drone-wlan=yes"
 
 # Enable robot-wlan according to variants
-EXTRA_OECONF_append_robot-som += "--enable-robot-som-wlan=yes"
-EXTRA_OECONF_remove_robot-rome += "--enable-robot-som-wlan=yes"
-EXTRA_OECONF_append_robot-rome += "--enable-robot-wlan=yes"
-EXTRA_OECONF_remove_robot-pronto += "--enable-robot-som-wlan=yes"
-EXTRA_OECONF_append_robot-pronto += "--enable-pronto-wlan=yes"
+EXTRA_OECONF:append:robot-som += "--enable-robot-som-wlan=yes"
+EXTRA_OECONF:remove:robot-rome += "--enable-robot-som-wlan=yes"
+EXTRA_OECONF:append:robot-rome += "--enable-robot-wlan=yes"
+EXTRA_OECONF:remove:robot-pronto += "--enable-robot-som-wlan=yes"
+EXTRA_OECONF:append:robot-pronto += "--enable-pronto-wlan=yes"
 
 INITSCRIPT_NAME   = "wlan_daemon"
 INITSCRIPT_PARAMS = "remove"
-INITSCRIPT_PARAMS_apq8009 = "${@bb.utils.contains('BASEPRODUCT', 'drone', 'start 01 2 3 4 5 . stop 2 0 1 6 .', 'start 98 5 . stop 2 0 1 6 .', d)}"
-INITSCRIPT_PARAMS_apq8053 = "start 98 5 . stop 2 0 1 6 ."
-INITSCRIPT_PARAMS_apq8017 = "start 98 5 . stop 2 0 1 6 ."
-INITSCRIPT_PARAMS_apq8096 = "${@bb.utils.contains('BASEPRODUCT', 'drone', 'start 01 2 3 4 5 . stop 2 0 1 6 .', 'start 98 5 . stop 2 0 1 6 .', d)}"
+INITSCRIPT_PARAMS:apq8009 = "${@bb.utils.contains('BASEPRODUCT', 'drone', 'start 01 2 3 4 5 . stop 2 0 1 6 .', 'start 98 5 . stop 2 0 1 6 .', d)}"
+INITSCRIPT_PARAMS:apq8053 = "start 98 5 . stop 2 0 1 6 ."
+INITSCRIPT_PARAMS:apq8017 = "start 98 5 . stop 2 0 1 6 ."
+INITSCRIPT_PARAMS:apq8096 = "${@bb.utils.contains('BASEPRODUCT', 'drone', 'start 01 2 3 4 5 . stop 2 0 1 6 .', 'start 98 5 . stop 2 0 1 6 .', d)}"
