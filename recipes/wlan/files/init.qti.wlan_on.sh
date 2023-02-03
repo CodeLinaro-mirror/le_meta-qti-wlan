@@ -42,7 +42,7 @@ else
 	modprobe cnss2
 fi
 echo "##########load cnss2 done############"
-
+wpas_conf="/etc/misc/wifi/wpa_supplicant.conf"
 if (lspci -k|grep cnss_pci);then
 	if (lspci -k|grep 1102);then
 		echo "##########load qca6595#############"
@@ -55,6 +55,14 @@ if (lspci -k|grep cnss_pci);then
 		modprobe qca6696
 	elif (lspci -k|grep 1103);then
 		echo "##########load qca6490#############"
+		mount -o remount,rw /
+		if ( grep -c "wowlan_triggers=magic_pkt" $wpas_conf ); then
+			echo "wow setting is present in wpa_supplicant.conf"
+			break
+		else
+			sed -i '$a\wowlan_triggers=magic_pkt' $wpas_conf
+			echo "adding wow setting in wpa_supplicant.conf"
+		fi
 		modprobe qca6490
 	else
 		echo "##########load default wlan########"
