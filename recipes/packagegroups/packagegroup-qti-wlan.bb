@@ -20,7 +20,7 @@ RDEPENDS_${PN} += "\
     ${@bb.utils.contains('MACHINE', 'sa415m', '', 'qcacld32-ll-genoa', d)} \
     qcacld32-ll-rome \
     ${@bb.utils.contains('MACHINE', 'sa415m', '', 'qcacld32-ll-hsp', d)} \
-    ${@bb.utils.contains('MACHINE', 'sa415m', '', 'qcacld32-cnss2', d)} \
+    qcacld32-cnss2 \
     wpa-supplicant-qcacld \
     wlan-conf \
     "
