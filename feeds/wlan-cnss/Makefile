@@ -55,6 +55,10 @@ define KernelPackage/$(PKG_NAME)/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss_prealloc/cnss_prealloc.ko $(1)/$(EXTRA_ADDR)/
 	$(INSTALL_DIR) $(TOPDIR)/bin/targets/$(TARGET_VARIANT)/modules
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss2/cnss2.ko $(TOPDIR)/bin/targets/$(TARGET_VARIANT)/modules/
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_DIR) $(1)/etc/initscripts
+	$(INSTALL_BIN) ./files/wlan-cnss.init $(1)/etc/init.d/
+	$(INSTALL_BIN) ./files/start_wlan_cnss_le $(1)/etc/initscripts/
 endef
 
 $(eval $(call KernelPackage,$(PKG_NAME)))
