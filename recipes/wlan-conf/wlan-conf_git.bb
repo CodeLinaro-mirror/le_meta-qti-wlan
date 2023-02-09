@@ -51,7 +51,7 @@ do_install_append_msm(){
 }
 
 do_install_append(){
-    if [ "${BASEMACHINE}" == "qrbx210" ]; then
+    if [ "${BASEMACHINE}" == "qrbx210" ] || [ "${BASEMACHINE}" == "qcs6490" ] ; then
         if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
             install -d ${D}/etc/initscripts
             cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
@@ -83,6 +83,7 @@ EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'sdxpoorwills', '--enable-t
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'sdxprairie', '--enable-target-sdxprairie=yes', '', d)}"
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'qcs40x', '--enable-target-qcs405-som1=yes', '', d)}"
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'qcs605', '--enable-target-qcs605=yes', '', d)}"
+EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'qcs6490', '--enable-target-qcs6490=yes', '', d)}"
 
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'sdmsteppe', '--enable-target-sdmsteppe=yes', '', d)}"
 
