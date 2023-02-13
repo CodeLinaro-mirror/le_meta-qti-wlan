@@ -88,8 +88,10 @@ endef
 
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/etc/init.d/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hostapd/hostapd $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hostapd/hostapd_cli $(1)/usr/sbin/
+	$(INSTALL_BIN) ./files/hostapd-daemon.init $(1)/etc/init.d/
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
