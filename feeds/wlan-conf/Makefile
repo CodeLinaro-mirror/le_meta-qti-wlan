@@ -15,8 +15,11 @@ ifeq ($(BOARD),sdx65)
 	CONFIGURE_ARGS += --enable-target-sdxlemur=yes
 	WLAN_SUB_ADDR :=wlan_sdxlemur
 else ifeq ($(BOARD),sdx75)
-        CONFIGURE_ARGS += --enable-target-sdxpinn=yes
-        WLAN_SUB_ADDR :=wlan_sdxpinn
+	CONFIGURE_ARGS += --enable-target-sdxpinn=yes
+	WLAN_SUB_ADDR :=wlan_sdxpinn
+else ifeq ($(BOARD),sdx35)
+	CONFIGURE_ARGS += --enable-target-sdxbaagha=yes
+	WLAN_SUB_ADDR :=wlan_sdxbaagha
 else
 	WLAN_SUB_ADDR :=wlan
 endif
