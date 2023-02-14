@@ -17,7 +17,7 @@ RDEPENDS_${PN} += "\
     wireless-tools \
     iw \
     ${@bb.utils.contains('MACHINE', 'sa415m', '', 'qcacld32-ll-hasting', d)} \
-    ${@bb.utils.contains('MACHINE', 'sa415m', '', 'qcacld32-ll-genoa', d)} \
+    qcacld32-ll-genoa \
     qcacld32-ll-rome \
     ${@bb.utils.contains('MACHINE', 'sa415m', '', 'qcacld32-ll-hsp', d)} \
     qcacld32-cnss2 \

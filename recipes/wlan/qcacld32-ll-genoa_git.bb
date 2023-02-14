@@ -124,10 +124,8 @@ do_install_append_sa515m() {
 
 do_install_append_sa415m() {
     install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx24_auto/WCNSS_qcom_cfg_qcn7605.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
-    chown -RH root:1001 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
     chmod -R 0664 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
     install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx24_auto/wlan_mac.bin ${FIRMWARE_PATH}/wlan_mac.bin
-    chown -RH root:1001 ${FIRMWARE_PATH}/wlan_mac.bin
     chmod -R 0664 ${FIRMWARE_PATH}/wlan_mac.bin
 }
 
