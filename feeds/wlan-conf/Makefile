@@ -64,7 +64,7 @@ define Package/$(PKG_NAME)/install
 	$(CP) $(CONF_ADDR)/wpa_supplicant.conf $(1)/$(MISC_WIFI_ADDR)/
 	$(CP) $(CONF_ADDR)/WCNSS_qcom_cfg.ini $(1)/$(MISC_WIFI_ADDR)/
 	$(CP) $(CONF_ADDR)/wlan $(1)/$(INIT_D_ADDR)/
-	ln -nf $(1)/$(MISC_WIFI_ADDR)/WCNSS_qcom_cfg.ini $(1)/$(FIRMWARE_ADDR)/WCNSS_qcom_cfg.ini
+	$(LN) -rsf $(1)/$(MISC_WIFI_ADDR)/WCNSS_qcom_cfg.ini $(1)/$(FIRMWARE_ADDR)/WCNSS_qcom_cfg.ini
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
