@@ -1,0 +1,57 @@
+#! /bin/sh
+
+#Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+#SPDX-License-Identifier: BSD-3-Clause-Clear
+
+export MODULE_BASE=/lib/modules
+set -e
+
+case "$1" in
+  start)
+        echo -n "Starting/Loading wlan cnss modules: "
+
+	fullpath=$(find $MODULE_BASE -name cnss2.ko)
+	if [ -z "$fullpath" ]; then
+		echo -n "wlan cnss modules missing "
+		exit 0
+	fi
+
+	basepath=$(dirname $fullpath)
+
+        echo "wlan cnss:start/load" > /dev/kmsg
+
+	if [ -f $basepath/cnss_utils.ko ]; then
+		insmod $basepath/cnss_utils.ko
+	fi
+	if [ -f $basepath/cnss_plat_ipc_qmi_svc.ko ]; then
+		insmod $basepath/cnss_plat_ipc_qmi_svc.ko
+	fi
+	if [ -f $basepath/wlan_firmware_service.ko ]; then
+		insmod $basepath/wlan_firmware_service.ko
+	fi
+	if [ -f $basepath/cnss_nl.ko ]; then
+		insmod $basepath/cnss_nl.ko
+	fi
+	if [ -f $basepath/cnss_prealloc.ko ]; then
+		insmod $basepath/cnss_prealloc.ko
+	fi
+	if [ -f $basepath/cnss2.ko ]; then
+		insmod $basepath/cnss2.ko
+	fi
+
+        echo "done loading wlan cnss modules"
+        ;;
+  stop)
+        echo -n "Bypassing unloading of wlan modules"
+        ;;
+  restart)
+        $0 stop
+        $0 start
+        ;;
+  *)
+        echo "Usage { start | stop | restart}" >&2
+        exit 1
+        ;;
+esac
+
+exit 0
