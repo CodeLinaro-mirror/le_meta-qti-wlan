@@ -12,16 +12,19 @@ PACKAGES = "\
 
 ALLOW_EMPTY_${PN} = "1"
 
+ROMEONLY ?= 'False'
+ROMEONLY_sa525m = 'True'
+ROMEONLY_sa410m = 'True'
+
 RDEPENDS_${PN} += "\
     rfkill \
     hostap-daemon-qcacld \
     wireless-tools \
     iw \
-    qcacld32-ll-hasting \
-    qcacld32-ll-genoa \
-    qcacld32-ll-rome \
-    qcacld32-ll-hsp \
+    ${@oe.utils.conditional('PREFERRED_VERSION_linux-msm', '5.15', 'wlan-platform-dlkm', '', d)} \
+    ${@oe.utils.conditional('ROMEONLY', 'False', 'qcacld32-ll-rome qcacld32-ll-hasting qcacld32-ll-genoa qcacld32-ll-hsp', 'qcacld32-ll-rome', d)} \
     qcacld32-cnss2 \
     wpa-supplicant-qcacld \
     wlan-conf \
+    wlan-sigma-dut \
     "
