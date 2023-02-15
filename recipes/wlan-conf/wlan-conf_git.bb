@@ -55,6 +55,7 @@ do_install_append(){
         if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
             install -d ${D}/etc/initscripts
             cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
+            install -m 0644 ${S}/wlan_qrb5165/hostapd.conf -D ${D}/etc/hostapd/hostapd.conf
             install -d ${D}/etc/systemd/system/
             install -d ${D}/etc/systemd/system/multi-user.target.wants/
             install -m 0644 ${WORKDIR}/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
