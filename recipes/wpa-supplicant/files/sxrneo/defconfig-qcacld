@@ -556,3 +556,6 @@ CONFIG_DPP=y
 
 # WEP
 CONFIG_WEP=y
+
+# To ignore possible wrong network configurations
+CFLAGS += -DWPA_IGNORE_CONFIG_ERRORS
