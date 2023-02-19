@@ -18,6 +18,9 @@ ifeq ($(BOARD),sdx65)
 else ifeq ($(BOARD),sdx75)
 	TARGET_ADD_CONFIG += echo -e "\nCONFIG_WEP=y" >> $(HOSTAPD_CONFIG_FILE)
 	TARGET_LOCAL_NAME :=sdxpinn
+else ifeq ($(BOARD),sdx35)
+	TARGET_ADD_CONFIG += echo -e "\nCONFIG_WEP=y" >> $(HOSTAPD_CONFIG_FILE)
+	TARGET_LOCAL_NAME :=sdxbaagha
 else ifeq ($(BOARD),sxrneo)
 	TARGET_ADD_CONFIG += echo -e "\nLIBS_c +=-llog" >> $(HOSTAPD_CONFIG_FILE) && \
 			     echo -e "\nLIBS +=-llog" >> $(HOSTAPD_CONFIG_FILE)
