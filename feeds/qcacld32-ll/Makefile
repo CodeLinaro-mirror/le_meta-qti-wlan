@@ -6,7 +6,7 @@ PKG_VERSION:=1.0
 PKG_RELEASE:=1
 PKG_FIXUP:=autoreconf
 
-ifeq ($(VARIANT),perf)
+ifeq ($(TARGET_VARIANT),perf)
   COMPILE_MODE :=perf
 else
   COMPILE_MODE :=debug
@@ -49,14 +49,6 @@ endef
 
 QCACLD32_LL_MAKEOPTS=  M="$(PKG_BUILD_DIR)/qcacld-3.0" \
 			${TARGET_MAKEOPTS} \
-			KERNEL_PATH=${LINUX_DIR} \
-			KERNEL_SRC=${LINUX_DIR} \
-			KERNEL_VERSION=${LINUX_VERSION} \
-			TARGET=$(LINUX_KARCH) \
-			CC=$(KERNEL_CC) \
-			TOOLPREFIX="$(KERNEL_CROSS)" \
-			TOOLPATH="$(KERNEL_CROSS)" \
-			CROSS_COMPILE=$(TARGET_CROSS) \
 			CONFIG_CNSS_SDIO=n \
 			CONFIG_CLD_HL_SDIO_CORE=n
 
@@ -74,7 +66,8 @@ define Build/Prepare
 endef
 
 define Build/Compile
-	$(MAKE) -j32 -C "$(LINUX_DIR)" $(QCACLD32_LL_MAKEOPTS)
+	$(MAKE) -j32 -C "$(LINUX_DIR)" $(QCACLD32_LL_MAKEOPTS) \
+	modules
 endef
 
 define Build/InstallDev
@@ -87,6 +80,8 @@ endef
 define  KernelPackage/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/$(EXTRA_ADDR)/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/qcacld-3.0/wlan.ko $(1)/$(EXTRA_ADDR)/
+	$(INSTALL_DIR) $(TOPDIR)/bin/targets/$(TARGET_VARIANT)/modules
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/qcacld-3.0/wlan.ko $(TOPDIR)/bin/targets/$(TARGET_VARIANT)/modules/
 endef
 
 $(eval $(call KernelPackage,$(PKG_NAME)))
