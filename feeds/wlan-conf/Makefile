@@ -63,6 +63,7 @@ define Package/$(PKG_NAME)/install
 	$(CP) $(CONF_ADDR)/hostapd.conf $(1)/$(MISC_WIFI_ADDR)/
 	$(CP) $(CONF_ADDR)/hostapd-wlan1.conf $(1)/$(MISC_WIFI_ADDR)/
 	$(CP) $(CONF_ADDR)/hostapd-wlan2.conf $(1)/$(MISC_WIFI_ADDR)/
+	$(CP) $(CONF_ADDR)/hostapd-wlan3.conf $(1)/$(MISC_WIFI_ADDR)/
 	$(CP) $(CONF_ADDR)/sta_mode_hostapd.conf $(1)/$(MISC_WIFI_ADDR)/
 	$(CP) $(CONF_ADDR)/wpa_supplicant.conf $(1)/$(MISC_WIFI_ADDR)/
 	$(CP) $(CONF_ADDR)/WCNSS_qcom_cfg.ini $(1)/$(MISC_WIFI_ADDR)/
