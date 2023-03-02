@@ -20,87 +20,68 @@ PID_PATH=/var/run/$SVC_NAME-$IFNAME.pid
 CONF_PATH=/var/run/$SVC_NAME-$IFNAME.conf
 
 start_service() {
+	local ifname=$1
 	if [ -x "${BIN_PATH}" ];then
-		if [ -f /var/run/$SVC_NAME-wlan0.conf ];then
-			IFNAME=wlan0
+		if [ -f /var/run/$SVC_NAME-$ifname.conf ];then
+			IFNAME=$ifname
 			echo "IFNAME is $IFNAME" > /dev/kmsg
+			# BIN_PATH - /usr/sbin/wpa_supplicant
 			BIN_PATH=/usr/sbin/$SVC_NAME
+			# UCI_CONFIG_PATH - /etc/config/wpa_supplicant used to reload wpa_supplicant service if it changed
 			UCI_CONFIG_PATH=/etc/config/$SVC_NAME
+			# LOG_PATH - /tmp/wpa_supplicant-ifname.log used to catch wpa_supplicant log
 			LOG_PATH=/tmp/$SVC_NAME-$IFNAME.log
 			PID_PATH=/var/run/$SVC_NAME-$IFNAME.pid
+			# CONF_PATH - config file used to start wpa_supplicant service
 			CONF_PATH=/var/run/$SVC_NAME-$IFNAME.conf
-			config_load "${SVC_NAME}"
-			config_get_bool enable_debug cfg enable_debug 0
-			mkdir -p /var/run/wpa_supplicant
-			chown wifi:wifi /var/run/wpa_supplicant
-			procd_open_instance $PKG_NAME
-			procd_set_param command $BIN_PATH -Dnl80211 -i$IFNAME -P $PID_PATH -f $LOG_PATH
-			procd_append_param command -dddd
 
-			procd_append_param command -c $CONF_PATH
-			procd_set_param file $UCI_CONFIG_PATH
-			procd_set_param pidfile $PID_PATH
-			procd_set_param stdout 1
-			procd_set_param stderr 1
-			[ -x /sbin/ujail -a -e /etc/capabilities/wpa_supplicant.json ] && {
-				procd_add_jail $PKG_NAME
-				procd_set_param user wifi
-				procd_set_param group wifi
-				procd_set_param capabilities /etc/capabilities/wpa_supplicant.json
-				procd_set_param no_new_privs 1
-			}
-			procd_close_instance
-		fi
-		if [ -f /var/run/$SVC_NAME-wlan1.conf ];then
-			IFNAME=wlan1
-			echo "IFNAME is $IFNAME" > /dev/kmsg
-			BIN_PATH=/usr/sbin/$SVC_NAME
-			UCI_CONFIG_PATH=/etc/config/$SVC_NAME
-			LOG_PATH=/tmp/$SVC_NAME-$IFNAME.log
-			PID_PATH=/var/run/$SVC_NAME-$IFNAME.pid
-			CONF_PATH=/var/run/$SVC_NAME-$IFNAME.conf
 			config_load "${SVC_NAME}"
 			config_get_bool enable_debug cfg enable_debug 0
 
+			# make the ctrl_interface file as wifi user Id and group Id
 			mkdir -p /var/run/wpa_supplicant
 			chown wifi:wifi /var/run/wpa_supplicant
-			procd_open_instance $PKG_NAME
+
+			# create a instance to start wpa_supplicant service
+			procd_open_instance $PKG_NAME-$IFNAME
+			# start hostapd as the command /usr/sbin/wpa_supplicant -Dnl80211 -i ifname
+			# -p /var/run/wpa_supplicant-ifname.pid -f /var/run/wpa_supplicant-ifname.log
 			procd_set_param command $BIN_PATH -Dnl80211 -i$IFNAME -P $PID_PATH -f $LOG_PATH
-			echo "enable debug log (append '-dddd') for $SVC_NAME" > /dev/kmsg
+			# give the highest the debug log level to dump more log
 			procd_append_param command -dddd
 
+			# set the config file
 			procd_append_param command -c $CONF_PATH
+			# trigger wpa_supplicant re-start if the config file changed
 			procd_set_param file $UCI_CONFIG_PATH
+			# set the PID file
 			procd_set_param pidfile $PID_PATH
+			# set the log print level in procd
 			procd_set_param stdout 1
 			procd_set_param stderr 1
 			[ -x /sbin/ujail -a -e /etc/capabilities/wpa_supplicant.json ] && {
-				procd_add_jail $PKG_NAME
+				procd_add_jail $PKG_NAME-$IFNAME
+				# wpa_supplicant service will start as the user and group permission
 				procd_set_param user wifi
 				procd_set_param group wifi
+				# wpa_supplicant service's capabilities get from this file
 				procd_set_param capabilities /etc/capabilities/wpa_supplicant.json
 				procd_set_param no_new_privs 1
 			}
+			# close the instance after wpa_supplicant service start, free the memory
 			procd_close_instance
 		fi
 	fi
 }
 
 stop_service() {
-	echo "stop $PKG_NAME" > /dev/kmsg
 	local pid
+	local ifname=$1
 
-	if [ -e "/var/run/$SVC_NAME-wlan0.pid" ];then
-		PID_PATH=/var/run/$SVC_NAME-wlan0.pid
+	if [ -e "/var/run/$SVC_NAME-$ifname.pid" ];then
+		PID_PATH=/var/run/$SVC_NAME-$ifname.pid
 		pid=$(cat $PID_PATH)
-		echo "kill $SVC_NAME(pid: $pid)" > /dev/kmsg
-		kill $pid &> /dev/null
-		rm -rf $PID_PATH &> /dev/null
-	fi
-
-	if [ -e "/var/run/$SVC_NAME-wlan1.pid" ];then
-		PID_PATH=/var/run/$SVC_NAME-wlan1.pid
-		pid=$(cat $PID_PATH)
+		echo "The pid is $pid"
 		echo "kill $SVC_NAME(pid: $pid)" > /dev/kmsg
 		kill $pid &> /dev/null
 		rm -rf $PID_PATH &> /dev/null
@@ -109,8 +90,8 @@ stop_service() {
 
 reload_service() {
 	echo "reload $PKG_NAME" > /dev/kmsg
-	stop
-	start
+	stop $@
+	start $@
 }
 
 service_triggers() {
@@ -119,6 +100,6 @@ service_triggers() {
 
 restart() {
 	echo "restart $PKG_NAME" > /dev/kmsg
-	stop
-	start
+	stop $@
+	start $@
 }
