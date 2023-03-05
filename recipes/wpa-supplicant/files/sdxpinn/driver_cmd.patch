@@ -103,7 +103,7 @@ index 9d20f51..49f991a 100644
  
  /* driver_nl80211_scan.c */
 diff --git a/src/drivers/driver_nl80211_event.c b/src/drivers/driver_nl80211_event.c
-index 9b58665..f796e88 100644
+index 9b58665..b4eca15 100644
 --- a/src/drivers/driver_nl80211_event.c
 +++ b/src/drivers/driver_nl80211_event.c
 @@ -2526,8 +2526,8 @@ static void qca_nl80211_key_mgmt_auth(struct wpa_driver_nl80211_data *drv,
@@ -113,7 +113,7 @@ index 9b58665..f796e88 100644
 -#ifdef ANDROID
 -#ifdef ANDROID_LIB_EVENT
 +#if defined(ANDROID) || defined(LINUX_EMBEDDED)
-+#if defined(ANDROID_LIB_EVENT) || defined(LINUX_EMBEDDED_LIB_EVENT
++#if defined(ANDROID_LIB_EVENT) || defined(LINUX_EMBEDDED_LIB_EVENT)
  	wpa_driver_nl80211_driver_event(
  		drv, OUI_QCA, QCA_NL80211_VENDOR_SUBCMD_KEY_MGMT_ROAM_AUTH,
  		data, len);
