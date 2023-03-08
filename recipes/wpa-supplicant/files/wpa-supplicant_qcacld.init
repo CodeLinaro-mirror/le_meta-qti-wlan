@@ -43,7 +43,7 @@ start_service() {
 			chown wifi:wifi /var/run/wpa_supplicant
 
 			# create a instance to start wpa_supplicant service
-			procd_open_instance $PKG_NAME-$IFNAME
+			procd_open_instance $IFNAME
 			# start hostapd as the command /usr/sbin/wpa_supplicant -Dnl80211 -i ifname
 			# -p /var/run/wpa_supplicant-ifname.pid -f /var/run/wpa_supplicant-ifname.log
 			procd_set_param command $BIN_PATH -Dnl80211 -i$IFNAME -P $PID_PATH -f $LOG_PATH
@@ -60,7 +60,7 @@ start_service() {
 			procd_set_param stdout 1
 			procd_set_param stderr 1
 			[ -x /sbin/ujail -a -e /etc/capabilities/wpa_supplicant.json ] && {
-				procd_add_jail $PKG_NAME-$IFNAME
+				procd_add_jail $IFNAME
 				# wpa_supplicant service will start as the user and group permission
 				procd_set_param user wifi
 				procd_set_param group wifi
@@ -75,17 +75,13 @@ start_service() {
 }
 
 stop_service() {
-	local pid
-	local ifname=$1
-
-	if [ -e "/var/run/$SVC_NAME-$ifname.pid" ];then
-		PID_PATH=/var/run/$SVC_NAME-$ifname.pid
-		pid=$(cat $PID_PATH)
-		echo "The pid is $pid"
-		echo "kill $SVC_NAME(pid: $pid)" > /dev/kmsg
-		kill $pid &> /dev/null
-		rm -rf $PID_PATH &> /dev/null
-	fi
+	# procd will invoke service_handle_delete() to kill
+	# the instance by default when called stop_service,
+	# but it needs send correct instance when create in
+	# start_service(). I,e, if the instance create in
+	# start_service() is wlan0, it needs send wlan0 when
+        # stop.
+	echo "stop $1" > /dev/kmsg
 }
 
 reload_service() {
