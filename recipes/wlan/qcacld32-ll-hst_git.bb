@@ -66,6 +66,7 @@ do_install() {
 
     #auto load
     install -d ${D}${sysconfdir}/modules-load.d
+    sed -i 's/kiwi_v2/wlan/' ${WORKDIR}/wlan_load.conf
     install -m 0755 ${WORKDIR}/wlan_load.conf -D ${D}${sysconfdir}/modules-load.d/wlan_load.conf
 }
 
