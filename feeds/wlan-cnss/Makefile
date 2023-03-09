@@ -6,7 +6,7 @@ PKG_VERSION:=1.0
 PKG_RELEASE:=1
 PKG_FIXUP:=autoreconf
 
-ifeq ($(VARIANT),perf)
+ifeq ($(TARGET_VARIANT),perf)
   COMPILE_MODE :=perf
 else
   COMPILE_MODE :=debug
@@ -19,12 +19,7 @@ include $(INCLUDE_DIR)/package.mk
 
 CNSS_MAKEOPTS = CONFIG_CNSS_OUT_OF_TREE=y \
 		CONFIG_MHI_BUS_MISC=y \
-		M="$(PKG_BUILD_DIR)" \
-		TARGET=$(LINUX_KARCH) \
-		CC=$(KERNEL_CC) \
-		TOOLPREFIX="$(KERNEL_CROSS)" \
-		TOOLPATH="$(KERNEL_CROSS)" \
-		CROSS_COMPILE=$(TARGET_CROSS) 
+		M="$(PKG_BUILD_DIR)"
 
 define KernelPackage/$(PKG_NAME)
   SECTION:=Kernel Modules
@@ -37,13 +32,13 @@ define KernelPackage/$(PKG_NAME)/Description
 endef
 
 define Build/Prepare
-	export WLAN_PLATFORM_ROOT=$(TOPDIR)/src/wlan/platform/
 	mkdir -p $(PKG_BUILD_DIR)/
 	$(CP) $(LOCAL_SRC)/* $(PKG_BUILD_DIR)/
 endef
 
 define Build/Compile
-	$(MAKE) -C "$(LINUX_DIR)" $(CNSS_MAKEOPTS)
+	$(MAKE) -C "$(LINUX_DIR)" $(CNSS_MAKEOPTS) \
+	modules
 endef
 
 define Build/InstallDev
@@ -58,6 +53,8 @@ define KernelPackage/$(PKG_NAME)/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss_utils/wlan_firmware_service.ko $(1)/$(EXTRA_ADDR)/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss_genl/cnss_nl.ko $(1)/$(EXTRA_ADDR)/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss_prealloc/cnss_prealloc.ko $(1)/$(EXTRA_ADDR)/
+	$(INSTALL_DIR) $(TOPDIR)/bin/targets/$(TARGET_VARIANT)/modules
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss2/cnss2.ko $(TOPDIR)/bin/targets/$(TARGET_VARIANT)/modules/
 endef
 
 $(eval $(call KernelPackage,$(PKG_NAME)))
