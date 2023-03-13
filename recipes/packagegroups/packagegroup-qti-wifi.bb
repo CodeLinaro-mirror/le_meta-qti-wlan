@@ -12,11 +12,15 @@ WLAN_IW_TOOL="${@oe.utils.conditional('BASEMACHINE', 'sdxlemur', 'iw-wifi6e', 'i
 QCACLD32_LL="qcacld32-ll"
 QCACLD32_LL:neo="qcacld32-ll-oot qcacld32-ll-kiwi"
 QCACLD32_LL:kalama="qcacld32-ll-kiwi"
+QCACLD32_LL:qrb5165="qcacld32-ll-hst"
 
-WLAN_PLATFORM="${@oe.utils.conditional('BASEMACHINE', 'kalama', 'wlan-platform', '', d)}"
+WLAN_PLATFORM=""
+WLAN_PLATFORM:kalama="wlan-platform"
+WLAN_PLATFORM:qrb5165="wlan-platform"
 
 RDEPENDS:packagegroup-qti-wifi:append:sxrneo = "tcpdump rfkill dnsmasq dhcpcd iperf2 iperf3"
 RDEPENDS:packagegroup-qti-wifi:append:kalama = "rfkill dnsmasq iperf2"
+RDEPENDS:packagegroup-qti-wifi:append:qrb5165 = "rfkill dnsmasq iperf2"
 
 RDEPENDS:packagegroup-qti-wifi = " \
         ${QCACLD32_LL} \
