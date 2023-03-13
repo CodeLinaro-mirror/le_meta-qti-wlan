@@ -120,12 +120,6 @@ do_install_append() {
     fi
 }
 
-do_install_append_sa415m() {
-    install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6174.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
-    chmod -R 0664 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
-    sed -i -e 's/^gIPAConfig=0x7d/gIPAConfig=0/g' ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
-}
-
 do_module_signing() {
     if [ -f ${STAGING_KERNEL_BUILDDIR}/signing_key.priv ]; then
         bbnote "Signing ${PN} module"
