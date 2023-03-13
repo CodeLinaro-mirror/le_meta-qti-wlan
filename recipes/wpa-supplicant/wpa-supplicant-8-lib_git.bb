@@ -20,3 +20,4 @@ PACKAGE_ARCH ?= "${MACHINE_ARCH}"
 
 S = "${WORKDIR}/wlan/qcwcn/wpa_supplicant_8_lib"
 
+CFLAGS:append= "-fcommon"
