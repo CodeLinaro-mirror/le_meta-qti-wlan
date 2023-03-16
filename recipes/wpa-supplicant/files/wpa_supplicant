@@ -1,0 +1,22 @@
+#
+# Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+#
+# This file is used to config supplicant log relative configuration on OpenWRT,
+# such as log level, folder to store and so on.
+
+# The section supplicant is used to set wpa-supplicant_qcacld's log print level and
+# where to print.
+# The 'log_folder_mode' option is used to set where to print and store the log,
+# 0 = syslog, log will print in system log, catch with the command "logread -f >
+# /data/vendor/wifi/logread.txt"
+# 1 = tmp folder, log will store in the folder /tmp/wpa_supplicant-wlanX.log
+# 2 = /data/vendor/wifi/ folder.
+# The 'log_level' option is used to set the log level to print, we support
+# {debug, info} currently, debug is the default level, if set the level to
+# info, few log will print.
+
+config supplicant 'log'
+	option log_folder_mode '0'
+	option log_level 'debug'
+
