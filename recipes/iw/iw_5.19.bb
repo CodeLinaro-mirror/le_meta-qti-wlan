@@ -2,11 +2,11 @@ DESCRIPTION = "cfg80211 interface configuration utility"
 LICENSE = "ISC"
 LIC_FILES_CHKSUM = "file://COPYING;md5=878618a5c4af25e9b93ef0be1a93f774"
 
-PV = "5.9"
+PV = "5.19"
 SRC_URI = "https://www.kernel.org/pub/software/network/iw/iw-${PV}.tar.xz \
 	   "
-SRC_URI[md5sum] = "7a47d6f749ec69afcaf351166fd12f6f"
-SRC_URI[sha256sum] = "293a07109aeb7e36267cf59e3ce52857e9ffae3a6666eb8ac77894b1839fe1f2"
+SRC_URI[md5sum] = "fd17ca2dd5f160a5d9e5fd3f8a69f416"
+SRC_URI[sha256sum] = "f167bbe947dd53bb9ebc0c1dcef5db6ad73ac1d6084f2c6f9376c5c360cc4d4e"
 
 DEPENDS = "libnl"
 S = "${WORKDIR}/iw-${PV}"
