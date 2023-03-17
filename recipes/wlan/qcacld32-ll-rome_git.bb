@@ -122,6 +122,10 @@ do_compile:prepend() {
         sed -i -e "/$(CONFIG_QCA_CLD_WLAN_PROFILE)_defconfig$/i${CFG80211_FLAG}" ${S}/Kbuild
     fi
 }
+do_compile_prepend_sa410m() {
+    CMD="echo 8 >/sys/class/net/wlan0/queues/tx-0/xps_cpus;echo 8 >/sys/class/net/wlan0/queues/rx-0/rps_cpus"
+    sed -i -e "/Load wlanhost driver done/i${CMD}" ${WORKDIR}/init.qti.wlan_on.sh
+}
 
 do_install () {
     module_do_install
