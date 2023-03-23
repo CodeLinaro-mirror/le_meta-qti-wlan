@@ -18,6 +18,9 @@ ifeq ($(BOARD),sdx65)
 else ifeq ($(BOARD),sdx75)
 	TARGET_ADD_CONFIG += echo -e "\nCONFIG_WEP=y" >> $(HOSTAPD_CONFIG_FILE)
 	TARGET_LOCAL_NAME :=sdxpinn
+else ifeq ($(BOARD),sdx35)
+	TARGET_ADD_CONFIG += echo -e "\nCONFIG_WEP=y" >> $(HOSTAPD_CONFIG_FILE)
+	TARGET_LOCAL_NAME :=sdxbaagha
 else ifeq ($(BOARD),sxrneo)
 	TARGET_ADD_CONFIG += echo -e "\nLIBS_c +=-llog" >> $(HOSTAPD_CONFIG_FILE) && \
 			     echo -e "\nLIBS +=-llog" >> $(HOSTAPD_CONFIG_FILE)
@@ -44,6 +47,7 @@ define Package/$(PKG_NAME)
   CATEGORY:=QTI-PACKAGES
   TITLE:=HOSTAPD
   DEPENDS:= +libnl +openssl-util +wpa-supplicant-8-lib +liblog
+  USERID:=wifi=1010:wifi=1010
 endef
 # DEPENDS += pkgconfig since no exist
 
@@ -84,8 +88,14 @@ endef
 
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/etc/init.d/
+	$(INSTALL_DIR) $(1)/usr/share/acl.d
+	$(INSTALL_DIR) $(1)/etc/capabilities
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hostapd/hostapd $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hostapd/hostapd_cli $(1)/usr/sbin/
+	$(INSTALL_BIN) ./files/hostapd-daemon.init $(1)/etc/init.d/
+	$(INSTALL_DATA) ./files/hostapd-daemon_acl.json $(1)/usr/share/acl.d/
+	$(INSTALL_DATA) ./files/hostapd-daemon.json $(1)/etc/capabilities/
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))

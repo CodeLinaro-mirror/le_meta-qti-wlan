@@ -27,6 +27,14 @@ else ifeq ($(BOARD),sdx75)
 		echo -e "\nCONFIG_EAP_PROXY_AKA_PRIME:=true" >> $(SUPPLICANT_CONFIG_FILE) && \
 		echo -e "\nCONFIG_WEP=y" >> $(SUPPLICANT_CONFIG_FILE)
 
+else ifeq ($(BOARD),sdx35)
+	TARGET_LOCAL_NAME :=sdxbaagha
+	TARGET_CPPFLAGS += -I$(STAGING_DIR)/usr/include/qmi
+	TARGET_ADD_CONFIG := echo -e "\nCONFIG_EAP_PROXY=qmi" >> $(SUPPLICANT_CONFIG_FILE) && \
+		echo -e "\nCONFIG_EAP_PROXY_DUAL_SIM=true" >> $(SUPPLICANT_CONFIG_FILE) && \
+		echo -e "\nCONFIG_EAP_PROXY_AKA_PRIME:=true" >> $(SUPPLICANT_CONFIG_FILE) && \
+		echo -e "\nCONFIG_WEP=y" >> $(SUPPLICANT_CONFIG_FILE)
+
 else ifeq ($(BOARD),sxrneo)
 	TARGET_LOCAL_NAME :=sxrneo
 	TARGET_CFLAGS += -DCONFIG_ANDROID_LOG
@@ -56,6 +64,7 @@ define Package/$(PKG_NAME)
   CATEGORY:=QTI-PACKAGES
   TITLE:=SIGMA DUT
   DEPENDS:= +libnl-tiny +openssl-util +wpa-supplicant-8-lib +qmi +qmi-framework
+  USERID:=wifi=1010:wifi=1010
 endef
 
 define Package/$(PKG_NAME)/Description
@@ -95,8 +104,14 @@ endef
 
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/etc/init.d/
+	$(INSTALL_DIR) $(1)/usr/share/acl.d
+	$(INSTALL_DIR) $(1)/etc/capabilities
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/wpa_supplicant/wpa_supplicant $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/wpa_supplicant/wpa_cli $(1)/usr/sbin/
+	$(INSTALL_BIN) files/wpa-supplicant_qcacld.init $(1)/etc/init.d/
+	$(INSTALL_DATA) ./files/wpa_supplicant_acl.json $(1)/usr/share/acl.d/
+	$(INSTALL_DATA) ./files/wpa_supplicant.json $(1)/etc/capabilities/
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))

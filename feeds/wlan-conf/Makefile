@@ -1,4 +1,5 @@
 include $(TOPDIR)/rules.mk
+include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=wlan-conf
 PKG_VERSION:=1.0
@@ -11,12 +12,22 @@ include $(INCLUDE_DIR)/package.mk
 
 TARGET_CFLAGS += -DOPENWRT_BUILD
 
+WLAN_INI_DEFAULT := WCNSS_qcom_cfg.ini
+WLAN_INI_PERF := WCNSS_qcom_cfg-perf.ini
+WLAN_INI_FILE := $(WLAN_INI_DEFAULT)
+
 ifeq ($(BOARD),sdx65)
 	CONFIGURE_ARGS += --enable-target-sdxlemur=yes
 	WLAN_SUB_ADDR :=wlan_sdxlemur
 else ifeq ($(BOARD),sdx75)
-        CONFIGURE_ARGS += --enable-target-sdxpinn=yes
-        WLAN_SUB_ADDR :=wlan_sdxpinn
+	CONFIGURE_ARGS += --enable-target-sdxpinn=yes
+	WLAN_SUB_ADDR :=wlan_sdxpinn
+	ifeq ($(TARGET_VARIANT),perf)
+		WLAN_INI_FILE := $(WLAN_INI_PERF)
+	endif
+else ifeq ($(BOARD),sdx35)
+	CONFIGURE_ARGS += --enable-target-sdxbaagha=yes
+	WLAN_SUB_ADDR :=wlan_sdxbaagha
 else
 	WLAN_SUB_ADDR :=wlan
 endif
@@ -60,11 +71,12 @@ define Package/$(PKG_NAME)/install
 	$(CP) $(CONF_ADDR)/hostapd.conf $(1)/$(MISC_WIFI_ADDR)/
 	$(CP) $(CONF_ADDR)/hostapd-wlan1.conf $(1)/$(MISC_WIFI_ADDR)/
 	$(CP) $(CONF_ADDR)/hostapd-wlan2.conf $(1)/$(MISC_WIFI_ADDR)/
+	$(CP) $(CONF_ADDR)/hostapd-wlan3.conf $(1)/$(MISC_WIFI_ADDR)/
 	$(CP) $(CONF_ADDR)/sta_mode_hostapd.conf $(1)/$(MISC_WIFI_ADDR)/
 	$(CP) $(CONF_ADDR)/wpa_supplicant.conf $(1)/$(MISC_WIFI_ADDR)/
-	$(CP) $(CONF_ADDR)/WCNSS_qcom_cfg.ini $(1)/$(MISC_WIFI_ADDR)/
+	$(CP) $(CONF_ADDR)/$(WLAN_INI_FILE) $(1)/$(MISC_WIFI_ADDR)/$(WLAN_INI_DEFAULT)
 	$(CP) $(CONF_ADDR)/wlan $(1)/$(INIT_D_ADDR)/
-	ln -nf $(1)/$(MISC_WIFI_ADDR)/WCNSS_qcom_cfg.ini $(1)/$(FIRMWARE_ADDR)/WCNSS_qcom_cfg.ini
+	$(LN) -rsf $(1)/$(MISC_WIFI_ADDR)/$(WLAN_INI_DEFAULT) $(1)/$(FIRMWARE_ADDR)/$(WLAN_INI_DEFAULT)
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
