@@ -1,22 +1,19 @@
 inherit linux-kernel-base deploy
 
 DESCRIPTION = "Qualcomm Technologies, Inc. WLAN CLD3.0 low latency driver"
-LICENSE = "ISC & BSD-3-Clause"
+LICENSE = "ISC & BSD-3-Clause & GPL-V2"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/ISC;md5=f3b90e78ea0cffb20bf5cca7947a896d \
-                    file://${COREBASE}/meta/files/common-licenses/BSD-3-Clause;md5=550794465ba0ec5312d6919e203a55f9"
-
-MODULE_NAME = "kiwi_v2"
+                    file://${COREBASE}/meta/files/common-licenses/BSD-3-Clause;md5=550794465ba0ec5312d6919e203a55f9 \
+                    file://${COREBASE}/meta/files/common-licenses/GPL-2.0-only;md5=801f80980d171dd6425610833a22dbe6"
 
 do_unpack[deptask] = "do_populate_sysroot"
 PR = "r8"
 PV = "2.0"
 DEPENDS += "wlan-platform"
 
-do_configure[depends] += "virtual/kernel:do_shared_workdir"
+MODULE_NAME = "wlan"
 
-# TODO: Remove this local definition once available via machine.conf
-KERNEL_DEFCONFIG ?= "neo_le-defconfig"
-KERNEL_DEFCONFIG_qti-distro-debug ?= "neo_le-debug_defconfig"
+do_configure[depends] += "virtual/kernel:do_shared_workdir"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/qcacld-3.0/"
@@ -35,39 +32,25 @@ BUILD_FLAGS = "CONFIG_QCA_CLD_WLAN_PROFILE=${TARGET_WLAN_CHIP} MODNAME=${WLAN_CH
 KERNEL_VERSION = "${@get_kernelversion_file("${STAGING_KERNEL_BUILDDIR}")}"
 EXT_MODULES = "${@os.path.relpath("${S}", "${KERNEL_PLATFORM_PATH}")}"
 
-do_configure:append:sxrneo() {
-    sed -i '1i DYNAMIC_SINGLE_CHIP=${TARGET_WLAN_CHIP}' ${WORKDIR}/wlan/qcacld-3.0/configs/${TARGET_WLAN_CHIP}_defconfig
-    sed -i 's/CONFIG_WLAN_FEATURE_COAP := y/#CONFIG_WLAN_FEATURE_COAP := y/g' ${WORKDIR}/wlan/qcacld-3.0/configs/${TARGET_WLAN_CHIP}_defconfig
-}
-
 do_compile[depends] += "virtual/kernel:do_shared_workdir"
 do_compile[cleandirs] += "${WORKDIR}/out/${KERNEL_DEFCONFIG}"
 do_compile() {
     cd ${KERNEL_PLATFORM_PATH}
     BUILD_CONFIG=msm-kernel/${KERNEL_CONFIG} \
-    EXT_MODULES=../../wlan/qcacld-3.0/ \
-    ROOTDIR=${WORKDIR}/ \
+    EXT_MODULES=${EXT_MODULES} \
+    KERNEL_KIT=${KERNEL_PREBUILT_PATH} \
     MODULE_OUT=${S} \
-    OUT_DIR=../out/${KERNEL_DEFCONFIG} \
+    OUT_DIR=${WORKDIR}/out/${KERNEL_DEFCONFIG} \
+    INPLACE_COMPILE=y \
     KERNEL_UAPI_HEADERS_DIR=${STAGING_KERNEL_BUILDDIR} \
     ./build/build_module.sh \
-    WLAN_PROFILE=${MODULE_NAME} \
-    DYNAMIC_SINGLE_CHIP= \
-    MODNAME=${MODULE_NAME}\
-    DEVNAME=${MODULE_NAME} \
-    BOARD_PLATFORM=kalama \
-    CONFIG_QCA_CLD_WLAN=m \
-    WLAN_CTRL_NAME=wlan \
-    CONFIG_CNSS_OUT_OF_TREE=y \
+    CONFIG_QCA_CLD_WLAN_PROFILE=default \
     CONFIG_CNSS2=m \
-    CONFIG_CNSS2_QMI=y \
-    CONFIG_CNSS_QMI_SVC=m \
-    CONFIG_CNSS_PLAT_IPC_QMI_SVC=m \
-    CONFIG_CNSS_GENL=m \
-    CONFIG_WCNSS_MEM_PRE_ALLOC=m \
-    CONFIG_CNSS_UTILS=m \
-    KERNEL_SUPPORTS_NESTED_COMPOSITES=n \
-    BUILD_DEBUG_VERSION=y \
+    CONFIG_CNSS_QCA6390=y \
+    CONFIG_HIF_PCI=y \
+    CONFIG_CNSS_OUT_OF_TREE=y \
+    CONFIG_CLD_HL_SDIO_CORE=n \
+    CONFIG_CNSS_SDIO=n \
     KBUILD_EXTRA_SYMBOLS=${STAGING_DIR_HOST}/lib/modules/${KERNEL_VERSION}/cnsswlan-kernel/Module.symvers
 }
 
@@ -83,6 +66,7 @@ do_install() {
 
     #auto load
     install -d ${D}${sysconfdir}/modules-load.d
+    sed -i 's/kiwi_v2/wlan/' ${WORKDIR}/wlan_load.conf
     install -m 0755 ${WORKDIR}/wlan_load.conf -D ${D}${sysconfdir}/modules-load.d/wlan_load.conf
 }
 
