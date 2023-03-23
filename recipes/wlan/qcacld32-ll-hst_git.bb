@@ -37,11 +37,10 @@ do_compile[cleandirs] += "${WORKDIR}/out/${KERNEL_DEFCONFIG}"
 do_compile() {
     cd ${KERNEL_PLATFORM_PATH}
     BUILD_CONFIG=msm-kernel/${KERNEL_CONFIG} \
-    EXT_MODULES=${EXT_MODULES} \
-    KERNEL_KIT=${KERNEL_PREBUILT_PATH} \
+    EXT_MODULES=../../wlan/qcacld-3.0/ \
+    ROOTDIR=${WORKDIR}/ \
     MODULE_OUT=${S} \
-    OUT_DIR=${WORKDIR}/out/${KERNEL_DEFCONFIG} \
-    INPLACE_COMPILE=y \
+    OUT_DIR=../out/${KERNEL_DEFCONFIG} \
     KERNEL_UAPI_HEADERS_DIR=${STAGING_KERNEL_BUILDDIR} \
     ./build/build_module.sh \
     CONFIG_QCA_CLD_WLAN_PROFILE=default \
