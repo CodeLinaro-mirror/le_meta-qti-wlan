@@ -4,9 +4,6 @@
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 #
 
-START=95
-STOP=01
-
 USE_PROCD=1
 PROCD_DEBUG=1
 
