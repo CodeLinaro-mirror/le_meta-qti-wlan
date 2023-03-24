@@ -71,13 +71,18 @@ _WLAN_CFG_OVERRIDE_525 = "\
 						CONFIG_QMI=y \
 						CONFIG_IPA3=n \
 						CONFIG_IPA_OFFLOAD=n \
+						CONFIG_IPA_WDI_UNIFIED_API=n \
+						CONFIG_ENABLE_SMMU_S1_TRANSLATION=n \
 						CONFIG_CNSS_GENL=m \
 						CONFIG_CNSS_UTILS=m \
 						CONFIG_WLAN_WBUFF=n \
 						CONFIG_REMOVE_PKT_LOG=y \
 						CONFIG_WDI_EVENT_ENABLE=n \
 						CONFIG_MDM_PLATFORM=y \
+						CONFIG_FEATURE_IPA_PIPE_CHANGE_WDI1=y \
+						CONFIG_NUM_IPA_IFACE=2 \
 						CONFIG_WLAN_CONV_SPECTRAL_ENABLE=n \
+						CONFIG_ENABLE_VALLOC_REPLACE_MALLOC=y \
                         "
 
 EXTRA_OEMAKE_append_sdxpoorwills = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_415}"
@@ -117,6 +122,10 @@ do_compile:prepend() {
         CFG80211_FLAG="ccflags-y += -DCFG80211_SINGLE_NETDEV_MULTI_LINK_SUPPORT"
         sed -i -e "/$(CONFIG_QCA_CLD_WLAN_PROFILE)_defconfig$/i${CFG80211_FLAG}" ${S}/Kbuild
     fi
+}
+do_compile_prepend_sa410m() {
+    CMD="echo 8 >/sys/class/net/wlan0/queues/tx-0/xps_cpus;echo 8 >/sys/class/net/wlan0/queues/rx-0/rps_cpus"
+    sed -i -e "/Load wlanhost driver done/i${CMD}" ${WORKDIR}/init.qti.wlan_on.sh
 }
 
 do_install () {
