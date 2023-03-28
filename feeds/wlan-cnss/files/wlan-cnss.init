@@ -1,0 +1,15 @@
+#!/bin/sh /etc/rc.common
+#Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+#SPDX-License-Identifier: BSD-3-Clause-Clear
+
+START=10
+STOP=89
+
+start() {
+
+	/etc/initscripts/start_wlan_cnss_le start
+}
+
+stop() {
+	echo "Stopping wlan cnss instance"
+}
