@@ -77,5 +77,5 @@ define Package/$(PKG_NAME)/install
 	$(CP) $(CONF_ADDR)/$(WLAN_INI_FILE) $(1)/$(MISC_WIFI_ADDR)/$(WLAN_INI_DEFAULT)
 	$(CP) $(CONF_ADDR)/wlan $(1)/$(INIT_D_ADDR)/
 	$(LN) -rsf $(1)/$(MISC_WIFI_ADDR)/$(WLAN_INI_DEFAULT) $(1)/$(FIRMWARE_ADDR)/$(WLAN_INI_DEFAULT)
-
+endef
 $(eval $(call BuildPackage,$(PKG_NAME)))
