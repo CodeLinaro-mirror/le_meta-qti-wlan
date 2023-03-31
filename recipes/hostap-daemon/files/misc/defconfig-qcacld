@@ -131,7 +131,7 @@ CONFIG_WPS_UPNP=y
 #CONFIG_IPV6=y
 
 # IEEE Std 802.11r-2008 (Fast BSS Transition)
-#CONFIG_IEEE80211R=y
+CONFIG_IEEE80211R=y
 
 # Use the hostapd's IEEE 802.11 authentication (ACL), but without
 # the IEEE 802.11 Management capability (e.g., madwifi or FreeBSD/net80211)
@@ -225,6 +225,7 @@ CONFIG_SUITEB192=y
 
 # SAE
 CONFIG_SAE=y
+CONFIG_SAE_PK=y
 
 CONFIG_DRIVER_NL80211_QCA=y
 
@@ -233,6 +234,9 @@ CONFIG_WNM=y
 
 # Multiband Operations
 CONFIG_MBO=y
+
+# Support Operating Channel Validation
+CONFIG_OCV=y
 
 # LE platform
 CONFIG_LINUX_EMBEDDED=y
