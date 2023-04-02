@@ -64,6 +64,7 @@ define Package/$(PKG_NAME)
   CATEGORY:=QTI-PACKAGES
   TITLE:=SIGMA DUT
   DEPENDS:= +libnl-tiny +openssl-util +wpa-supplicant-8-lib +qmi +qmi-framework
+  USERID:=wifi=1010:wifi=1010
 endef
 
 define Package/$(PKG_NAME)/Description
@@ -103,8 +104,14 @@ endef
 
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/etc/init.d/
+	$(INSTALL_DIR) $(1)/usr/share/acl.d
+	$(INSTALL_DIR) $(1)/etc/capabilities
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/wpa_supplicant/wpa_supplicant $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/wpa_supplicant/wpa_cli $(1)/usr/sbin/
+	$(INSTALL_BIN) files/wpa-supplicant_qcacld.init $(1)/etc/init.d/
+	$(INSTALL_DATA) ./files/wpa_supplicant_acl.json $(1)/usr/share/acl.d/
+	$(INSTALL_DATA) ./files/wpa_supplicant.json $(1)/etc/capabilities/
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
