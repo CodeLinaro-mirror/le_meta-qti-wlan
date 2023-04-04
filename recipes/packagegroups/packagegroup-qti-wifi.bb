@@ -31,4 +31,5 @@ RDEPENDS:packagegroup-qti-wifi = " \
         hostap-daemon-qcacld \
         wpa-supplicant-8-lib \
         wpa-supplicant-qcacld \
+	wireless-tools \
         "
