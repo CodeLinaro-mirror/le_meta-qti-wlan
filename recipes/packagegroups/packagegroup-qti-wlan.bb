@@ -12,9 +12,9 @@ PACKAGES = "\
 
 ALLOW_EMPTY_${PN} = "1"
 
-ROMEONLY ?= 'False'
-ROMEONLY_sa525m = 'True'
-ROMEONLY_sa410m = 'True'
+DRIVERS ?= 'qcacld32-ll-rome qcacld32-ll-hasting qcacld32-ll-genoa qcacld32-ll-hsp'
+DRIVERS_sa410m = 'qcacld32-ll-rome'
+DRIVERS_sa525m = 'qcacld32-ll-rome qcacld32-ll-hsp'
 
 RDEPENDS_${PN} += "\
     rfkill \
@@ -22,7 +22,7 @@ RDEPENDS_${PN} += "\
     wireless-tools \
     iw \
     ${@oe.utils.conditional('PREFERRED_VERSION_linux-msm', '5.15', 'wlan-platform-dlkm', '', d)} \
-    ${@oe.utils.conditional('ROMEONLY', 'False', 'qcacld32-ll-rome qcacld32-ll-hasting qcacld32-ll-genoa qcacld32-ll-hsp', 'qcacld32-ll-rome', d)} \
+    ${DRIVERS} \
     qcacld32-cnss2 \
     wpa-supplicant-qcacld \
     wlan-conf \

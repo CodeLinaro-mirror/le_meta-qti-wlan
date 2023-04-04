@@ -34,6 +34,8 @@ PR = "r8"
 DEPENDS = "virtual/kernel"
 DEPENDS += "${@bb.utils.contains_any('BASEMACHINE', 'sa525m', 'wlan-devicetree', '', d)}"
 
+MAKE_TARGETS = " modules"
+
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/platform/"
 S = "${WORKDIR}/wlan/platform/"
