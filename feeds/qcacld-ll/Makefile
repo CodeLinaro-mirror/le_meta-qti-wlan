@@ -41,6 +41,8 @@ else
 TARGET_MAKEOPTS := CONFIG_QCA_CLD_WLAN_PROFILE=default
 endif
 
+TARGET_CFLAGS += -DOPENWRT_BUILD
+
 define KernelPackage/$(PKG_NAME)
   SECTION:=Kernel Modules
   CATEGORY:=External Kernel Modules
