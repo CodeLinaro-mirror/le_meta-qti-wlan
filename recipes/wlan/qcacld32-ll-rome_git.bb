@@ -60,7 +60,7 @@ _WLAN_CFG_OVERRIDE_410 = "\
 						CONFIG_QMI=y \
 						CONFIG_IPA3=n \
 						CONFIG_IPA_OFFLOAD=n \
-						CONFIG_CNSS_GENL=m \
+						CONFIG_CNSS_GENL=n \
 						CONFIG_CNSS_UTILS=m \
 						CONFIG_WLAN_CONV_SPECTRAL_ENABLE=n \
                         "
@@ -71,7 +71,7 @@ _WLAN_CFG_OVERRIDE_525 = "\
 						CONFIG_QMI=y \
 						CONFIG_IPA3=n \
 						CONFIG_IPA_OFFLOAD=n \
-						CONFIG_CNSS_GENL=m \
+						CONFIG_CNSS_GENL=n \
 						CONFIG_CNSS_UTILS=m \
 						CONFIG_WLAN_WBUFF=n \
 						CONFIG_REMOVE_PKT_LOG=y \
