@@ -235,7 +235,7 @@ CONFIG_WNM=y
 # Multiband Operations
 CONFIG_MBO=y
 
-# Support Operating Channel Validation
+# Support Operating Channel Validation		
 CONFIG_OCV=y
 
 # LE platform
