@@ -12,7 +12,7 @@ SVC_NAME=wpa_supplicant
 PKG_NAME=wpa-supplicant-qcacld
 BIN_PATH=/usr/sbin/$SVC_NAME
 UCI_CONFIG_PATH=/etc/config/$SVC_NAME
-LOG_PATH=/tmp/$SVC_NAME-$IFNAME.log
+LOG_PATH=/data/vendor/wifi/$SVC_NAME-$IFNAME.log
 PID_PATH=/data/vendor/wifi/$SVC_NAME-$IFNAME.pid
 CONF_PATH=/data/vendor/wifi/$SVC_NAME-$IFNAME.conf
 
@@ -35,9 +35,6 @@ start_service() {
 			config_get log_folder_mode log log_folder_mode 0
 
 			if [ "$log_folder_mode" = "1" ];then
-				echo "store the log in /tmp/ folder"
-				LOG_PATH=/tmp/$SVC_NAME-$IFNAME.log
-			elif [ "$log_folder_mode" = "2" ];then
 				echo "store the log in /data/vendor/wifi/ folder"
 				LOG_PATH=/data/vendor/wifi/$SVC_NAME-$IFNAME.log
 			fi
