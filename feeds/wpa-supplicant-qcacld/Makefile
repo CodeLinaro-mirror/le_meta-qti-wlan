@@ -22,6 +22,7 @@ ifeq ($(BOARD),sdx65)
 else ifeq ($(BOARD),sdx75)
 	TARGET_LOCAL_NAME :=sdxpinn
 	TARGET_CPPFLAGS += -I$(STAGING_DIR)/usr/include/qmi
+	TARGET_CFLAGS += -DCONFIG_CTRL_IFACE_DIR=\\\"/data/vendor/wifi/wpa_supplicant\\\"
 	TARGET_ADD_CONFIG := echo -e "\nCONFIG_EAP_PROXY=qmi" >> $(SUPPLICANT_CONFIG_FILE) && \
 		echo -e "\nCONFIG_EAP_PROXY_DUAL_SIM=true" >> $(SUPPLICANT_CONFIG_FILE) && \
 		echo -e "\nCONFIG_EAP_PROXY_AKA_PRIME:=true" >> $(SUPPLICANT_CONFIG_FILE) && \
@@ -74,7 +75,6 @@ endef
 define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)/
 	$(CP) $(LOCAL_SRC)/* $(PKG_BUILD_DIR)/
-	$(CP) $(STAGING_DIR)/usr/include/qmi/*.h $(PKG_BUILD_DIR)/src/eap_peer/
 	if [ -d "./patches/" ]; then \
 		rm -rf ./patches; \
 	fi
@@ -92,6 +92,7 @@ WPA_SUPPLICANT_MAKEOPTS= $(TARGET_CONFIGURE_OPTS) \
 			TARGET_CFLAGS="$(TARGET_CFLAGS)" \
 			TARGET_LDFLAGS="$(TARGET_LDFLAGS)" \
 			TARGET_CPPFLAGS="$(TARGET_CPPFLAGS)" \
+			EXTRA_CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS)" \
 			 -C $(PKG_BUILD_DIR)/wpa_supplicant
 
 define Build/Compile
