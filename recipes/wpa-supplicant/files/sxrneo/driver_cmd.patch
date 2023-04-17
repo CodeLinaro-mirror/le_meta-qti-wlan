@@ -1,3 +1,34 @@
+diff --git a/src/common/wpa_ctrl.c b/src/common/wpa_ctrl.c
+index 4830b52..94cd5b0 100644
+--- a/src/common/wpa_ctrl.c
++++ b/src/common/wpa_ctrl.c
+@@ -100,7 +100,7 @@ struct wpa_ctrl * wpa_ctrl_open2(const char *ctrl_path,
+ 	size_t res;
+ 	int tries = 0;
+ 	int flags;
+-#ifdef ANDROID
++#ifdef ANDROID || defined(LINUX_EMBEDDED)
+ 	struct group *grp_wifi;
+ 	gid_t gid_wifi;
+ 	struct passwd *pwd_system;
+@@ -164,7 +164,7 @@ try_again:
+ 	 * interface messages.
+ 	 */
+ 	chmod(ctrl->local.sun_path, S_IRWXU | S_IRWXG | S_IRWXO);
+-#ifdef ANDROID
++#ifdef ANDROID || defined(LINUX_EMBEDDED)
+ 	/* Set group even if we do not have privileges to change owner */
+ 	grp_wifi = getgrnam("wifi");
+ 	gid_wifi = grp_wifi ? grp_wifi->gr_gid : 0;
+@@ -212,7 +212,7 @@ try_again:
+ 		}
+ 		return ctrl;
+ 	}
+-#endif /* ANDROID */
++#endif /* ANDROID || defined(LINUX_EMBEDDED) */
+ 
+ 	ctrl->dest.sun_family = AF_UNIX;
+ 	if (os_strncmp(ctrl_path, "@abstract:", 10) == 0) {
 diff --git a/src/drivers/driver.h b/src/drivers/driver.h
 index 0586d3d..71c5753 100644
 --- a/src/drivers/driver.h
@@ -21,10 +52,10 @@ index 0586d3d..71c5753 100644
  	/**
  	 * vendor_cmd - Execute vendor specific command
 diff --git a/src/drivers/driver_nl80211.c b/src/drivers/driver_nl80211.c
-index 3d45bbb..1f27a7d 100644
+index bf69406..dfea552 100644
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
-@@ -9883,11 +9883,11 @@ static int nl80211_set_p2p_powersave(void *priv, int legacy_ps, int opp_ps,
+@@ -9893,11 +9893,11 @@ static int nl80211_set_p2p_powersave(void *priv, int legacy_ps, int opp_ps,
  		   "opp_ps=%d ctwindow=%d)", legacy_ps, opp_ps, ctwindow);
  
  	if (opp_ps != -1 || ctwindow != -1) {
@@ -39,7 +70,7 @@ index 3d45bbb..1f27a7d 100644
  	}
  
  	if (legacy_ps == -1)
-@@ -13313,16 +13313,16 @@ const struct wpa_driver_ops wpa_driver_nl80211_ops = {
+@@ -13323,16 +13323,16 @@ const struct wpa_driver_ops wpa_driver_nl80211_ops = {
  #ifdef CONFIG_IEEE80211AX
  	.switch_color = nl80211_switch_color,
  #endif /* CONFIG_IEEE80211AX */
