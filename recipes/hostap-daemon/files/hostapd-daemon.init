@@ -4,9 +4,6 @@
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 #
 
-START=95
-STOP=01
-
 USE_PROCD=1
 PROCD_DEBUG=1
 
@@ -15,39 +12,54 @@ SVC_NAME=hostapd
 PKG_NAME=hostapd-daemon
 BIN_PATH=/usr/sbin/$SVC_NAME
 UCI_CONFIG_PATH=/etc/config/$SVC_NAME
-LOG_PATH=/tmp/$SVC_NAME-$IFNAME.log
-PID_PATH=/var/run/$SVC_NAME-$IFNAME.pid
-CONF_PATH=/var/run/$SVC_NAME-$IFNAME.conf
+LOG_PATH=/data/vendor/wifi/$SVC_NAME-$IFNAME.log
+PID_PATH=/data/vendor/wifi/$SVC_NAME-$IFNAME.pid
+CONF_PATH=/data/vendor/wifi/$SVC_NAME-$IFNAME.conf
 
 start_service() {
 	local ifname=$1
 	if [ -x "${BIN_PATH}" ];then
-		if [ -f /var/run/$SVC_NAME-$ifname.conf ];then
+		if [ -f /data/vendor/wifi/$SVC_NAME-$ifname.conf ];then
 			IFNAME=$ifname
 			echo "IFNAME is $IFNAME" > /dev/kmsg
 			# BIN_PATH - /usr/sbin/hostapd
 			BIN_PATH=/usr/sbin/$SVC_NAME
 			# UCI_CONFIG_PATH - /etc/config/hostapd used to reload hostapd service if it changed
 			UCI_CONFIG_PATH=/etc/config/$SVC_NAME
-			# LOG_PATH - /tmp/hostapd-ifname.log used to catch hostapd log
-			LOG_PATH=/tmp/$SVC_NAME-$IFNAME.log
-			PID_PATH=/var/run/$SVC_NAME-$IFNAME.pid
+			PID_PATH=/data/vendor/wifi/$SVC_NAME-$IFNAME.pid
 			# CONF_PATH - config file used to start hostapd service
-			CONF_PATH=/var/run/$SVC_NAME-$IFNAME.conf
+			CONF_PATH=/data/vendor/wifi/$SVC_NAME-$IFNAME.conf
 
 			config_load "${SVC_NAME}"
-			config_get_bool enable_debug cfg enable_debug 0
+			config_get log_level log log_level "debug"
+			config_get log_folder_mode log log_folder_mode 0
+
+			if [ "$log_folder_mode" = "1" ];then
+				echo "store log in /data/vendor/wifi/$SVC_NAME-$IFNAME.log"
+				LOG_PATH=/data/vendor/wifi/$SVC_NAME-$IFNAME.log
+			fi
 
 			# make the ctrl_interface file as wifi user Id and group Id
-			mkdir -p /var/run/hostapd
-			chown wifi:wifi /var/run/hostapd
+			mkdir -p /data/vendor/wifi/hostapd
+			chown wifi:wifi /data/vendor/wifi/hostapd
 
 			# create a instance to start hostapd service
 			procd_open_instance $IFNAME
 			# start hostapd as the command /usr/sbin/hostapd -p /var/run/hostapd-ifname.pid -f /var/run/hostapd-ifname.log
-			procd_set_param command $BIN_PATH -P $PID_PATH -f $LOG_PATH
-			# give the highest log level to dump more log
-			procd_append_param command -dddd
+			if [ "$log_folder_mode" = "0" ];then
+				procd_set_param command $BIN_PATH -P $PID_PATH
+			else
+				procd_set_param command $BIN_PATH -P $PID_PATH -f $LOG_PATH
+			fi
+			# set log print level
+			if [ "$log_level" = "debug" ];then
+				procd_append_param command -d
+			elif [ "$log_level" = "info" ];then
+				echo "log_level is $log_level, unnecessary to do any change"
+			else
+				echo "unrecognized log level $log_level, set default log level debug"
+				procd_append_param command -dddd
+			fi
 
 			# set the config file
 			procd_append_param command $CONF_PATH

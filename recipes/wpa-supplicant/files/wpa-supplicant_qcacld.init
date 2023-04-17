@@ -4,9 +4,6 @@
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 #
 
-START=95
-STOP=01
-
 USE_PROCD=1
 PROCD_DEBUG=1
 
@@ -15,40 +12,55 @@ SVC_NAME=wpa_supplicant
 PKG_NAME=wpa-supplicant-qcacld
 BIN_PATH=/usr/sbin/$SVC_NAME
 UCI_CONFIG_PATH=/etc/config/$SVC_NAME
-LOG_PATH=/tmp/$SVC_NAME-$IFNAME.log
-PID_PATH=/var/run/$SVC_NAME-$IFNAME.pid
-CONF_PATH=/var/run/$SVC_NAME-$IFNAME.conf
+LOG_PATH=/data/vendor/wifi/$SVC_NAME-$IFNAME.log
+PID_PATH=/data/vendor/wifi/$SVC_NAME-$IFNAME.pid
+CONF_PATH=/data/vendor/wifi/$SVC_NAME-$IFNAME.conf
 
 start_service() {
 	local ifname=$1
 	if [ -x "${BIN_PATH}" ];then
-		if [ -f /var/run/$SVC_NAME-$ifname.conf ];then
+		if [ -f /data/vendor/wifi/$SVC_NAME-$ifname.conf ];then
 			IFNAME=$ifname
 			echo "IFNAME is $IFNAME" > /dev/kmsg
 			# BIN_PATH - /usr/sbin/wpa_supplicant
 			BIN_PATH=/usr/sbin/$SVC_NAME
 			# UCI_CONFIG_PATH - /etc/config/wpa_supplicant used to reload wpa_supplicant service if it changed
 			UCI_CONFIG_PATH=/etc/config/$SVC_NAME
-			# LOG_PATH - /tmp/wpa_supplicant-ifname.log used to catch wpa_supplicant log
-			LOG_PATH=/tmp/$SVC_NAME-$IFNAME.log
-			PID_PATH=/var/run/$SVC_NAME-$IFNAME.pid
+			PID_PATH=/data/vendor/wifi/$SVC_NAME-$IFNAME.pid
 			# CONF_PATH - config file used to start wpa_supplicant service
-			CONF_PATH=/var/run/$SVC_NAME-$IFNAME.conf
+			CONF_PATH=/data/vendor/wifi/$SVC_NAME-$IFNAME.conf
 
 			config_load "${SVC_NAME}"
-			config_get_bool enable_debug cfg enable_debug 0
+			config_get log_level log log_level "debug"
+			config_get log_folder_mode log log_folder_mode 0
+
+			if [ "$log_folder_mode" = "1" ];then
+				echo "store the log in /data/vendor/wifi/ folder"
+				LOG_PATH=/data/vendor/wifi/$SVC_NAME-$IFNAME.log
+			fi
 
 			# make the ctrl_interface file as wifi user Id and group Id
-			mkdir -p /var/run/wpa_supplicant
-			chown wifi:wifi /var/run/wpa_supplicant
+			mkdir -p /data/vendor/wifi/wpa_supplicant
+			chown wifi:wifi /data/vendor/wifi/wpa_supplicant
 
 			# create a instance to start wpa_supplicant service
 			procd_open_instance $IFNAME
-			# start hostapd as the command /usr/sbin/wpa_supplicant -Dnl80211 -i ifname
+			# start wpa_supplicant as the command /usr/sbin/wpa_supplicant -Dnl80211 -i ifname
 			# -p /var/run/wpa_supplicant-ifname.pid -f /var/run/wpa_supplicant-ifname.log
-			procd_set_param command $BIN_PATH -Dnl80211 -i$IFNAME -P $PID_PATH -f $LOG_PATH
-			# give the highest the debug log level to dump more log
-			procd_append_param command -dddd
+			if [ "$log_folder_mode" = "0" ];then
+				procd_set_param command $BIN_PATH -Dnl80211 -i$IFNAME -P $PID_PATH
+			else
+				procd_set_param command $BIN_PATH -Dnl80211 -i$IFNAME -P $PID_PATH -f $LOG_PATH
+			fi
+			# set log print level
+			if [ "$log_level" = "debug" ];then
+				procd_append_param command -d
+			elif [ "$log_level" = "info" ];then
+				echo "log_level is $log_level, unnecessary to do any change"
+			else
+				echo "unrecognized log level $log_level, set default log level debug"
+				procd_append_param command -dddd
+			fi
 
 			# set the config file
 			procd_append_param command -c $CONF_PATH
