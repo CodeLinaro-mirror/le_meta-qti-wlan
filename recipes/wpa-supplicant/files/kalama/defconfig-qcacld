@@ -431,6 +431,9 @@ CONFIG_DEBUG_FILE=y
 # LE platform build with wpa_cli "driver" command
 CONFIG_LINUX_EMBEDDED=y
 
+#LE platform build with wpa_supplicant_8_lib driver event
+CONFIG_LINUX_EMBEDDED_LIB_EVENT=y
+
 # Enable privilege separation (see README 'Privilege separation' for details)
 #CONFIG_PRIVSEP=y
 

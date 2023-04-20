@@ -1,5 +1,5 @@
 diff --git a/src/drivers/driver.h b/src/drivers/driver.h
-index 9ef9a16b7..47a694c9f 100644
+index 9ef9a16b..47a694c9 100644
 --- a/src/drivers/driver.h
 +++ b/src/drivers/driver.h
 @@ -4131,7 +4131,7 @@ struct wpa_driver_ops {
@@ -21,7 +21,7 @@ index 9ef9a16b7..47a694c9f 100644
  	/**
  	 * vendor_cmd - Execute vendor specific command
 diff --git a/src/drivers/driver_nl80211.c b/src/drivers/driver_nl80211.c
-index 4ac97ca9d..603291a8e 100644
+index 4ac97ca9..603291a8 100644
 --- a/src/drivers/driver_nl80211.c
 +++ b/src/drivers/driver_nl80211.c
 @@ -9879,11 +9879,11 @@ static int nl80211_set_p2p_powersave(void *priv, int legacy_ps, int opp_ps,
@@ -61,7 +61,7 @@ index 4ac97ca9d..603291a8e 100644
  	.set_qos_map = nl80211_set_qos_map,
  	.get_wowlan = nl80211_get_wowlan,
 diff --git a/src/drivers/driver_nl80211.h b/src/drivers/driver_nl80211.h
-index 9d20f51c9..4400d9c54 100644
+index 9d20f51c..4400d9c5 100644
 --- a/src/drivers/driver_nl80211.h
 +++ b/src/drivers/driver_nl80211.h
 @@ -308,28 +308,27 @@ const char * nl80211_iftype_str(enum nl80211_iftype mode);
@@ -104,7 +104,7 @@ index 9d20f51c9..4400d9c54 100644
  /* driver_nl80211_scan.c */
  
 diff --git a/src/drivers/driver_nl80211_event.c b/src/drivers/driver_nl80211_event.c
-index 9ae019e4e..e752b9231 100644
+index 9ae019e4..6be7cbe8 100644
 --- a/src/drivers/driver_nl80211_event.c
 +++ b/src/drivers/driver_nl80211_event.c
 @@ -2526,8 +2526,8 @@ static void qca_nl80211_key_mgmt_auth(struct wpa_driver_nl80211_data *drv,
@@ -118,8 +118,19 @@ index 9ae019e4e..e752b9231 100644
  	wpa_driver_nl80211_driver_event(
  		drv, OUI_QCA, QCA_NL80211_VENDOR_SUBCMD_KEY_MGMT_ROAM_AUTH,
  		data, len);
+@@ -3014,8 +3014,8 @@ static void nl80211_vendor_event(struct wpa_driver_nl80211_data *drv,
+ 		return;
+ 	}
+ 
+-#ifdef ANDROID
+-#ifdef ANDROID_LIB_EVENT
++#if defined(ANDROID) || defined(LINUX_EMBEDDED)
++#if defined(ANDROID_LIB_EVENT) || defined(LINUX_EMBEDDED_LIB_EVENT)
+ 	/* Postpone QCA roam+auth event indication to the point when both that
+ 	 * and the NL80211_CMD_ROAM event have been received (see calls to
+ 	 * qca_nl80211_key_mgmt_auth() and drv->pending_roam_data). */
 diff --git a/wpa_supplicant/Android.mk b/wpa_supplicant/Android.mk
-index ce6890651..039e90248 100644
+index ce689065..039e9024 100644
 --- a/wpa_supplicant/Android.mk
 +++ b/wpa_supplicant/Android.mk
 @@ -1600,6 +1600,14 @@ ifdef CONFIG_ANDROID_LOG
@@ -138,7 +149,7 @@ index ce6890651..039e90248 100644
  # for eapol_test only
  L_CFLAGS += -DCONFIG_IPV6
 diff --git a/wpa_supplicant/Makefile b/wpa_supplicant/Makefile
-index 931145ee0..3824f4c6f 100644
+index 931145ee..3824f4c6 100644
 --- a/wpa_supplicant/Makefile
 +++ b/wpa_supplicant/Makefile
 @@ -1,5 +1,8 @@
@@ -186,7 +197,7 @@ index 931145ee0..3824f4c6f 100644
  CFLAGS += -DCONFIG_FST
  ifdef CONFIG_FST_TEST
 diff --git a/wpa_supplicant/android.config b/wpa_supplicant/android.config
-index 75c9618e9..813ed97a2 100644
+index 75c9618e..813ed97a 100644
 --- a/wpa_supplicant/android.config
 +++ b/wpa_supplicant/android.config
 @@ -385,6 +385,9 @@ CONFIG_IEEE80211R=y
@@ -200,7 +211,7 @@ index 75c9618e9..813ed97a2 100644
  #CONFIG_PRIVSEP=y
  
 diff --git a/wpa_supplicant/ctrl_iface.c b/wpa_supplicant/ctrl_iface.c
-index 98f82e015..aea9d9c75 100644
+index 98f82e01..aea9d9c7 100644
 --- a/wpa_supplicant/ctrl_iface.c
 +++ b/wpa_supplicant/ctrl_iface.c
 @@ -8587,7 +8587,7 @@ static int wpa_supplicant_pktcnt_poll(struct wpa_supplicant *wpa_s, char *buf,
@@ -248,7 +259,7 @@ index 98f82e015..aea9d9c75 100644
  		"GET_NETWORK ",
  		"REMOVE_NETWORK ",
 diff --git a/wpa_supplicant/driver_i.h b/wpa_supplicant/driver_i.h
-index 5dd2a514c..de747f3d6 100644
+index 5dd2a514..de747f3d 100644
 --- a/wpa_supplicant/driver_i.h
 +++ b/wpa_supplicant/driver_i.h
 @@ -598,7 +598,7 @@ static inline int wpa_drv_tdls_oper(struct wpa_supplicant *wpa_s,
@@ -270,7 +281,7 @@ index 5dd2a514c..de747f3d6 100644
  static inline void wpa_drv_set_rekey_info(struct wpa_supplicant *wpa_s,
  					  const u8 *kek, size_t kek_len,
 diff --git a/wpa_supplicant/wpa_cli.c b/wpa_supplicant/wpa_cli.c
-index 437d3e6ba..e4996a12e 100644
+index 437d3e6b..e4996a12 100644
 --- a/wpa_supplicant/wpa_cli.c
 +++ b/wpa_supplicant/wpa_cli.c
 @@ -2954,12 +2954,12 @@ static int wpa_cli_cmd_raw(struct wpa_ctrl *ctrl, int argc, char *argv[])
