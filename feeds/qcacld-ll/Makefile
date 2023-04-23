@@ -47,13 +47,14 @@ define KernelPackage/$(PKG_NAME)
   SECTION:=Kernel Modules
   CATEGORY:=External Kernel Modules
   TITLE:=WLAN HOST DRIVER
-  DEPENDS := +kmod-wlan-cnss
+  DEPENDS := +kmod-wlan-cnss-legacy
 endef
 
 QCACLD_LL_MAKEOPTS=M="$(PKG_BUILD_DIR)/" \
 			${TARGET_MAKEOPTS} \
 			CONFIG_CNSS_SDIO=n \
-			CONFIG_CLD_HL_SDIO_CORE=n
+			CONFIG_CLD_HL_SDIO_CORE=n \
+			WLAN_PLATFORM_INC="$(LOCAL_SRC)/../platform/inc"
 
 define  KernelPackage/$(PKG_NAME)/Description
 	wlan host driver
@@ -63,7 +64,6 @@ define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)/
 	$(CP) $(LOCAL_SRC)/* $(PKG_BUILD_DIR)/
 	awk -f ${wirelessdir}/genregdb.awk < ${wirelessdir}/db.txt > $(PKG_BUILD_DIR)/CORE/VOSS/src/vos_regdb.c
-	$(CP) $(PKG_BUILD_DIR)/../wlan-cnss-${PKG_VERSION}/inc/* $(PKG_BUILD_DIR)/CORE/HDD/inc/
 endef
 
 define Build/Compile
