@@ -28,22 +28,24 @@
 #
 #
 echo "##########Trying to unload wlanhost driver ##########"
+wpas_conf="/etc/misc/wifi/wpa_supplicant.conf"
 if (lspci -k|grep cnss_pci);then
 	if (lspci -k|grep 1102);then
 		echo "##########unload qca6595#############"
-		modprobe -r qca6595
+		rmmod qca6595
 	elif ((lspci -k|grep 003e) || (lspci -k|grep QCA6174));then
 		echo "##########unload qca6574#############"
-		modprobe -r qca6574
+		rmmod qca6574
 	elif (lspci -k|grep 1101);then
 		echo "##########unload qca6696#############"
-		modprobe -r qca6696
+		rmmod qca6696
 	elif (lspci -k|grep 1103);then
 		echo "##########unload qca6490#############"
-		modprobe -r qca6490
+		sed -i '/wowlan_triggers=magic_pkt/d' $wpas_conf
+		rmmod qca6490
 	else
 		echo "##########unload default wlan########"
-		modprobe -r wlan
+		rmmod wlan
 	fi
 fi
 echo "##########Unload wlanhost driver done################"
