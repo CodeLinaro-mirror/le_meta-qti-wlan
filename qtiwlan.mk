@@ -5,5 +5,5 @@ ifeq ($(BOARD),sdx75)
 endif
 
 ifeq ($(BOARD),sdx35)
-  QTIWLAN+=kmod-qcacld32-ll kmod-wlan-cnss2 kmod-wlan-cnss-legacy cld80211-lib
+  QTIWLAN+=kmod-qcacld32-ll kmod-qcacld-ll kmod-wlan-cnss2 kmod-wlan-cnss-legacy cld80211-lib
 endif
