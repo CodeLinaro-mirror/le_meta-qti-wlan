@@ -3,7 +3,7 @@ inherit pkgconfig logging
 include hostap-daemon.inc
 
 PR = "${INC_PR}.2"
-PV = "5.0"
+PV = "6.0"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 FILESPATH =+ "${WORKSPACE}:"
