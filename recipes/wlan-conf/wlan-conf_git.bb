@@ -2,7 +2,7 @@ inherit autotools systemd update-rc.d qperf useradd
 DESCRIPTION = "Device specific config"
 LICENSE = "ISC"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=f3b90e78ea0cffb20bf5cca7947a896d"
-PV = "2.0"
+PV = "1.0"
 PR = "r3"
 DEPENDS += "virtual/kernel"
 
@@ -21,6 +21,7 @@ SRC_URI:append:sxrneo+= "file://sxrneo/dbus-wpa_supplicant.conf"
 SRC_URI:append:sxrneo+= "file://sxrneo/dbus-wpa_supplicant_testing.conf"
 SRC_URI:append:kalama+= "file://sxrneo/wlan_daemon.service"
 SRC_URI:append:qrb5165+= "file://sxrneo/wlan_daemon.service"
+SRC_URI:append:kalama+= "file://sxrneo/wlan-conf_systemd_tmpfiles.conf"
 
 # Update for each machine
 S = "${WORKDIR}/mdm-init/"
@@ -114,6 +115,10 @@ do_install:append:neo(){
 
 do_install:append:kalama(){
 	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
+		#systemd-tmpfiles service for wlan-conf
+		install -d ${D}${sysconfdir}/tmpfiles.d
+		install -m 0644 ${WORKDIR}/sxrneo/wlan-conf_systemd_tmpfiles.conf \
+				-D ${D}${sysconfdir}/tmpfiles.d/wlan-conf_systemd_tmpfiles.conf
 		install -d ${D}/etc/initscripts
 		cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
 		install -d ${D}/etc/systemd/system/
