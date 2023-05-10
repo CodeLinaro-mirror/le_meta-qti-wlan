@@ -17,6 +17,7 @@ ifeq ($(BOARD),sdx65)
 	TARGET_LOCAL_NAME :=sdxlemur
 else ifeq ($(BOARD),sdx75)
 	TARGET_ADD_CONFIG += echo -e "\nCONFIG_WEP=y" >> $(HOSTAPD_CONFIG_FILE)
+	TARGET_CFLAGS += -DCONFIG_CTRL_IFACE_DIR=\\\"/data/vendor/wifi/hostapd\\\"
 	TARGET_LOCAL_NAME :=sdxpinn
 else ifeq ($(BOARD),sdx35)
 	TARGET_ADD_CONFIG += echo -e "\nCONFIG_WEP=y" >> $(HOSTAPD_CONFIG_FILE)
@@ -40,7 +41,6 @@ endif
 
 COPY_PATCH_FILES := $(CP) ./files/$(TARGET_PATCH_PATH)/*.patch ./patches/
 COPY_CONFIG_FILES := ${INSTALL_DATA} ./files/$(TARGET_PATCH_PATH)/defconfig-qcacld  $(HOSTAPD_CONFIG_FILE)
-INCLUDE_LIBNL :=echo -e "\nCFLAGS +=\"-I${STAGING_DIR}/usr/include/libnl3\"" >> $(HOSTAPD_CONFIG_FILE)
 
 define Package/$(PKG_NAME)
   SECTION:=QTI
@@ -63,7 +63,6 @@ define Build/Prepare
 	fi
 	mkdir patches
 	${COPY_CONFIG_FILES}
-	${INCLUDE_LIBNL}
 	${TARGET_ADD_CONFIG}
 	${COPY_PATCH_FILES}
 	$(Build/Patch)
@@ -76,6 +75,7 @@ HOSTAPD_MAKEOPTS= $(TARGET_CONFIGURE_OPTS) \
 		COPTS="$(TARGET_CFLAGS)" \
 		TARGET_CFLAGS="$(TARGET_CFLAGS)" \
 		TARGET_LDFLAGS="$(TARGET_LDFLAGS)" \
+		EXTRA_CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS)" \
 		-C $(PKG_BUILD_DIR)/hostapd
 
 define Build/Compile
@@ -91,11 +91,13 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/etc/init.d/
 	$(INSTALL_DIR) $(1)/usr/share/acl.d
 	$(INSTALL_DIR) $(1)/etc/capabilities
+	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hostapd/hostapd $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hostapd/hostapd_cli $(1)/usr/sbin/
 	$(INSTALL_BIN) ./files/hostapd-daemon.init $(1)/etc/init.d/
 	$(INSTALL_DATA) ./files/hostapd-daemon_acl.json $(1)/usr/share/acl.d/
 	$(INSTALL_DATA) ./files/hostapd-daemon.json $(1)/etc/capabilities/
+	$(CP) ./files/hostapd $(1)/etc/config/
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
