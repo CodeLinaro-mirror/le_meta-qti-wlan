@@ -61,7 +61,10 @@ _WLAN_CFG_OVERRIDE_415 = "\
 						CONFIG_WLAN_NAPI=n \
 						CONFIG_WLAN_MAX_VDEVS=4 \
 						CONFIG_SUPPORT_P2P_BY_ONE_INTF_WLAN=y \
-						CONFIG_IPA_OFFLOAD=n \
+						CONFIG_IPA_OFFLOAD=y \
+						CONFIG_WDI2_IPA_OVER_GSI=y \
+						CONFIG_ENABLE_SMMU_S1_TRANSLATION=y \
+						CONFIG_WDI2_IPA_HW_V4=y \
 						CONFIG_LTE_COEX=y \
 						CONFIG_QCOM_LTE_COEX=y \
                         "
@@ -124,10 +127,8 @@ do_install_append_sa515m() {
 
 do_install_append_sa415m() {
     install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx24_auto/WCNSS_qcom_cfg_qcn7605.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
-    chown -RH root:1001 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
     chmod -R 0664 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
     install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx24_auto/wlan_mac.bin ${FIRMWARE_PATH}/wlan_mac.bin
-    chown -RH root:1001 ${FIRMWARE_PATH}/wlan_mac.bin
     chmod -R 0664 ${FIRMWARE_PATH}/wlan_mac.bin
 }
 
