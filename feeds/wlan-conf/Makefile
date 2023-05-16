@@ -65,8 +65,6 @@ define Package/$(PKG_NAME)/install
 	mkdir -p  $(1)/$(MISC_WIFI_ADDR)
 	mkdir -p  $(1)/$(INIT_D_ADDR)
 	mkdir -p  $(1)/$(FIRMWARE_ADDR)
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_DIR) $(1)/etc/initscripts
 	$(CP) $(CONF_ADDR)/cld-hostapd-wlan0.sh $(1)/$(ETC_DATA_ADDR)/
 	$(CP) $(CONF_ADDR)/cld-hostapd-wlan1.sh $(1)/$(ETC_DATA_ADDR)/
 	$(CP) $(CONF_ADDR)/cld-hostapd-wlan2.sh $(1)/$(ETC_DATA_ADDR)/
@@ -77,10 +75,7 @@ define Package/$(PKG_NAME)/install
 	$(CP) $(CONF_ADDR)/sta_mode_hostapd.conf $(1)/$(MISC_WIFI_ADDR)/
 	$(CP) $(CONF_ADDR)/wpa_supplicant.conf $(1)/$(MISC_WIFI_ADDR)/
 	$(CP) $(CONF_ADDR)/$(WLAN_INI_FILE) $(1)/$(MISC_WIFI_ADDR)/$(WLAN_INI_DEFAULT)
-	$(CP) $(CONF_ADDR)/WCNSS_qcom_cfg.Rome.ini $(1)/$(MISC_WIFI_ADDR)/
 	$(CP) $(CONF_ADDR)/wlan $(1)/$(INIT_D_ADDR)/
-	$(INSTALL_BIN) $(CONF_ADDR)/start_cnss_le.init $(1)/etc/init.d/
-	$(INSTALL_BIN) $(CONF_ADDR)/start_cnss_le $(1)/etc/initscripts/
 	$(LN) -rsf $(1)/$(MISC_WIFI_ADDR)/$(WLAN_INI_DEFAULT) $(1)/$(FIRMWARE_ADDR)/$(WLAN_INI_DEFAULT)
 endef
 
