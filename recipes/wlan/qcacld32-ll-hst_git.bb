@@ -50,6 +50,7 @@ do_compile() {
     CONFIG_CNSS_OUT_OF_TREE=y \
     CONFIG_CLD_HL_SDIO_CORE=n \
     CONFIG_CNSS_SDIO=n \
+    CONFIG_CNSS_GENL=y \
     KBUILD_EXTRA_SYMBOLS=${STAGING_DIR_HOST}/lib/modules/${KERNEL_VERSION}/cnsswlan-kernel/Module.symvers
 }
 
