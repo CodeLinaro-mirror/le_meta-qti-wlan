@@ -10,8 +10,7 @@
 # The 'log_folder_mode' option is used to set where to print and store the log,
 # 0 = syslog, log will print in system log, catch with the command "logread -f >
 # /data/vendor/wifi/logread.txt"
-# 1 = tmp folder, log will store in the folder /tmp/wpa_supplicant-wlanX.log
-# 2 = /data/vendor/wifi/ folder.
+# 1 = /data/vendor/wifi/ folder.
 # The 'log_level' option is used to set the log level to print, we support
 # {debug, info} currently, debug is the default level, if set the level to
 # info, few log will print.

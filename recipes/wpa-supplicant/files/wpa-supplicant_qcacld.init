@@ -12,39 +12,34 @@ SVC_NAME=wpa_supplicant
 PKG_NAME=wpa-supplicant-qcacld
 BIN_PATH=/usr/sbin/$SVC_NAME
 UCI_CONFIG_PATH=/etc/config/$SVC_NAME
-LOG_PATH=/tmp/$SVC_NAME-$IFNAME.log
-PID_PATH=/var/run/$SVC_NAME-$IFNAME.pid
-CONF_PATH=/var/run/$SVC_NAME-$IFNAME.conf
+LOG_PATH=/data/vendor/wifi/$SVC_NAME-$IFNAME.log
+PID_PATH=/data/vendor/wifi/$SVC_NAME-$IFNAME.pid
+CONF_PATH=/data/vendor/wifi/$SVC_NAME-$IFNAME.conf
 
 start_service() {
 	local ifname=$1
 	if [ -x "${BIN_PATH}" ];then
-		if [ -f /var/run/$SVC_NAME-$ifname.conf ];then
+		if [ -f /data/vendor/wifi/$SVC_NAME-$ifname.conf ];then
 			IFNAME=$ifname
-			echo "IFNAME is $IFNAME" > /dev/kmsg
+			echo "$PKG_NAME: start on $IFNAME" > /dev/kmsg
 			# BIN_PATH - /usr/sbin/wpa_supplicant
 			BIN_PATH=/usr/sbin/$SVC_NAME
 			# UCI_CONFIG_PATH - /etc/config/wpa_supplicant used to reload wpa_supplicant service if it changed
 			UCI_CONFIG_PATH=/etc/config/$SVC_NAME
-			PID_PATH=/var/run/$SVC_NAME-$IFNAME.pid
+			PID_PATH=/data/vendor/wifi/$SVC_NAME-$IFNAME.pid
 			# CONF_PATH - config file used to start wpa_supplicant service
-			CONF_PATH=/var/run/$SVC_NAME-$IFNAME.conf
+			CONF_PATH=/data/vendor/wifi/$SVC_NAME-$IFNAME.conf
 
+			uci set $SVC_NAME.$IFNAME=interface
+			uci commit $SVC_NAME
 			config_load "${SVC_NAME}"
 			config_get log_level log log_level "debug"
 			config_get log_folder_mode log log_folder_mode 0
 
 			if [ "$log_folder_mode" = "1" ];then
-				echo "store the log in /tmp/ folder"
-				LOG_PATH=/tmp/$SVC_NAME-$IFNAME.log
-			elif [ "$log_folder_mode" = "2" ];then
-				echo "store the log in /data/vendor/wifi/ folder"
+				echo "$PKG_NAME: store the log in /data/vendor/wifi/ folder" > /dev/kmsg
 				LOG_PATH=/data/vendor/wifi/$SVC_NAME-$IFNAME.log
 			fi
-
-			# make the ctrl_interface file as wifi user Id and group Id
-			mkdir -p /var/run/wpa_supplicant
-			chown wifi:wifi /var/run/wpa_supplicant
 
 			# create a instance to start wpa_supplicant service
 			procd_open_instance $IFNAME
@@ -59,9 +54,9 @@ start_service() {
 			if [ "$log_level" = "debug" ];then
 				procd_append_param command -d
 			elif [ "$log_level" = "info" ];then
-				echo "log_level is $log_level, unnecessary to do any change"
+				echo "$PKG_NAME: log_level is $log_level, unnecessary to do any change" > /dev/kmsg
 			else
-				echo "unrecognized log level $log_level, set default log level debug"
+				echo "$PKG_NAME: unrecognized log level $log_level, set default log level debug" > /dev/kmsg
 				procd_append_param command -dddd
 			fi
 
@@ -96,21 +91,38 @@ stop_service() {
 	# start_service(). I,e, if the instance create in
 	# start_service() is wlan0, it needs send wlan0 when
         # stop.
-	echo "stop $1" > /dev/kmsg
+	echo "$PKG_NAME: stop $1 $2" > /dev/kmsg
+	if [ ! -z "$1" ]; then
+		echo "$PKG_NAME: delete $SVC_NAME.$1" > /dev/kmsg
+		uci delete $SVC_NAME.$1
+		uci commit $SVC_NAME
+	fi
 }
 
 reload_service() {
-	echo "reload $PKG_NAME" > /dev/kmsg
+	echo "$PKG_NAME: reload" > /dev/kmsg
 	stop $@
 	start $@
 }
 
+service_add_interface_trigger() {
+	local ifname=$1
+	local basescript=$(readlink "$initscript")
+	local name="$(basename ${basescript:-$initscript})"
+
+	echo "$PKG_NAME: add interface trigger for $ifname" > /dev/kmsg
+	procd_add_interface_trigger "interface.down" $ifname /etc/init.d/$name stop $ifname ifdown
+}
+
 service_triggers() {
+	echo "$PKG_NAME: triggers" > /dev/kmsg
 	procd_add_reload_trigger $SVC_NAME
+	config_load "${SVC_NAME}"
+	config_foreach service_add_interface_trigger interface
 }
 
 restart() {
-	echo "restart $PKG_NAME" > /dev/kmsg
+	echo "$PKG_NAME: restart" > /dev/kmsg
 	stop $@
 	start $@
 }
