@@ -81,6 +81,8 @@ ifeq ($(BOARD),sdx35)
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_DIR) $(1)/etc/initscripts
 	$(CP) $(CONF_ADDR)/WCNSS_qcom_cfg.Rome.ini $(1)/$(MISC_WIFI_ADDR)/
+	mv $(1)/$(MISC_WIFI_ADDR)/WCNSS_qcom_cfg.ini $(1)/$(MISC_WIFI_ADDR)/WCNSS_qcom_cfg.hsp.ini
+	$(LN) -rsf $(1)/$(MISC_WIFI_ADDR)/WCNSS_qcom_cfg.hsp.ini $(1)/$(MISC_WIFI_ADDR)/WCNSS_qcom_cfg.ini
 	$(INSTALL_BIN) $(CONF_ADDR)/start_cnss_le.init $(1)/etc/init.d/
 	$(INSTALL_BIN) $(CONF_ADDR)/start_cnss_le $(1)/etc/initscripts/
 endif
