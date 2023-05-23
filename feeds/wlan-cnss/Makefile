@@ -61,9 +61,19 @@ endif
 
 ifeq ($(BUILD_VARIANT),cnss2)
 ifeq ($(BOARD),sdx35)
-CNSS_MAKEOPTS += CONFIG_DISABLE_CNSS_SRAM_DUMP=y \
-		 CONFIG_FREE_M3_BLOB_MEM=y \
-		 CONFIG_WLAN_MEMORY_OPT=y
+CNSS_MAKEOPTS = CONFIG_CNSS_OUT_OF_TREE=y \
+		CONFIG_MHI_BUS_MISC=y \
+		M="$(PKG_BUILD_DIR)" \
+		WLAN_PLATFORM_ROOT="$(LOCAL_SRC)" \
+		CONFIG_CNSS2=m \
+		CONFIG_CNSS2_QMI=y \
+		CONFIG_CNSS_QMI_SVC=m \
+		CONFIG_CNSS_PLAT_IPC_QMI_SVC=m \
+		CONFIG_CNSS_UTILS=m \
+		CONFIG_WCNSS_MEM_PRE_ALLOC=m \
+		CONFIG_DISABLE_CNSS_SRAM_DUMP=y \
+		CONFIG_FREE_M3_BLOB_MEM=y \
+		CONFIG_WLAN_MEMORY_OPT=y
 endif
 endif
 
@@ -87,7 +97,9 @@ define KernelPackage/wlan-cnss2/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss_utils/cnss_utils.ko $(1)/$(EXTRA_ADDR)/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss_utils/cnss_plat_ipc_qmi_svc.ko $(1)/$(EXTRA_ADDR)/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss_utils/wlan_firmware_service.ko $(1)/$(EXTRA_ADDR)/
+ifneq ($(BOARD),sdx35)
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss_genl/cnss_nl.ko $(1)/$(EXTRA_ADDR)/
+endif
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss_prealloc/cnss_prealloc.ko $(1)/$(EXTRA_ADDR)/
 	$(INSTALL_DIR) $(TOPDIR)/bin/targets/$(TARGET_VARIANT)/modules
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss2/cnss2.ko $(TOPDIR)/bin/targets/$(TARGET_VARIANT)/modules/
