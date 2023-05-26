@@ -65,6 +65,7 @@ _WLAN_CFG_OVERRIDE_415 = "\
 						CONFIG_WDI2_IPA_OVER_GSI=y \
 						CONFIG_ENABLE_SMMU_S1_TRANSLATION=y \
 						CONFIG_WDI2_IPA_HW_V4=y \
+						CONFIG_MDM_PLATFORM=y \
 						CONFIG_LTE_COEX=y \
 						CONFIG_QCOM_LTE_COEX=y \
                         "
