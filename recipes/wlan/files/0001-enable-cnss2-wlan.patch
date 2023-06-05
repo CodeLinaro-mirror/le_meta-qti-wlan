@@ -1,0 +1,35 @@
+From 6325f9ec93837797ab606c01687b5997577ce7d6 Mon Sep 17 00:00:00 2001
+From: Shudan Liu <quic_shudan@quicinc.com>
+Date: Thu, 16 Feb 2023 14:20:07 +0800
+Subject: [PATCH] enable cnss2 wlan
+
+Change-Id: I0390ac1cefc55bf767e35da6f3d1e148700f39b1
+Signed-off-by: Shudan Liu <quic_shudan@quicinc.com>
+---
+ Kbuild | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/Kbuild b/Kbuild
+index 945fa0c5d..af5b6b3fe 100644
+--- a/Kbuild
++++ b/Kbuild
+@@ -2608,7 +2608,6 @@ ccflags-y += $(INCS)
+ 
+ cppflags-y +=	-DANI_OS_TYPE_ANDROID=6 \
+ 		-Wall\
+-		-Werror\
+ 		-D__linux__
+ 
+ cppflags-$(CONFIG_THERMAL_STATS_SUPPORT) += -DTHERMAL_STATS_SUPPORT
+@@ -2734,7 +2733,7 @@ cppflags-y += -DCONFIG_PLD_SNOC_ICNSS
+ endif
+ endif
+ 
+-cppflags-$(CONFIG_PLD_SNOC_ICNSS_FLAG) += -DCONFIG_PLD_SNOC_ICNSS
++cppflags-$(CONFIG_ICNSS) += -DCONFIG_PLD_SNOC_ICNSS
+ cppflags-$(CONFIG_ICNSS2_HELIUM) += -DCONFIG_PLD_SNOC_ICNSS2
+ 
+ cppflags-$(CONFIG_WIFI_3_0_ADRASTEA) += -DQCA_WIFI_3_0_ADRASTEA
+-- 
+2.25.1
+
