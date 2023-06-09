@@ -62,7 +62,7 @@ define KernelPackage/$(PKG_NAME)
   SECTION:=Kernel Modules
   CATEGORY:=External Kernel Modules
   TITLE:=WLAN HOST DRIVER
-  DEPENDS := +kmod-wlan-cnss
+  DEPENDS := +kmod-wlan-cnss2
 endef
 
 QCACLD32_LL_MAKEOPTS=  M="$(PKG_BUILD_DIR)/qcacld-3.0" \

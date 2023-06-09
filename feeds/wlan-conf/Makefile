@@ -77,6 +77,13 @@ define Package/$(PKG_NAME)/install
 	$(CP) $(CONF_ADDR)/$(WLAN_INI_FILE) $(1)/$(MISC_WIFI_ADDR)/$(WLAN_INI_DEFAULT)
 	$(CP) $(CONF_ADDR)/wlan $(1)/$(INIT_D_ADDR)/
 	$(LN) -rsf $(1)/$(MISC_WIFI_ADDR)/$(WLAN_INI_DEFAULT) $(1)/$(FIRMWARE_ADDR)/$(WLAN_INI_DEFAULT)
+ifeq ($(BOARD),sdx35)
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_DIR) $(1)/etc/initscripts
+	$(CP) $(CONF_ADDR)/WCNSS_qcom_cfg.Rome.ini $(1)/$(MISC_WIFI_ADDR)/
+	$(INSTALL_BIN) $(CONF_ADDR)/start_cnss_le.init $(1)/etc/init.d/
+	$(INSTALL_BIN) $(CONF_ADDR)/start_cnss_le $(1)/etc/initscripts/
+endif
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
