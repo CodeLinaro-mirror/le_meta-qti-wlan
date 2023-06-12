@@ -20,8 +20,9 @@ SRC_URI:append:sxrneo+= "file://sxrneo/fi.w1.wpa_supplicant1.service"
 SRC_URI:append:sxrneo+= "file://sxrneo/dbus-wpa_supplicant.conf"
 SRC_URI:append:sxrneo+= "file://sxrneo/dbus-wpa_supplicant_testing.conf"
 SRC_URI:append:kalama+= "file://sxrneo/wlan_daemon.service"
-SRC_URI:append:qrb5165+= "file://sxrneo/wlan_daemon.service"
 SRC_URI:append:kalama+= "file://sxrneo/wlan-conf_systemd_tmpfiles.conf"
+SRC_URI:append:qrb5165+= "file://sxrneo/wlan_daemon.service"
+SRC_URI:append:qrb5165+= "file://sxrneo/wlan-conf_systemd_tmpfiles.conf"
 
 # Update for each machine
 S = "${WORKDIR}/mdm-init/"
@@ -134,6 +135,9 @@ do_install:append:kalama(){
 
 do_install:append:qrb5165(){
 	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
+		install -d ${D}${sysconfdir}/tmpfiles.d
+		install -m 0644 ${WORKDIR}/sxrneo/wlan-conf_systemd_tmpfiles.conf \
+				-D ${D}${sysconfdir}/tmpfiles.d/wlan-conf_systemd_tmpfiles.conf
 		install -d ${D}/etc/initscripts
 		cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
 		install -d ${D}/etc/systemd/system/
