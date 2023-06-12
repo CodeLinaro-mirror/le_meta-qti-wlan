@@ -19,7 +19,7 @@ WLAN_PLATFORM:kalama="wlan-platform"
 WLAN_PLATFORM:qrb5165="wlan-platform"
 
 RDEPENDS:packagegroup-qti-wifi:append:sxrneo = "tcpdump rfkill dnsmasq dhcpcd iperf2 iperf3"
-RDEPENDS:packagegroup-qti-wifi:append:kalama = "rfkill dnsmasq iperf2 dhcpcd"
+RDEPENDS:packagegroup-qti-wifi:append:kalama = "rfkill dnsmasq iperf2"
 RDEPENDS:packagegroup-qti-wifi:append:qrb5165 = "rfkill dnsmasq iperf2"
 
 RDEPENDS:packagegroup-qti-wifi = " \
