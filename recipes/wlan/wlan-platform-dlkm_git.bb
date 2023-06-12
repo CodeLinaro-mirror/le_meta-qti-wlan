@@ -9,7 +9,6 @@ _MODNAME = "wlan-platform-dlkm"
 FILES_${PN}     += "lib/modules/${KERNEL_VERSION}/extra/cnss2.ko"
 FILES_${PN}     += "lib/modules/${KERNEL_VERSION}/extra/cnss_nl.ko"
 FILES_${PN}     += "lib/modules/${KERNEL_VERSION}/extra/cnss_utils.ko"
-FILES_${PN}     += "lib/modules/${KERNEL_VERSION}/extra/cnss_plat_ipc_qmi_svc.ko"
 FILES_${PN}     += "lib/modules/${KERNEL_VERSION}/extra/wlan_firmware_service.ko"
 FILES_${PN}     += "usr/inc/*"
 PROVIDES_NAME   = "kernel-module-${_MODNAME}"
@@ -22,7 +21,6 @@ WLAN_PLATFORM_CFG = " CONFIG_CNSS_OUT_OF_TREE=y \
 	CONFIG_CNSS2_QMI=y \
 	CONFIG_CNSS2_DEBUG=y \
 	CONFIG_CNSS_QMI_SVC=m \
-	CONFIG_CNSS_PLAT_IPC_QMI_SVC=m \
 	CONFIG_CNSS_GENL=m \
 	CONFIG_CNSS_UTILS=m \
 	CONFIG_CNSS2_CONDITIONAL_POWEROFF=y"
@@ -68,7 +66,6 @@ do_install() {
     install -m 0644 ${S}/cnss2/cnss2.ko ${CNSS2_KO}/cnss2/
     install -m 0644 ${S}/cnss_genl/cnss_nl.ko ${CNSS2_KO}/cnss_genl/
     install -m 0644 ${S}/cnss_utils/cnss_utils.ko ${CNSS2_KO}/cnss_utils/
-    install -m 0644 ${S}/cnss_utils/cnss_plat_ipc_qmi_svc.ko ${CNSS2_KO}/cnss_utils/
     install -m 0644 ${S}/cnss_utils/wlan_firmware_service.ko ${CNSS2_KO}/cnss_utils/
     install -m 0644 ${S}/inc/* ${D}${includedir}/
 }
