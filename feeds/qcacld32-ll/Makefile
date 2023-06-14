@@ -46,7 +46,6 @@ TARGET_MAKEOPTS := CONFIG_CNSS_QCA6490=y \
 		   CONFIG_CNSS2_QMI=y \
 		   CONFIG_CNSS_QMI_SVC=m \
 		   CONFIG_CNSS_PLAT_IPC_QMI_SVC=m \
-		   CONFIG_CNSS_GENL=m \
 		   CONFIG_CNSS_UTILS=m \
 		   CONFIG_WCNSS_MEM_PRE_ALLOC=m \
 		   KERNEL_SUPPORTS_NESTED_COMPOSITES=n
@@ -62,7 +61,7 @@ define KernelPackage/$(PKG_NAME)
   SECTION:=Kernel Modules
   CATEGORY:=External Kernel Modules
   TITLE:=WLAN HOST DRIVER
-  DEPENDS := +kmod-wlan-cnss
+  DEPENDS := +kmod-wlan-cnss2
 endef
 
 QCACLD32_LL_MAKEOPTS=  M="$(PKG_BUILD_DIR)/qcacld-3.0" \
