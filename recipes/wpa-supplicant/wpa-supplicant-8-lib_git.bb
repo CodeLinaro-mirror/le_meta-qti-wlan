@@ -24,6 +24,8 @@ do_patch() {
     cd ${PATCH_DIR}
 if [ ${BASEMACHINE} == "qrbx210" ]; then
     patch -p1 < ${WORKDIR}/modify-makefile-to-fix-compile-issue-on-LE.patch
+elif [ ${BASEMACHINE} == "qcs6490" ]; then
+    patch -p1 < ${WORKDIR}/modify-makefile-to-fix-compile-issue-on-LE.patch
 elif [ ${BASEMACHINE} == "sdmsteppe" ]; then
     patch -p1 < ${WORKDIR}/modify_makefile.patch
 fi
