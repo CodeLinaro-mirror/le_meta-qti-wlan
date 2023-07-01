@@ -22,7 +22,6 @@ SRC_URI:append:sxrneo+= "file://sxrneo/dbus-wpa_supplicant_testing.conf"
 SRC_URI:append:kalama+= "file://sxrneo/wlan_daemon.service"
 SRC_URI:append:qrb5165+= "file://sxrneo/wlan_daemon.service"
 SRC_URI:append:kalama+= "file://sxrneo/wlan-conf_systemd_tmpfiles.conf"
-SRC_URI:append:kalama+= "file://sxrneo/dhcpcd.service"
 
 # Update for each machine
 S = "${WORKDIR}/mdm-init/"
@@ -127,8 +126,6 @@ do_install:append:kalama(){
 		install -d ${D}/etc/systemd/system/multi-user.target.wants/
 		ln -sf /etc/systemd/system/wlan_daemon.service \
 			${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
-		install -m 0644 ${WORKDIR}/sxrneo/dhcpcd.service -D ${D}/etc/systemd/system/dhcpcd.service
-		ln -sf /etc/systemd/system/dhcpcd.service ${D}/etc/systemd/system/multi-user.target.wants/dhcpcd.service
 		install -d ${D}/etc/systemd/network/
 		ln -sf /dev/null ${D}/etc/systemd/network/99-default.link
 		install -d ${D}/etc/misc/wifi/
