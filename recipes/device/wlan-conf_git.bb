@@ -1,3 +1,5 @@
+inherit useradd
+
 DESCRIPTION = "Device specific config"
 
 LICENSE = "BSD-3-Clause"
@@ -41,6 +43,7 @@ do_install_append_sa525m(){
 	chmod -R 0664 ${FIRMWARE_PATH_ROME}/WCNSS_qcom_cfg.ini
 	install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6490.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
 	chmod -R 0664 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
+	chown -R radio:radio ${D}/etc/misc/wifi
 }
 
 do_install_append_sa415m_auto(){
