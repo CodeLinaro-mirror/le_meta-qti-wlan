@@ -18,6 +18,7 @@ QCACLD32_LL:qcs40x="qcacld32-ll-qcs40x"
 WLAN_PLATFORM=""
 WLAN_PLATFORM:kalama="wlan-platform"
 WLAN_PLATFORM:qrb5165="wlan-platform"
+WLAN_PLATFORM:qcs40x="wlan-platform"
 
 RDEPENDS:packagegroup-qti-wifi:append:sxrneo = "tcpdump rfkill dnsmasq dhcpcd iperf2 iperf3"
 RDEPENDS:packagegroup-qti-wifi:append:kalama = "rfkill dnsmasq iperf2"
