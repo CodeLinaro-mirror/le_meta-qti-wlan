@@ -1,0 +1,71 @@
+From a75a716bec6ae0c93889d678530bc1de0ca0b2a0 Mon Sep 17 00:00:00 2001
+From: Yi Chen <quic_yichen@quicinc.com>
+Date: Fri, 7 Jul 2023 11:01:23 +0800
+Subject: [PATCH] WAR for include dir too long issue
+
+Change-Id: I16e2a6b846413c7121ab1b236cd8c3b6fd4ce122
+Signed-off-by: Yi Chen <quic_yichen@quicinc.com>
+---
+ Kbuild   | 11 +++++++++--
+ Makefile |  8 +++++---
+ 2 files changed, 14 insertions(+), 5 deletions(-)
+
+diff --git a/Kbuild b/Kbuild
+index c430de49d..f61b993b8 100644
+--- a/Kbuild
++++ b/Kbuild
+@@ -2296,7 +2296,6 @@ ccflags-y += $(INCS)
+ 
+ cppflags-y +=	-DANI_OS_TYPE_ANDROID=6 \
+ 		-Wall\
+-		-Werror\
+ 		-D__linux__
+ 
+ cppflags-$(CONFIG_PTT_SOCK_SVC_ENABLE) += -DPTT_SOCK_SVC_ENABLE
+@@ -3317,7 +3316,10 @@ cppflags-$(CONFIG_SMMU_S1_UNMAP) += -DCONFIG_SMMU_S1_UNMAP
+ cppflags-$(CONFIG_GENERIC_SHADOW_REGISTER_ACCESS_ENABLE) += -DGENERIC_SHADOW_REGISTER_ACCESS_ENABLE
+ cppflags-$(CONFIG_IPA_SET_RESET_TX_DB_PA) += -DIPA_SET_RESET_TX_DB_PA
+ 
+-KBUILD_CPPFLAGS += $(cppflags-y)
++inc_file := wlan_cppflags_opts
++inc_var := $(shell echo $(cppflags-y) > $(inc_file))
++var := "@$(inc_file)"
++KBUILD_CPPFLAGS += $(var)
+ 
+ # Currently, for versions of gcc which support it, the kernel Makefile
+ # is disabling the maybe-uninitialized warning.  Re-enable it for the
+@@ -3383,6 +3385,11 @@ else
+ 	ccflags-y += -DWLAN_HOST_ARCH_ARM=1
+ endif
+ 
++ccflags_file := wlan_ccflags_opts
++ccflags_var := $(shell echo $(ccflags-y) > $(ccflags_file))
++ccvar := "@$(ccflags_file)"
++ccflags-y := $(ccvar)
++
+ # inject some build related information
+ ifeq ($(CONFIG_BUILD_TAG), y)
+ CLD_CHECKOUT = $(shell cd "$(WLAN_ROOT)" && \
+diff --git a/Makefile b/Makefile
+index fb78b0346..2ac0cb4f7 100644
+--- a/Makefile
++++ b/Makefile
+@@ -23,10 +23,12 @@ KBUILD_OPTIONS += $(WLAN_SELECT)
+ KBUILD_OPTIONS += $(KBUILD_EXTRA) # Extra config if any
+ 
+ all:
+-	$(MAKE) -C $(KERNEL_SRC) M=$(M) modules $(KBUILD_OPTIONS)
++	$(shell [ ! -e $(KERNEL_SRC)/../qcacld ] && ln -s $(shell pwd) $(KERNEL_SRC)/../qcacld)
++	$(MAKE) -C $(KERNEL_SRC) M="../qcacld" modules $(KBUILD_OPTIONS)
++
+ 
+ modules_install:
+-	$(MAKE) INSTALL_MOD_STRIP=1 M=$(M) -C $(KERNEL_SRC) modules_install
++	$(MAKE) INSTALL_MOD_STRIP=1 M="../qcacld" -C $(KERNEL_SRC) modules_install
+ 
+ clean:
+-	$(MAKE) -C $(KERNEL_SRC) M=$(M) clean $(KBUILD_OPTIONS)
++	$(MAKE) -C $(KERNEL_SRC) M="../qcacld" clean $(KBUILD_OPTIONS)
+-- 
+2.25.1
+
