@@ -101,8 +101,8 @@ ifneq ($(BOARD),sdx35)
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss_genl/cnss_nl.ko $(1)/$(EXTRA_ADDR)/
 endif
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss_prealloc/cnss_prealloc.ko $(1)/$(EXTRA_ADDR)/
-	$(INSTALL_DIR) $(TOPDIR)/bin/targets/$(TARGET_VARIANT)/modules
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss2/cnss2.ko $(TOPDIR)/bin/targets/$(TARGET_VARIANT)/modules/
+	$(INSTALL_DIR) $(TOPDIR)/bin/targets/$(COMPILE_MODE)/modules
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss2/cnss2.ko $(TOPDIR)/bin/targets/$(COMPILE_MODE)/modules/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_DIR) $(1)/etc/initscripts
 	$(INSTALL_BIN) ./files/wlan-cnss.init $(1)/etc/init.d/
@@ -111,11 +111,11 @@ endef
 
 define KernelPackage/wlan-cnss-legacy/install
 	$(INSTALL_DIR) $(1)/$(EXTRA_ADDR)/
-	$(INSTALL_DIR) $(TOPDIR)/bin/targets/$(TARGET_VARIANT)/modules
+	$(INSTALL_DIR) $(TOPDIR)/bin/targets/$(COMPILE_MODE)/modules
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss/cnss.ko $(1)/$(EXTRA_ADDR)/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss/logger/logger.ko $(1)/$(EXTRA_ADDR)/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss_crypto/cnss_crypto.ko $(1)/$(EXTRA_ADDR)/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss/cnss.ko $(TOPDIR)/bin/targets/$(TARGET_VARIANT)/modules/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss/cnss.ko $(TOPDIR)/bin/targets/$(COMPILE_MODE)/modules/
 endef
 
 $(eval $(call KernelPackage,wlan-cnss-legacy))
