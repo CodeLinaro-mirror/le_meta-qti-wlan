@@ -3,12 +3,12 @@ From: Yi Chen <quic_yichen@quicinc.com>
 Date: Fri, 7 Jul 2023 11:01:23 +0800
 Subject: [PATCH] WAR for include dir too long issue
 
-Change-Id: I151830db3672915428d6d6f08c0da2bfbab6ab67
+Change-Id: I16e2a6b846413c7121ab1b236cd8c3b6fd4ce122
 Signed-off-by: Yi Chen <quic_yichen@quicinc.com>
 ---
  Kbuild   | 11 +++++++++--
- Makefile |  3 ++-
- 2 files changed, 11 insertions(+), 3 deletions(-)
+ Makefile |  8 +++++---
+ 2 files changed, 14 insertions(+), 5 deletions(-)
 
 diff --git a/Kbuild b/Kbuild
 index c430de49d..f61b993b8 100644
@@ -47,19 +47,25 @@ index c430de49d..f61b993b8 100644
  ifeq ($(CONFIG_BUILD_TAG), y)
  CLD_CHECKOUT = $(shell cd "$(WLAN_ROOT)" && \
 diff --git a/Makefile b/Makefile
-index fb78b0346..705503b28 100644
+index fb78b0346..2ac0cb4f7 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -23,7 +23,8 @@ KBUILD_OPTIONS += $(WLAN_SELECT)
+@@ -23,10 +23,12 @@ KBUILD_OPTIONS += $(WLAN_SELECT)
  KBUILD_OPTIONS += $(KBUILD_EXTRA) # Extra config if any
  
  all:
 -	$(MAKE) -C $(KERNEL_SRC) M=$(M) modules $(KBUILD_OPTIONS)
 +	$(shell [ ! -e $(KERNEL_SRC)/../qcacld ] && ln -s $(shell pwd) $(KERNEL_SRC)/../qcacld)
 +	$(MAKE) -C $(KERNEL_SRC) M="../qcacld" modules $(KBUILD_OPTIONS)
++
  
  modules_install:
- 	$(MAKE) INSTALL_MOD_STRIP=1 M=$(M) -C $(KERNEL_SRC) modules_install
+-	$(MAKE) INSTALL_MOD_STRIP=1 M=$(M) -C $(KERNEL_SRC) modules_install
++	$(MAKE) INSTALL_MOD_STRIP=1 M="../qcacld" -C $(KERNEL_SRC) modules_install
+ 
+ clean:
+-	$(MAKE) -C $(KERNEL_SRC) M=$(M) clean $(KBUILD_OPTIONS)
++	$(MAKE) -C $(KERNEL_SRC) M="../qcacld" clean $(KBUILD_OPTIONS)
 -- 
 2.25.1
 
