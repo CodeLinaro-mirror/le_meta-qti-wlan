@@ -27,6 +27,7 @@ SRC_URI = "file://wlan/qcacld-3.0/"
 SRC_URI += "file://wlan/qca-wifi-host-cmn/"
 SRC_URI += "file://wlan/fw-api/"
 SRC_URI_append_qcs6490 += "file://0001-enable-cnss2-wlan.patch"
+SRC_URI += "file://qcacld-kbuild.patch"
 
 S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn/"
 S = "${WORKDIR}/wlan/qcacld-3.0/"
@@ -45,6 +46,11 @@ SSTATE_DUPWHITELIST += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wlan_nlink
 
 # NF perf image select WLAN perf config
 NF_PERF = "${@oe.utils.conditional('MACHINE', 'qcs403-som2', oe.utils.conditional('PERF_BUILD', '1', '1', '0', d), '0', d)}"
+
+do_patch() {
+    cd ${S}
+    patch -p1 < ${WORKDIR}/qcacld-kbuild.patch
+}
 
 do_install () {
     module_do_install
