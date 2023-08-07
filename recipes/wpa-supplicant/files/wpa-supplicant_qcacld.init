@@ -42,6 +42,18 @@ start_service() {
 				LOG_PATH=/data/vendor/wifi/$SVC_NAME-$IFNAME.log
 			fi
 
+			ctrl_interface_folder=$(find /data/vendor/wifi -type d -name "$SVC_NAME")
+			echo "The ctrl_interface_folder is $ctrl_interface_folder"
+			if [[ -n "$ctrl_interface_folder" ]];then
+				group_name=$(ls -ld "$ctrl_interface_folder" | awk '{print $4}')
+				echo "The group of ctrl_interface_folder is $group_name"
+
+				if [ $group_name != "wifi" ];then
+					echo "The ctrl_interface can't be used by $SVC_NAME, remove it"
+					rm -rf $ctrl_interface_folder
+				fi
+			fi
+
 			# create a instance to start wpa_supplicant service
 			procd_open_instance $IFNAME
 			# start wpa_supplicant as the command /usr/sbin/wpa_supplicant -Dnl80211 -i ifname

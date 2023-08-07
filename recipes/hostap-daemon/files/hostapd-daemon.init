@@ -15,6 +15,28 @@ UCI_CONFIG_PATH=/etc/config/$SVC_NAME
 LOG_PATH=/data/vendor/wifi/$SVC_NAME-$IFNAME.log
 PID_PATH=/data/vendor/wifi/$SVC_NAME-$IFNAME.pid
 CONF_PATH=/data/vendor/wifi/$SVC_NAME-$IFNAME.conf
+BOOT_KPI_NODE_DEFAULT=/sys/kernel/debug/bootkpi/kpi_values
+BOOT_KPI_NODE_5_4=/sys/kernel/boot_kpi/kpi_values
+
+add_boot_kpi_marker() {
+	local major=`uname -r | awk -F . '{print $1}'`
+	local minor=`uname -r | awk -F . '{print $2}'`
+	local boot_kpi_node=$BOOT_KPI_NODE_DEFAULT
+	local boot_kpi_marker="M - $1 - enable beaconing"
+
+	# compare kernel version with 5.4
+	if [ "$major" -gt "5" ] || [ "$major" -eq "5" -a "$minor" -ge "4" ]; then
+		boot_kpi_node=$BOOT_KPI_NODE_5_4
+	fi
+
+	# Only add maker for the 1st SAP after device bootup
+	cat "$boot_kpi_node" | grep "$boot_kpi_marker" 2>&1 > /dev/null
+	if [ $? -eq 0 ]; then
+		return
+	fi
+
+	echo -n $boot_kpi_marker >> $boot_kpi_node
+}
 
 start_service() {
 	local ifname=$1
@@ -22,6 +44,8 @@ start_service() {
 		if [ -f /data/vendor/wifi/$SVC_NAME-$ifname.conf ];then
 			IFNAME=$ifname
 			echo "$PKG_NAME: start on $IFNAME" > /dev/kmsg
+			add_boot_kpi_marker $IFNAME
+
 			# BIN_PATH - /usr/sbin/hostapd
 			BIN_PATH=/usr/sbin/$SVC_NAME
 			# UCI_CONFIG_PATH - /etc/config/hostapd used to reload hostapd service if it changed
@@ -39,6 +63,18 @@ start_service() {
 			if [ "$log_folder_mode" = "1" ];then
 				echo "$PKG_NAME: store log in /data/vendor/wifi/$SVC_NAME-$IFNAME.log"
 				LOG_PATH=/data/vendor/wifi/$SVC_NAME-$IFNAME.log
+			fi
+
+			ctrl_interface_folder=$(find /data/vendor/wifi -type d -name "$SVC_NAME")
+			echo "The ctrl_interface_folder is $ctrl_interface_folder"
+			if [[ -n "$ctrl_interface_folder" ]];then
+				group_name=$(ls -ld "$ctrl_interface_folder" | awk '{print $4}')
+				echo "The group of ctrl_interface_folder is $group_name"
+
+				if [ $group_name != "wifi" ];then
+					echo "The ctrl_interface can't be used by $SVC_NAME, remove it"
+					rm -rf $ctrl_interface_folder
+				fi
 			fi
 
 			# create a instance to start hostapd service
