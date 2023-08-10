@@ -9,7 +9,7 @@ WLAN_MODULE_NAME = "wlan"
 # The inherit of module.bbclass will automatically name module packages with
 # kernel-module-" prefix as required by the oe-core build environment. Also it
 # replaces '_' with '-' in the module name.
-RPROVIDES_${PN} += "${@'kernel-module-${WLAN_MODULE_NAME}-${KERNEL_VERSION}'.replace('_', '-')}"
+RPROVIDES_${PN} += "kernel-module-${@'${WLAN_MODULE_NAME}'.replace('_', '-')}-${KERNEL_VERSION}"
 PROVIDES_NAME   = "kernel-module-${WLAN_MODULE_NAME}-${KERNEL_VERSION}"
 
 do_unpack[deptask] = "do_populate_sysroot"
