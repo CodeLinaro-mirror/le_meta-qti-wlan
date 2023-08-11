@@ -8,7 +8,7 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://external/wpa_supplicant_8/"
-SRC_URI += "file://${MACHINE}/"
+SRC_URI += "file://${BASEMACHINE}/"
 SRC_URI += "file://misc/"
 DEPENDS = "pkgconfig libnl openssl wpa-supplicant-8-lib liblog"
 
@@ -19,12 +19,12 @@ S = "${WORKDIR}/external/wpa_supplicant_8/hostapd/"
 PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"
 
 do_configure() {
-    if [ "$(ls -A "${WORKDIR}/${MACHINE}")" ]
+    if [ "$(ls -A "${WORKDIR}/${BASEMACHINE}")" ]
     then
         bbwarn "============================================================"
-        bbwarn "picking ${WORKDIR}/${MACHINE}"
+        bbwarn "picking ${WORKDIR}/${BASEMACHINE}"
         bbwarn "============================================================"
-        install -m 0644 ${WORKDIR}/${MACHINE}/defconfig-qcacld .config
+        install -m 0644 ${WORKDIR}/${BASEMACHINE}/defconfig-qcacld .config
         echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
     else
         bbwarn "============================================================"
@@ -47,12 +47,12 @@ do_configure:append:sxrneo() {
 do_patch() {
     cd ${PATCH_DIR}
 
-    if [ "$(ls -A "${WORKDIR}/${MACHINE}")" ]
+    if [ "$(ls -A "${WORKDIR}/${BASEMACHINE}")" ]
     then
         bbwarn "============================================================"
-        bbwarn "picking ${WORKDIR}/${MACHINE}"
+        bbwarn "picking ${WORKDIR}/${BASEMACHINE}"
         bbwarn "============================================================"
-        patch -p1 < ${WORKDIR}/${MACHINE}/hostapd_driver_cmd.patch
+        patch -p1 < ${WORKDIR}/${BASEMACHINE}/hostapd_driver_cmd.patch
     else
         bbwarn "============================================================"
         bbwarn "picking ${WORKDIR}/misc"
