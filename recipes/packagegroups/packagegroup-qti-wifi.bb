@@ -13,6 +13,7 @@ QCACLD32_LL="qcacld32-ll"
 QCACLD32_LL:neo="qcacld32-ll-oot qcacld32-ll-kiwi"
 QCACLD32_LL:kalama="qcacld32-ll-kiwi"
 QCACLD32_LL:qrb5165="qcacld32-ll-hst"
+QCACLD32_LL:qcs40x="qcacld32-ll-qcs40x"
 
 WLAN_PLATFORM=""
 WLAN_PLATFORM:kalama="wlan-platform"
