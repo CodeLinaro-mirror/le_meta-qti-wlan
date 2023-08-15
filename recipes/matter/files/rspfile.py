@@ -9,7 +9,7 @@ if __name__ == "__main__":
     fileName = sys.argv[1]
     dirName = sys.argv[2].replace('/', '_')
     outString = ''
-    pat = re.compile(f"(\s+rspfile = __third_party_connectedhomeip_src_\w+){dirName}(_build_toolchain_custom_custom__rule.rsp)")
+    pat = re.compile("(\s+rspfile = __third_party_connectedhomeip_src_\w+)"+dirName+"(_build_toolchain_custom_custom__rule.rsp)")
     for eachLine in open(fileName):
         m = pat.match(eachLine)
         if m:
@@ -18,6 +18,6 @@ if __name__ == "__main__":
             if "--module pip -- install" in eachLine:
                 eachLine = eachLine.rstrip() + " --target pip_pkg" + os.linesep
             outString += eachLine
-    outFile = open(fileName, 'w')
-    outFile.write(outString)
+    with open(fileName, 'w') as outFile:
+        outFile.write(outString)
 
