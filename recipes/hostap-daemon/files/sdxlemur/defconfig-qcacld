@@ -166,7 +166,7 @@ CONFIG_DEBUG_FILE=y
 #CONFIG_NO_ACCOUNTING=y
 
 # Remove support for RADIUS
-CONFIG_NO_RADIUS=y
+#CONFIG_NO_RADIUS=y
 
 # Remove support for VLANs
 #CONFIG_NO_VLAN=y
