@@ -29,8 +29,8 @@ SRC_URI += "file://wlan/fw-api/"
 SRC_URI_append_qcs6490 += "file://0001-enable-cnss2-wlan.patch"
 SRC_URI += "file://qcacld-kbuild.patch"
 
-S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn/"
-S = "${WORKDIR}/wlan/qcacld-3.0/"
+S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn"
+S = "${WORKDIR}/wlan/qcacld-3.0"
 
 FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld"
 
