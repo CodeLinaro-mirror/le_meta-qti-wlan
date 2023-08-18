@@ -21,19 +21,14 @@ SRC_URI += " file://connectivity-fix.patch \
 
 S = "${WORKDIR}/git"
 
-DEPENDS += "avahi ninja-native dbus-glib-native libbsd glib-2.0 libchrome fluoride bt-app btobex"
+DEPENDS += "gn-native avahi ninja-native dbus-glib-native libbsd glib-2.0 libchrome fluoride bt-app btobex"
 
 TARGET_CC = "${CC}"
 TARGET_CXX = "${CXX}"
 
 do_configure() {
-    export CC=gcc
-    export CXX=g++
 
     python3 ${THISDIR}/files/generateQcs610.py ${S} ${THISDIR}/files/ ${WORKSPACE}
-
-    cd ${S}
-    source scripts/activate.sh
 
     cd ${S}/examples/all-clusters-app/qcs610
     gn gen -v out/test --args='is_debug=false treat_warnings_as_errors=false chip_device_platform="qcs610" target_os="linux" target_cpu="arm64" custom_toolchain="${S}/build/toolchain/custom" target_cc="${TARGET_CC}" target_cxx="${TARGET_CXX}" target_ar="${AR}" qcs610_bt_root="${WORKSPACE}" qcs610_sdk="${STAGING_INCDIR}" '
