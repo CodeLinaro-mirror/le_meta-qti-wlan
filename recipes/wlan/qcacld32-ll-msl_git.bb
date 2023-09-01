@@ -66,7 +66,9 @@ do_install () {
     fi
     install -d ${FIRMWARE_PATH}
     install -d ${D}${includedir}/qcacld/
-    install -m 0644 ${S1}/utils/nlink/inc/wlan_nlink_common.h ${D}${includedir}/qcacld/
+    if [ ${BASEMACHINE} != "qcs6490" ]; then
+        install -m 0644 ${S1}/utils/nlink/inc/wlan_nlink_common.h ${D}${includedir}/qcacld/
+    fi
 
     #copying wlan.ko to STAGING_DIR_TARGET
     WLAN_KO=${@oe.utils.conditional('PERF_BUILD', '1', '${STAGING_DIR_TARGET}-perf', '${STAGING_DIR_TARGET}', d)}
