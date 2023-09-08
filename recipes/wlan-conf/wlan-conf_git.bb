@@ -158,8 +158,6 @@ do_install:append:qcs40x(){
 		install -d ${D}${sysconfdir}/tmpfiles.d
 		install -m 0644 ${WORKDIR}/sxrneo/wlan-conf_systemd_tmpfiles.conf \
 				-D ${D}${sysconfdir}/tmpfiles.d/wlan-conf_systemd_tmpfiles.conf
-		install -d ${D}/etc/initscripts
-		cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
 		install -d ${D}/etc/systemd/system/
 		install -m 0644 ${WORKDIR}/sxrneo/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
 		install -d ${D}/etc/systemd/system/multi-user.target.wants/
