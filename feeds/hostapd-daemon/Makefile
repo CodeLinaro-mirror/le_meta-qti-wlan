@@ -48,7 +48,7 @@ define Package/$(PKG_NAME)
   CATEGORY:=QTI-PACKAGES
   TITLE:=HOSTAPD
   DEPENDS:= +libnl +openssl-util +wpa-supplicant-8-lib +liblog
-  USERID:=wifi=1010:wifi=1010
+  USERID:=wifi=1010:wifi=1010 0:wifi=1010
 endef
 # DEPENDS += pkgconfig since no exist
 
