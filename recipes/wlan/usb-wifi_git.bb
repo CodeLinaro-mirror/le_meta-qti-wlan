@@ -11,7 +11,7 @@ DEPENDS += "virtual/kernel"
 SRCREV = "12cfcd8cd8ec7115158df3d223510435541ddc32"
 
 SRC_URI = "git://git.codelinaro.org/clo/le/platform/external/rincat/RTL88x2BU-Linux-Driver.git;protocol=https;branch=source/master \
-    file://0001-adapt-makefile-to-support-QCS8550-Platform.patch \
+    file://0001-adapt-makefile-to-support-KALAMA-Platform.patch \
     file://0001-adapt-upstream-driver-to-kp5.15.patch"
 
 S = "${WORKDIR}/git"
