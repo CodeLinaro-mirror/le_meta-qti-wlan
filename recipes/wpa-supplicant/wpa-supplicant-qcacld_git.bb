@@ -10,6 +10,7 @@ SRC_URI += "file://p2p_tmp_config.patch"
 SRC_URI += "file://driver_cmd.patch"
 SRC_URI += "file://driver_cmd_ks-3.0.patch"
 SRC_URI += "file://driver_cmd_ks-4.0.patch"
+SRC_URI_append_qcs6490 += "file://${BASEMACHINE}"
 
 DEPENDS += "qmi"
 DEPENDS += "qmi-framework"
@@ -21,17 +22,24 @@ S = "${WORKDIR}/external/wpa_supplicant_8/wpa_supplicant"
 PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"
 
 do_configure() {
-    install -m 0644 ${WORKDIR}/defconfig-qcacld .config
-    echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
+    if [ ${BASEMACHINE} == "qcs6490" ]; then
+        install -m 0644 ${WORKDIR}/${BASEMACHINE}/defconfig-qcacld .config
+        echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
+    else
+        install -m 0644 ${WORKDIR}/defconfig-qcacld .config
+        echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
+    fi
 }
 do_patch() {
     cd ${PATCH_DIR}
     patch -p1 < ${WORKDIR}/p2p_tmp_config.patch
-if [ ${BASEMACHINE} == "qrbx210" ]; then
-    patch -p1 < ${WORKDIR}/driver_cmd_ks-3.0.patch
-elif [ ${BASEMACHINE} == "sdmsteppe" ] || [ ${BASEMACHINE} == "qcs6490" ] ; then
-    patch -p1 < ${WORKDIR}/driver_cmd_ks-4.0.patch
-else
-    patch -p1 < ${WORKDIR}/driver_cmd.patch
-fi
+    if [ ${BASEMACHINE} == "qrbx210" ]; then
+        patch -p1 < ${WORKDIR}/driver_cmd_ks-3.0.patch
+    elif [ ${BASEMACHINE} == "sdmsteppe" ]; then
+        patch -p1 < ${WORKDIR}/driver_cmd_ks-4.0.patch
+    elif [ ${BASEMACHINE} == "qcs6490" ]; then
+        patch -p1 < ${WORKDIR}/${BASEMACHINE}/driver_cmd.patch
+    else
+        patch -p1 < ${WORKDIR}/driver_cmd.patch
+    fi
 }
