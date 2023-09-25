@@ -66,7 +66,7 @@ define Package/$(PKG_NAME)
   CATEGORY:=QTI-PACKAGES
   TITLE:=SIGMA DUT
   DEPENDS:= +libnl-tiny +openssl-util +wpa-supplicant-8-lib +qmi +qmi-framework
-  USERID:=wifi=1010:wifi=1010
+  USERID:=wifi=1010:wifi=1010 0:wifi=1010
 endef
 
 define Package/$(PKG_NAME)/Description
