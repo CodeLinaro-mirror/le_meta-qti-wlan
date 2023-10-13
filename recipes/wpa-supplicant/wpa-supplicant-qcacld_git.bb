@@ -92,3 +92,14 @@ do_patch_sdxlemur() {
         patch -p1 < ${WORKDIR}/${BASEMACHINE}/driver_cmd.patch
     fi
 }
+
+do_patch_sxrneo() {
+    cd ${PATCH_DIR}
+    if [ "$(ls -A "${WORKDIR}/${MACHINE}")" ]
+    then
+        bbwarn "============================================================"
+        bbwarn "picking ${WORKDIR}/${MACHINE}"
+        bbwarn "============================================================"
+        patch -p1 < ${WORKDIR}/${MACHINE}/driver_cmd.patch
+    fi
+}
