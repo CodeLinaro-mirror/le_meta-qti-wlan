@@ -45,6 +45,7 @@ ExecStartPre=+/bin/sh -c '/bin/mkdir -p /var/run/dhcpcd'
 ExecStartPre=+/bin/sh -c '/bin/chown system /var/run/dhcpcd'
 ExecStartPre=+/bin/sh -c '/bin/touch /var/run/dhcpcd.pid'
 ExecStartPre=+/bin/sh -c '/bin/chown system /var/run/dhcpcd.pid'
+ExecStartPre=+/bin/sh -c "sed -ie 's/slaac private/#slaac private/g' /etc/dhcpcd.conf"
 ExecStart=/usr/sbin/dhcpcd -t 0 -o domain_name_servers --noipv4ll -h -b -A
 ExecStop=/bin/kill -15 $MAINPID
 ExecStopPost=/bin/rm -rf /var/run/dhcpcd-*.info
