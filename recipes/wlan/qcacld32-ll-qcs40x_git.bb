@@ -6,14 +6,18 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/ISC;md5=f3b90e
                     file://${COREBASE}/meta/files/common-licenses/BSD-3-Clause;md5=550794465ba0ec5312d6919e203a55f9 \
                     file://${COREBASE}/meta/files/common-licenses/GPL-2.0-only;md5=801f80980d171dd6425610833a22dbe6"
 
+MODULE_NAME = "wlan"
+
 do_unpack[deptask] = "do_populate_sysroot"
 PR = "r8"
 PV = "2.0"
 DEPENDS += "wlan-platform"
 
-MODULE_NAME = "wlan"
-
 do_configure[depends] += "virtual/kernel:do_shared_workdir"
+
+# TODO: Remove this local definition once available via machine.conf
+KERNEL_DEFCONFIG ?= "qcs405.config"
+KERNEL_DEFCONFIG_qti-distro-debug ?= "qcs405-debug_defconfig"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/qcacld-3.0/"
@@ -32,25 +36,38 @@ BUILD_FLAGS = "CONFIG_QCA_CLD_WLAN_PROFILE=${TARGET_WLAN_CHIP} MODNAME=${WLAN_CH
 KERNEL_VERSION = "${@get_kernelversion_file("${STAGING_KERNEL_BUILDDIR}")}"
 EXT_MODULES = "${@os.path.relpath("${S}", "${KERNEL_PLATFORM_PATH}")}"
 
+do_configure:append:sxrneo() {
+    sed -i '1i DYNAMIC_SINGLE_CHIP=${TARGET_WLAN_CHIP}' ${WORKDIR}/wlan/qcacld-3.0/configs/${TARGET_WLAN_CHIP}_defconfig
+    sed -i 's/CONFIG_WLAN_FEATURE_COAP := y/#CONFIG_WLAN_FEATURE_COAP := y/g' ${WORKDIR}/wlan/qcacld-3.0/configs/${TARGET_WLAN_CHIP}_defconfig
+}
+
 do_compile[depends] += "virtual/kernel:do_shared_workdir"
 do_compile[cleandirs] += "${WORKDIR}/out/${KERNEL_DEFCONFIG}"
 do_compile() {
     cd ${KERNEL_PLATFORM_PATH}
     BUILD_CONFIG=msm-kernel/${KERNEL_CONFIG} \
     EXT_MODULES=../../wlan/qcacld-3.0/ \
-    KERNEL_KIT=${KERNEL_PREBUILT_PATH} \
     ROOTDIR=${WORKDIR}/ \
-    OUT_DIR=${WORKDIR}/out/${KERNEL_DEFCONFIG} \
+    MODULE_OUT=${S} \
+    OUT_DIR=../out/${KERNEL_DEFCONFIG} \
     KERNEL_UAPI_HEADERS_DIR=${STAGING_KERNEL_BUILDDIR} \
     ./build/build_module.sh \
-    CONFIG_QCA_CLD_WLAN_PROFILE=default \
-    CONFIG_CNSS2=m \
-    CONFIG_CNSS_QCA6390=y \
-    CONFIG_HIF_PCI=y \
+    WLAN_PROFILE=${MODULE_NAME} \
+    DYNAMIC_SINGLE_CHIP= \
+    MODNAME=${MODULE_NAME}\
+    DEVNAME=${MODULE_NAME} \
+    BOARD_PLATFORM=qcs40x \
+    CONFIG_QCA_CLD_WLAN=m \
+    WLAN_CTRL_NAME=wlan \
     CONFIG_CNSS_OUT_OF_TREE=y \
-    CONFIG_CLD_HL_SDIO_CORE=n \
-    CONFIG_CNSS_SDIO=n \
-    CONFIG_CNSS_GENL=y \
+    CONFIG_ICNSS2=m \
+    CONFIG_CNSS_QMI_SVC=m \
+    CONFIG_CNSS_PLAT_IPC_QMI_SVC=m \
+    CONFIG_WLAN_TX_MON_2_0=n \
+    CONFIG_WLAN_DP_LOCAL_PKT_CAPTURE=n \
+    KERNEL_SUPPORTS_NESTED_COMPOSITES=n \
+    BUILD_DEBUG_VERSION=y \
+    CONFIG_CNSS_GENL=m \
     KBUILD_EXTRA_SYMBOLS=${STAGING_DIR_HOST}/lib/modules/${KERNEL_VERSION}/cnsswlan-kernel/Module.symvers
 }
 
@@ -62,11 +79,8 @@ do_install() {
     ${STAGING_DIR_NATIVE}/usr/bin/aarch64-oe-linux/aarch64-oe-linux-strip \
              --strip-debug ${S}/unstripped/${MODULE_NAME}.ko -o ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/${MODULE_NAME}.ko
 
-    install ${WORKDIR}/wlan/qcacld-3.0/Module.symvers -D ${D}${base_libdir}/modules/${KERNEL_VERSION}/wlan-kernel/Module.symvers
-
     #auto load
     install -d ${D}${sysconfdir}/modules-load.d
-    sed -i 's/kiwi_v2/wlan/' ${WORKDIR}/wlan_load.conf
     install -m 0755 ${WORKDIR}/wlan_load.conf -D ${D}${sysconfdir}/modules-load.d/wlan_load.conf
 }
 
