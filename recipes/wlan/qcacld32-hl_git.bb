@@ -42,8 +42,7 @@ FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld${CHIP_NAME_APPEND}"
 
 # Explicitly disable LL to enable HL as current WLAN driver is not having
 # simultaneous support of HL and LL.
-EXTRA_OEMAKE += "CONFIG_CLD_LL_CORE=n CONFIG_CNSS_PCI=n MODNAME=${WLAN_MODULE_NAME} CHIP_NAME=${CHIP_NAME} CONFIG_QCA_CLD_WLAN_PROFILE=qca6174"
-
+EXTRA_OEMAKE += "CONFIG_CLD_LL_CORE=n CONFIG_CNSS_PCI=n MODNAME=${WLAN_MODULE_NAME} CHIP_NAME=${CHIP_NAME} CONFIG_QCA_CLD_WLAN_PROFILE=qca6174 CONFIG_WLAN_FEATURE_DSRC=n"
 do_compile_prepend() {
     sed -i '$a\ccflags-y += -Wno-implicit-fallthrough' ${S}/Kbuild
 }
