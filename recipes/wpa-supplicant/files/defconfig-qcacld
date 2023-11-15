@@ -542,3 +542,6 @@ CONFIG_SUITEB192=y
 
 # Enable MBO
 CONFIG_MBO=y
+
+#enable FILS
+CONFIG_FILS=y
