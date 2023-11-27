@@ -53,6 +53,7 @@ do_compile() {
     KERNEL_UAPI_HEADERS_DIR=${STAGING_KERNEL_BUILDDIR} \
     ./build/build_module.sh \
     WLAN_PROFILE=${MODULE_NAME} \
+    DYNAMIC_SINGLE_CHIP= \
     MODNAME=${MODULE_NAME}\
     DEVNAME=${MODULE_NAME} \
     BOARD_PLATFORM=qcs40x \
