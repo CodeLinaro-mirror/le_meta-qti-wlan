@@ -67,6 +67,10 @@ else
                 else
                     echo -n "Not supported CDT sub type id, QCMAP_CLI will load cnss2 in needed" > /dev/kmsg
                 fi
+            # For SA525 IDP board
+            elif [ "$soc_hwplatform" == "IDP" ]; then
+                echo -n "SA525 IDP -> load cnss2 module" > /dev/kmsg
+                modprobe cnss2
             else
                 echo -n "Not supported platform from CDT, QCMAP_CLI will load cnss2 in needed" > /dev/kmsg
             fi
