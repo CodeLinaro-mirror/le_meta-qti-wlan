@@ -1,0 +1,23 @@
+From 31ffdcad716bbb4f032c274d35ab111eff3e2c4a Mon Sep 17 00:00:00 2001
+From: gaolez <gaolez@codeaurora.org>
+Date: Mon, 30 Aug 2021 19:27:15 +0800
+Subject: [PATCH] fix iwpriv limit issue
+
+---
+ iwlib.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/iwlib.c b/iwlib.c
+index 5a9550a..4399ce7 100755
+--- a/iwlib.c
++++ b/iwlib.c
+@@ -651,7 +651,7 @@ iw_get_priv_info(int		skfd,
+       else
+ 	maxpriv *= 2;
+     }
+-  while(maxpriv < 1000);
++  while(maxpriv < 4000);
+ 
+   /* Cleanup */
+   if(priv)
+
