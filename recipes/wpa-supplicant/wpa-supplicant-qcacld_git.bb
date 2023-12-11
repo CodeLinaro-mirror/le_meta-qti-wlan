@@ -21,7 +21,7 @@ S = "${WORKDIR}/external/wpa_supplicant_8/wpa_supplicant"
 PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"
 
 LDFLAGS:append:sxrneo = " -Wl,--no-as-needed -L${RECIPE_SYSROOT}/usr/lib -llog"
-CFLAGS:append:sxrneo ="-DCONFIG_ANDROID_LOG"
+CFLAGS:append:sxrneo =" -DCONFIG_ANDROID_LOG"
 
 do_configure() {
     if [ "$(ls -A "${WORKDIR}/${BASEMACHINE}")" ]
@@ -71,3 +71,13 @@ do_patch() {
     fi
 }
 
+do_patch:sxrneo() {
+    cd ${PATCH_DIR}
+    if [ "$(ls -A "${WORKDIR}/${BASEMACHINE}")" ]
+    then
+        bbwarn "============================================================"
+        bbwarn "picking ${WORKDIR}/${BASEMACHINE}"
+        bbwarn "============================================================"
+        patch -p1 < ${WORKDIR}/${BASEMACHINE}/driver_cmd.patch
+    fi
+}
