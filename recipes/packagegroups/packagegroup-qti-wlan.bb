@@ -11,7 +11,7 @@ PACKAGES = "\
     packagegroup-qti-wlan \
     "
 
-RDEPENDS_${PN} += "\
+RDEPENDS:${PN} += "\
     rfkill \
     hostap-daemon-qcacld \
     wireless-tools \
@@ -24,5 +24,6 @@ RDEPENDS_${PN} += "\
     qcacld32-cnss2 \
     wpa-supplicant-qcacld \
     wlan-conf \
+    wlan-sigma-dut \
     "
-RDEPENDS_${PN}_remove_mdm9607 += " qcacld32-ll-hasting qcacld32-ll-hsp qcacld32-ll-genoa qcacld32-ll-rome qcacld32-cnss2"
+RDEPENDS:${PN}:remove:mdm9607 += " qcacld32-ll-hasting qcacld32-ll-hsp qcacld32-ll-genoa qcacld32-ll-rome qcacld32-cnss2"

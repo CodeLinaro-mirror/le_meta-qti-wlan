@@ -14,11 +14,11 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5
 PR = "r8"
 _MODNAME = "qca6490"
 FW_PATH_NAME = "qca6490"
-FILES_${PN}     += "lib/firmware/wlan/*"
-FILES_${PN}     += "lib/firmware/*"
-FILES_${PN}     += "lib/modules/${KERNEL_VERSION}/extra/${_MODNAME}.ko"
+FILES:${PN}     += "lib/firmware/wlan/*"
+FILES:${PN}     += "lib/firmware/*"
+FILES:${PN}     += "lib/modules/${KERNEL_VERSION}/extra/${_MODNAME}.ko"
 PROVIDES_NAME   = "kernel-module-${_MODNAME}"
-RPROVIDES_${PN} += "${PROVIDES_NAME}-${KERNEL_VERSION}"
+RPROVIDES:${PN} += "${PROVIDES_NAME}-${KERNEL_VERSION}"
 
 do_unpack[deptask] = "do_populate_sysroot"
 PR = "r8"
@@ -35,7 +35,7 @@ FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld/${_MODNAME}"
 
 # Explicitly disable HL to enable LL as current WLAN driver is not having
 # simultaneous support of HL and LL.
-EXTRA_OEMAKE_append = " CONFIG_CLD_HL_SDIO_CORE=n \
+EXTRA_OEMAKE:append = " CONFIG_CLD_HL_SDIO_CORE=n \
                        CONFIG_CNSS_SDIO=n \
                        CONFIG_QCA_CLD_WLAN_PROFILE=qca6490 \
                        DYNAMIC_SINGLE_CHIP=${_MODNAME} \
@@ -43,7 +43,7 @@ EXTRA_OEMAKE_append = " CONFIG_CLD_HL_SDIO_CORE=n \
                        "
 
 #Enable/Disable IPA by MACHINE name
-EXTRA_OEMAKE_append_sa515m = " CONFIG_ENABLE_IPA=n"
+EXTRA_OEMAKE:append:sa515m = " CONFIG_ENABLE_IPA=n"
 
 _WLAN_CFG_OVERRIDE_515 = "\
 						CONFIG_FEATURE_FORCE_WAKE=y \
@@ -102,24 +102,24 @@ _WLAN_CFG_OVERRIDE_515 = "\
 						CONFIG_BAND_6GHZ=y \
 						"
 
-EXTRA_OEMAKE_append_sa515m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_515}"
+EXTRA_OEMAKE:append:sa515m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_515}"
 
-LDFLAGS_aarch64 = "-O1 --hash-style=gnu --as-needed"
+LDFLAGS:aarch64 = "-O1 --hash-style=gnu --as-needed"
 
 # The common header file, 'wlan_nlink_common.h' can be installed from other
 # qcacld recipes too. To suppress the duplicate detection error, add it to
-# SSTATE_DUPWHITELIST.
-SSTATE_DUPWHITELIST += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wlan_nlink_common.h"
+# SSTATE_ALLOW_OVERLAP_FILES.
+SSTATE_ALLOW_OVERLAP_FILES += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wlan_nlink_common.h"
 
 inherit systemd
-SRC_URI_append = " file://init_qti_wlan_auto.service"
-SYSTEMD_SERVICE_${PN} = "init_qti_wlan_auto.service"
-SYSTEMD_AUTO_ENABLE_${PN} = "disable"
+SRC_URI:append = " file://init_qti_wlan_auto.service"
+SYSTEMD_SERVICE:${PN} = "init_qti_wlan_auto.service"
+SYSTEMD_AUTO_ENABLE:${PN} = "disable"
 
-SRC_URI_append = " file://init.qti.wlan_on.sh"
-SRC_URI_append = " file://init.qti.wlan_off.sh"
-FILES_${PN}     += "usr/bin/init.qti.wlan_on.sh"
-FILES_${PN}     += "usr/bin/init.qti.wlan_off.sh"
+SRC_URI:append = " file://init.qti.wlan_on.sh"
+SRC_URI:append = " file://init.qti.wlan_off.sh"
+FILES:${PN}     += "usr/bin/init.qti.wlan_on.sh"
+FILES:${PN}     += "usr/bin/init.qti.wlan_off.sh"
 
 do_install () {
     module_do_install
@@ -134,7 +134,7 @@ do_install () {
     install -m 0644 ${S}/${_MODNAME}.ko ${WLAN_KO}/wlan/
 }
 
-do_install_append() {
+do_install:append() {
     install -d ${D}/lib/firmware/${FW_PATH_NAME}/
     ln -sf /firmware/image/${FW_PATH_NAME}/amss.bin ${D}/lib/firmware/${FW_PATH_NAME}/
     ln -sf /firmware/image/${FW_PATH_NAME}/amss20.bin ${D}/lib/firmware/${FW_PATH_NAME}/

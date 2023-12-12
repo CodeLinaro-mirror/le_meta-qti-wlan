@@ -11,12 +11,12 @@ python __anonymous () {
     d.setVar('CHIP_NAME', '')
 }
 
-FILES_${PN}     += "lib/firmware/wlan/*"
-FILES_${PN}     += "${base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko"
+FILES:${PN}     += "lib/firmware/wlan/*"
+FILES:${PN}     += "${base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko"
 # The inherit of module.bbclass will automatically name module packages with
 # kernel-module-" prefix as required by the oe-core build environment. Also it
 # replaces '_' with '-' in the module name.
-RPROVIDES_${PN} += "${@'kernel-module-${WLAN_MODULE_NAME}-${KERNEL_VERSION}'.replace('_', '-')}"
+RPROVIDES:${PN} += "${@'kernel-module-${WLAN_MODULE_NAME}-${KERNEL_VERSION}'.replace('_', '-')}"
 PROVIDES_NAME   = "kernel-module-${WLAN_MODULE_NAME}-${KERNEL_VERSION}"
 
 do_unpack[deptask] = "do_populate_sysroot"
@@ -25,13 +25,14 @@ PR = "r0"
 #This DEPENDS is to serialize kernel module builds
 DEPENDS = "rtsp-alg"
 
+do_configure[depends] += "virtual/kernel:do_shared_workdir"
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/qcacld-3.0/"
 SRC_URI += "file://wlan/qca-wifi-host-cmn/"
 SRC_URI += "file://wlan/fw-api/"
 
-SRC_URI_append = " file://device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_sdio_qca6174.ini"
-SRC_URI_append = " file://device/qcom/wlan/sdx_auto/wlan_mac.bin"
+SRC_URI:append = " file://device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_sdio_qca6174.ini"
+SRC_URI:append = " file://device/qcom/wlan/sdx_auto/wlan_mac.bin"
 
 S = "${WORKDIR}/wlan/qcacld-3.0/"
 S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn/"
@@ -42,13 +43,28 @@ FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld${CHIP_NAME_APPEND}"
 
 # Explicitly disable LL to enable HL as current WLAN driver is not having
 # simultaneous support of HL and LL.
-EXTRA_OEMAKE += "CONFIG_CLD_LL_CORE=n CONFIG_CNSS_PCI=n MODNAME=${WLAN_MODULE_NAME} CHIP_NAME=${CHIP_NAME} CONFIG_QCA_CLD_WLAN_PROFILE=qca6174 CONFIG_WLAN_FEATURE_DSRC=n"
-do_compile_prepend() {
+EXTRA_OEMAKE += "CONFIG_CLD_LL_CORE=n CONFIG_CNSS_PCI=n MODNAME=${WLAN_MODULE_NAME} CHIP_NAME=${CHIP_NAME} CONFIG_QCA_CLD_WLAN_PROFILE=qca6174"
+
+EXT_MODULES = "${@os.path.relpath("${S}", "${KERNEL_PLATFORM_PATH}")}"
+do_compile[depends] += "virtual/kernel:do_shared_workdir"
+do_compile[cleandirs] += "${WORKDIR}/out/${KERNEL_DEFCONFIG}"
+
+do_compile:prepend() {
     sed -i '$a\ccflags-y += -Wno-implicit-fallthrough' ${S}/Kbuild
 }
 
+do_compile() {
+    cd ${KERNEL_PLATFORM_PATH}
+    BUILD_CONFIG=${KERNEL_BUILD_CONFIG} \
+    EXT_MODULES=${EXT_MODULES} \
+    ROOTDIR=${WORKDIR}/ \
+    MODULE_OUT=${S} \
+    OUT_DIR=${KERNEL_OUT_PATH}/ \
+    KERNEL_UAPI_HEADERS_DIR=${STAGING_KERNEL_BUILDDIR} \
+    ./build/build_module.sh
+}
+
 do_install () {
-    module_do_install
 
     install -d ${FIRMWARE_PATH}
     #copying wlan.ko to STAGING_DIR_TARGET
