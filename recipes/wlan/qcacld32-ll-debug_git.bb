@@ -6,7 +6,7 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/ISC;md5=f3b90e
                     file://${COREBASE}/meta/files/common-licenses/BSD-3-Clause;md5=550794465ba0ec5312d6919e203a55f9 \
                     file://${COREBASE}/meta/files/common-licenses/GPL-2.0-only;md5=801f80980d171dd6425610833a22dbe6"
 
-MODULE_NAME = "wlan"
+MODULE_NAME = "wlan_debug"
 
 do_unpack[deptask] = "do_populate_sysroot"
 PR = "r8"
@@ -31,16 +31,15 @@ S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn"
 S = "${WORKDIR}/wlan/qcacld-3.0"
 FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld/${TARGET_WLAN_CHIP}"
 
-BUILD_FLAGS = "MODNAME=${WLAN_CHIP}_${TARGET_WLAN_CHIP}"
-WLAN_CONFIG = "qcs40x.snoc.perf"
+WLAN_CONFIG = "default"
 
 KERNEL_VERSION = "${@get_kernelversion_file("${STAGING_KERNEL_BUILDDIR}")}"
 EXT_MODULES = "${@os.path.relpath("${S}", "${KERNEL_PLATFORM_PATH}")}"
 
-do_configure:append:sxrneo() {
-    sed -i '1i DYNAMIC_SINGLE_CHIP=${TARGET_WLAN_CHIP}' ${WORKDIR}/wlan/qcacld-3.0/configs/${TARGET_WLAN_CHIP}_defconfig
-    sed -i 's/CONFIG_WLAN_FEATURE_COAP := y/#CONFIG_WLAN_FEATURE_COAP := y/g' ${WORKDIR}/wlan/qcacld-3.0/configs/${TARGET_WLAN_CHIP}_defconfig
-}
+# The common header file, 'wlan_nlink_common.h' can be installed from other
+# qcacld recipes too. To suppress the duplicate detection error, add it to
+# SSTATE_ALLOW_OVERLAP_FILES.
+SSTATE_ALLOW_OVERLAP_FILES += "${STAGING_DIR}/${BASEMACHINE}${includedir}/qcacld/wlan_nlink_common.h"
 
 do_compile[depends] += "virtual/kernel:do_shared_workdir"
 do_compile[cleandirs] += "${WORKDIR}/out/${KERNEL_DEFCONFIG}"
@@ -53,6 +52,7 @@ do_compile() {
     OUT_DIR=../out/${KERNEL_DEFCONFIG} \
     KERNEL_UAPI_HEADERS_DIR=${STAGING_KERNEL_BUILDDIR} \
     ./build/build_module.sh \
+    WLAN_PROFILE=${MODULE_NAME} \
     DYNAMIC_SINGLE_CHIP= \
     MODNAME=${MODULE_NAME}\
     DEVNAME=${MODULE_NAME} \
@@ -67,8 +67,8 @@ do_compile() {
     CONFIG_WLAN_TX_MON_2_0=n \
     CONFIG_WLAN_DP_LOCAL_PKT_CAPTURE=n \
     KERNEL_SUPPORTS_NESTED_COMPOSITES=n \
+    BUILD_DEBUG_VERSION=y \
     CONFIG_CNSS_GENL=m \
-    CONFIG_FEATURE_COEX_TPUT_SHAPING_ENABLE=y \
     KBUILD_EXTRA_SYMBOLS=${STAGING_DIR_HOST}/lib/modules/${KERNEL_VERSION}/cnsswlan-kernel/Module.symvers
 }
 
@@ -76,6 +76,8 @@ do_install() {
     install -d ${S}/unstripped
     install -m 0755 ${S}/${MODULE_NAME}.ko -D ${S}/unstripped
     install -d ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}
+    install -d ${D}${includedir}/qcacld/
+    install -m 0644 ${S1}/utils/nlink/inc/wlan_nlink_common.h ${D}${includedir}/qcacld/
 
     ${STAGING_DIR_NATIVE}/usr/bin/aarch64-oe-linux/aarch64-oe-linux-strip \
              --strip-debug ${S}/unstripped/${MODULE_NAME}.ko -o ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/${MODULE_NAME}.ko

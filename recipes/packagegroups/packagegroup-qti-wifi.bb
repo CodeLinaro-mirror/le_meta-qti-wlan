@@ -10,10 +10,10 @@ PACKAGES = "packagegroup-qti-wifi"
 
 WLAN_IW_TOOL="${@oe.utils.conditional('BASEMACHINE', 'sdxlemur', 'iw-wifi6e', 'iw', d)}"
 QCACLD32_LL="qcacld32-ll"
-QCACLD32_LL:neo="qcacld32-ll-oot qcacld32-ll-kiwi"
+QCACLD32_LL:neo="qcacld32-ll-neo-kiwi"
 QCACLD32_LL:kalama="qcacld32-ll-kiwi"
 QCACLD32_LL:qrb5165="qcacld32-ll-hst"
-QCACLD32_LL:qcs40x="qcacld32-ll-qcs40x"
+QCACLD32_LL:qcs40x="${@bb.utils.contains('DEBUG_BUILD', '1', "qcacld32-ll-debug", "qcacld32-ll-qcs40x", d)}"
 
 WLAN_PLATFORM=""
 WLAN_PLATFORM:kalama="wlan-platform"
