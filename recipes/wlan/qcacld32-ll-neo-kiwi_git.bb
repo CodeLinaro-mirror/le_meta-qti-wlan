@@ -8,8 +8,8 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/ISC;md5=f3b90e
 TARGET_WLAN_CHIP = "kiwi_v2"
 WLAN_CHIP = "qca_cld3"
 
-FILES_${PN}     += "lib/firmware/wlan/*"
-FILES_${PN}     += "lib/modules/${KERNEL_VERSION}/extra/${WLAN_CHIP}_${TARGET_WLAN_CHIP}.ko"
+FILES:${PN}     += "lib/firmware/wlan/*"
+FILES:${PN}     += "lib/modules/${KERNEL_VERSION}/extra/${WLAN_CHIP}_${TARGET_WLAN_CHIP}.ko"
 PROVIDES_NAME   = "kernel-module-wlan"
 RPROVIDES_${PN} += "${PROVIDES_NAME}-${KERNEL_VERSION}"
 do_unpack[deptask] = "do_populate_sysroot"
@@ -76,7 +76,7 @@ do_deploy () {
     install -m 0755 ${S}/unstripped/${WLAN_CHIP}_${TARGET_WLAN_CHIP}.ko ${DEPLOYDIR}/kernel_modules/${WLAN_CHIP}_${TARGET_WLAN_CHIP}.ko
 }
 
-FILES_${PN} += "${sysconfdir}/*"
-FILES_${PN} += "${nonarch_base_libdir}/modules/*"
+FILES:${PN} += "${sysconfdir}/*"
+FILES:${PN} += "${nonarch_base_libdir}/modules/*"
 
 addtask do_deploy after do_install
