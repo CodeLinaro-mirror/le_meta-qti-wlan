@@ -8,13 +8,15 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5
 
 PR = "r0"
 
+FILESPATH =+ "${WORKSPACE}:"
+SRC_URI = "file://wlan/utils/sigma-dut/"
+SRC_URI += "file://0001-sigma-dut-Enable-NL80211_SUPPORT.patch"
+
 SRC_DIR = "${WORKSPACE}/wlan/utils/sigma-dut/"
 
 S = "${WORKDIR}/wlan/utils/sigma-dut"
 
 CFLAGS += "-I${STAGING_INCDIR}/libnl3/"
-
-EXTRA_OEMAKE += "NL80211_SUPPORT=y"
 
 do_install() {
     make install DESTDIR=${D} BINDIR=${sbindir}/

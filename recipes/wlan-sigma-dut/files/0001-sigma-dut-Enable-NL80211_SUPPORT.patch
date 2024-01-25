@@ -1,0 +1,34 @@
+This patch file is from Qualcomm Innovation Center, Inc. and is provided under the following license:
+
+Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+SPDX-License-Identifier: BSD-3-Clause-Clear
+
+From 321cf2779c9a16f369a08460f1318ea5f422a2e0 Mon Sep 17 00:00:00 2001
+From: "Yu Zhang(Yuriy)" <quic_yuzha@quicinc.com>
+Date: Wed, 31 Jan 2024 22:57:08 +0800
+Subject: [PATCH] sigma-dut: Enable NL80211_SUPPORT
+
+Signed-off-by: Yu Zhang(Yuriy) <quic_yuzha@quicinc.com>
+---
+ Makefile | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index f2a9918..ed28f08 100644
+--- a/Makefile
++++ b/Makefile
+@@ -84,10 +84,8 @@ CFLAGS += -DMIRACAST
+ LIBS += -ldl
+ endif
+ 
+-ifdef NL80211_SUPPORT
+-CFLAGS += -DNL80211_SUPPORT -I /usr/include/libnl3
++CFLAGS += -DNL80211_SUPPORT
+ LIBS += -lnl-3 -lnl-genl-3
+-endif
+ 
+ sigma_dut: $(OBJS)
+ 	$(LDO) $(LDFLAGS) -o sigma_dut $(OBJS) $(LIBS)
+-- 
+2.17.1
+
