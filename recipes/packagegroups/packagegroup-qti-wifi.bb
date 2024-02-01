@@ -8,7 +8,7 @@ inherit packagegroup
 
 PROVIDES = "${PACKAGES}"
 PACKAGES = "\
-    packagegroup-qti-wlan \
+    packagegroup-qti-wifi \
     "
 
 RDEPENDS:${PN} += "\
