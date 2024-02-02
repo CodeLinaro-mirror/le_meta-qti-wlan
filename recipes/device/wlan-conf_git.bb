@@ -8,6 +8,8 @@ PR = "r0"
 
 FILESPATH =+ "${WORKSPACE}:"
 FILES_${PN} += "lib/firmware/wlan/*"
+FILES_${PN} += "/data/qca6490/*"
+FILES_${PN} += "/data/qca6574/*"
 FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld/qca6490"
 FIRMWARE_PATH_ROME = "${D}/lib/firmware/wlan/qca_cld/qca6574"
 
@@ -37,10 +39,10 @@ do_install_append_sa525m(){
 	install -m 0644 ${S}/qcom/wlan/sdx_auto/*.conf ${D}/etc/misc/wifi
 	install -d ${FIRMWARE_PATH}
 	install -d ${FIRMWARE_PATH_ROME}
-	install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6174.ini ${FIRMWARE_PATH_ROME}/WCNSS_qcom_cfg.ini
-	chmod -R 0664 ${FIRMWARE_PATH_ROME}/WCNSS_qcom_cfg.ini
-	install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6490.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
-	chmod -R 0664 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
+	install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6174.ini ${D}/data/qca6574/WCNSS_qcom_cfg.ini
+	install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6490.ini ${D}/data/qca6490/WCNSS_qcom_cfg.ini
+	ln -sf /data/qca6574/WCNSS_qcom_cfg.ini ${FIRMWARE_PATH_ROME}/
+	ln -sf /data/qca6490/WCNSS_qcom_cfg.ini ${FIRMWARE_PATH}/
 }
 
 do_install_append_sa415m_auto(){
