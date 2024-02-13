@@ -67,10 +67,8 @@ do_compile() {
 do_install () {
 
     install -d ${FIRMWARE_PATH}
-    #copying wlan.ko to STAGING_DIR_TARGET
-    WLAN_KO=${@oe.utils.conditional('PERF_BUILD', '1', '${STAGING_DIR_TARGET}-perf', '${STAGING_DIR_TARGET}', d)}
-    install -d ${WLAN_KO}/wlan
-    install -m 0644 ${S}/${WLAN_MODULE_NAME}.ko ${WLAN_KO}/wlan/
+
+    install -m 0644 ${S}/${WLAN_MODULE_NAME}.ko -D ${D}/${base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko
 
     install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_sdio_qca6174.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
     chmod -R 0664 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
