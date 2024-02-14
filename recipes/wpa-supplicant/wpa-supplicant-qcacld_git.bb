@@ -9,6 +9,7 @@ FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://external/wpa_supplicant_8/"
 SRC_URI += "file://${BASEMACHINE}/"
 SRC_URI += "file://misc/"
+SRC_URI:append:sxrneo += "file://${MACHINE}/"
 
 DEPENDS += "glib-2.0 wpa-supplicant-8-lib dbus liblog"
 DEPENDS:append:kalama = " qmi-framework "
@@ -40,17 +41,22 @@ do_configure() {
     fi
 }
 
+do_configure:sxrneo() {
+    bbwarn "============================================================"
+    bbwarn "picking ${WORKDIR}/${MACHINE}"
+    bbwarn "============================================================"
+    install -m 0644 ${WORKDIR}/${MACHINE}/defconfig-qcacld .config
+    echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
+    rm -rf ${STAGING_LIBDIR}/libwpa_supplicant_8_lib.so*
+    echo "EXTRALIBS +=\"-llog\"" >> .config
+    echo "LIBS +=\"-llog\"" >> .config
+}
+
 do_configure:append:sdxlemur() {
     echo "CONFIG_EAP_PROXY=qmi" >> .config
     echo "CONFIG_EAP_PROXY_DUAL_SIM := true" >> .config
     echo "CONFIG_EAP_PROXY_AKA_PRIME := true" >> .config
     echo "CONFIG_WEP=y" >> .config
-}
-
-do_configure:append:sxrneo() {
-	rm -rf ${STAGING_LIBDIR}/libwpa_supplicant_8_lib.so*
-        echo "EXTRALIBS +=\"-llog\"" >> .config
-        echo "LIBS +=\"-llog\"" >> .config
 }
 
 do_patch() {
