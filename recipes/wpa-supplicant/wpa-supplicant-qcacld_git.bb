@@ -7,7 +7,7 @@ FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://external/wpa_supplicant_8/"
 SRC_URI += "file://defconfig-qcacld"
 
-FILES_${PN} += "/usr/include/*"
+FILES:${PN} += "/usr/include/*"
 
 S = "${WORKDIR}/external/wpa_supplicant_8/wpa_supplicant"
 
@@ -18,7 +18,7 @@ do_configure() {
 }
 
 INCSUFFIX ?= "none"
-INCSUFFIX_automotive = "wpa-supplicant_auto"
-INCSUFFIX_auto = "wpa-supplicant_auto"
-INCSUFFIX_sa515m = "wpa-supplicant_auto"
+INCSUFFIX:automotive = "wpa-supplicant_auto"
+INCSUFFIX:auto = "wpa-supplicant_auto"
+INCSUFFIX:sa515m = "wpa-supplicant_auto"
 include ${INCSUFFIX}.inc

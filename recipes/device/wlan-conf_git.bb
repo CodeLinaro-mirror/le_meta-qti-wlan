@@ -9,7 +9,7 @@ ${LICENSE};md5=550794465ba0ec5312d6919e203a55f9"
 PR = "r0"
 
 FILESPATH =+ "${WORKSPACE}:"
-FILES_${PN} += "lib/firmware/wlan/*"
+FILES:${PN} += "lib/firmware/wlan/*"
 FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld/qca6490"
 FIRMWARE_PATH_ROME = "${D}/lib/firmware/wlan/qca_cld/qca6574"
 
@@ -19,14 +19,14 @@ SRC_URI = "file://device/"
 # Update for each machine
 S = "${WORKDIR}/device"
 
-do_install_append_auto(){
+do_install:append:auto(){
 	install -d ${D}/etc/misc/wifi
 	install -m 0644 ${S}/qcom/wlan/sdx_auto/*.conf ${D}/etc/misc/wifi
 	install -d ${D}/usr/bin
 	install -m 0755 ${S}/qcom/wlan/sdx_auto/*.sh ${D}/usr/bin
 }
 
-do_install_append_sa410m(){
+do_install:append:sa410m(){
 	install -d ${D}/etc/misc/wifi
 	install -m 0644 ${S}/qcom/wlan/sdx24_auto/*.conf ${D}/etc/misc/wifi
 	install -d ${FIRMWARE_PATH_ROME}
@@ -34,7 +34,7 @@ do_install_append_sa410m(){
 	chmod -R 0664 ${FIRMWARE_PATH_ROME}/WCNSS_qcom_cfg.ini
 }
 
-do_install_append_sa525m(){
+do_install:append:sa525m(){
 	install -d ${D}/etc/misc/wifi
 	install -m 0644 ${S}/qcom/wlan/sdx24_auto/*.conf ${D}/etc/misc/wifi
 	install -d ${FIRMWARE_PATH}
@@ -46,21 +46,21 @@ do_install_append_sa525m(){
 	chown -R radio:radio ${D}/etc/misc/wifi
 }
 
-do_install_append_sa415m_auto(){
+do_install:append:sa415m_auto(){
 	install -d ${D}/etc/misc/wifi
 	install -m 0644 ${S}/qcom/wlan/sdx24_auto/*.conf ${D}/etc/misc/wifi
 	install -d ${D}/usr/bin
 	install -m 0755 ${S}/qcom/wlan/sdx24_auto/*.sh ${D}/usr/bin
 }
 
-do_install_append_sa515m_auto(){
+do_install:append:sa515m_auto(){
 	install -d ${D}/etc/misc/wifi
 	install -m 0644 ${S}/qcom/wlan/sdx24_auto/*.conf ${D}/etc/misc/wifi
 	install -d ${D}${sysconfdir}
 	install -m 0644 ${S}/qcom/wlan/sdx24_auto/vendor_cmd.xml ${D}${sysconfdir}
 }
 
-do_install_append_sa515m(){
+do_install:append:sa515m(){
 	install -d ${D}/etc/misc/wifi
 	install -m 0644 ${S}/qcom/wlan/sdx24_auto/*.conf ${D}/etc/misc/wifi
 	install -d ${D}${sysconfdir}
