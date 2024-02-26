@@ -1,3 +1,4 @@
+inherit useradd
 DESCRIPTION = "Device specific config"
 
 LICENSE = "BSD-3-Clause"
@@ -21,14 +22,14 @@ SRC_URI = "file://device/"
 # Update for each machine
 S = "${WORKDIR}/device"
 
-do_install_append_auto(){
+do_install:append:auto(){
 	install -d ${D}/etc/misc/wifi
 	install -m 0644 ${S}/qcom/wlan/sdx_auto/*.conf ${D}/etc/misc/wifi
 	install -d ${D}/usr/bin
 	install -m 0755 ${S}/qcom/wlan/sdx_auto/*.sh ${D}/usr/bin
 }
 
-do_install_append_sa410m(){
+do_install:append:sa410m(){
 	install -d ${D}/etc/misc/wifi
 	install -m 0644 ${S}/qcom/wlan/sdx24_auto/*.conf ${D}/etc/misc/wifi
 	install -d ${FIRMWARE_PATH_ROME}
@@ -36,7 +37,7 @@ do_install_append_sa410m(){
 	chmod -R 0664 ${FIRMWARE_PATH_ROME}/WCNSS_qcom_cfg.ini
 }
 
-do_install_append_sa525m(){
+do_install:append:sa525m(){
 	install -d ${D}/etc/misc/wifi
 	install -m 0644 ${S}/qcom/wlan/sdx_auto/*.conf ${D}/etc/misc/wifi
 	install -m 0644 ${S}/qcom/wlan/msm_auto/hostapd_mlo*.conf ${D}/etc/misc/wifi
@@ -60,21 +61,21 @@ do_install_append_sa525m(){
         ln -sf /data/qca6797/WCNSS_qcom_cfg.ini ${FIRMWARE_PATH_HMT}/
 }
 
-do_install_append_sa415m_auto(){
+do_install:append:sa415m_auto(){
 	install -d ${D}/etc/misc/wifi
 	install -m 0644 ${S}/qcom/wlan/sdx24_auto/*.conf ${D}/etc/misc/wifi
 	install -d ${D}/usr/bin
 	install -m 0755 ${S}/qcom/wlan/sdx24_auto/*.sh ${D}/usr/bin
 }
 
-do_install_append_sa515m_auto(){
+do_install:append:sa515m_auto(){
 	install -d ${D}/etc/misc/wifi
 	install -m 0644 ${S}/qcom/wlan/sdx_auto/*.conf ${D}/etc/misc/wifi
 	install -d ${D}${sysconfdir}
 	install -m 0644 ${S}/qcom/wlan/sdx_auto/vendor_cmd.xml ${D}${sysconfdir}
 }
 
-do_install_append_sa515m(){
+do_install:append:sa515m(){
 	install -d ${D}/etc/misc/wifi
 	install -m 0644 ${S}/qcom/wlan/sdx_auto/*.conf ${D}/etc/misc/wifi
 	install -d ${D}${sysconfdir}

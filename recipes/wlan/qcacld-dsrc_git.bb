@@ -9,7 +9,7 @@ WLAN_MODULE_NAME = "wlan"
 # The inherit of module.bbclass will automatically name module packages with
 # kernel-module-" prefix as required by the oe-core build environment. Also it
 # replaces '_' with '-' in the module name.
-RPROVIDES_${PN} += "${@'kernel-module-${WLAN_MODULE_NAME}-${KERNEL_VERSION}'.replace('_', '-')}"
+RPROVIDES:${PN} += "kernel-module-${@'${WLAN_MODULE_NAME}'.replace('_', '-')}-${KERNEL_VERSION}"
 PROVIDES_NAME   = "kernel-module-${WLAN_MODULE_NAME}-${KERNEL_VERSION}"
 
 do_unpack[deptask] = "do_populate_sysroot"
@@ -31,8 +31,8 @@ EXTRA_OEMAKE += "CONFIG_STATICALLY_ADD_11P_CHANNELS=y CONFIG_SLUB_DEBUG_ON=n CON
 
 # The common header file, 'wlan_nlink_common.h' can be installed from other
 # qcacld recipes too. To suppress the duplicate detection error, add it to
-# SSTATE_DUPWHITELIST.
-SSTATE_DUPWHITELIST += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wlan_nlink_common.h"
+# SSTATE_ALLOW_OVERLAP_FILES.
+SSTATE_ALLOW_OVERLAP_FILES += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wlan_nlink_common.h"
 
 do_install () {
     module_do_install
@@ -66,7 +66,7 @@ do_module_signing() {
     fi
 }
 
-FILES_${PN}     += "lib/firmware/wlan/*"
-FILES_${PN}     += "${base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko"
+FILES:${PN}     += "lib/firmware/wlan/*"
+FILES:${PN}     += "${base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko"
 
 addtask module_signing after do_package before do_package_write_ipk
