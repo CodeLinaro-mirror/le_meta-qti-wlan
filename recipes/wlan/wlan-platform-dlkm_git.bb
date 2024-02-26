@@ -2,17 +2,22 @@
 inherit autotools-brokensep module qperf
 
 DESCRIPTION = "Build wlan platform drivers to kernel module"
-LICENSE = "GPL-2.0"
+LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=801f80980d171dd6425610833a22dbe6"
 SUMMARY = "Wlan platform drivers"
 _MODNAME = "wlan-platform-dlkm"
-FILES_${PN}     += "lib/modules/${KERNEL_VERSION}/extra/cnss2.ko"
-FILES_${PN}     += "lib/modules/${KERNEL_VERSION}/extra/cnss_nl.ko"
-FILES_${PN}     += "lib/modules/${KERNEL_VERSION}/extra/cnss_utils.ko"
-FILES_${PN}     += "lib/modules/${KERNEL_VERSION}/extra/wlan_firmware_service.ko"
-FILES_${PN}     += "usr/inc/*"
+FILES:${PN}     += "${base_libdir}/modules/${KERNEL_VERSION}/extra/cnss2.ko"
+FILES:${PN}     += "${base_libdir}/modules/${KERNEL_VERSION}/extra/cnss_nl.ko"
+FILES:${PN}     += "${base_libdir}/modules/${KERNEL_VERSION}/extra/cnss_utils.ko"
+FILES:${PN}     += "${base_libdir}/modules/${KERNEL_VERSION}/extra/wlan_firmware_service.ko"
+FILES:${PN}     += "${includedir}/*"
+FILES:${PN}     += "${base_libdir}/modules/${KERNEL_VERSION}/extra/*"
 PROVIDES_NAME   = "kernel-module-${_MODNAME}"
-RPROVIDES_${PN} += "${PROVIDES_NAME}-${KERNEL_VERSION}"
+RPROVIDES:${PN} += "${PROVIDES_NAME}-${KERNEL_VERSION}"
+RPROVIDES:${PN} += "kernel-module-cnss2-${KERNEL_VERSION}"
+RPROVIDES:${PN} += "kernel-module-cnss-nl-${KERNEL_VERSION}"
+RPROVIDES:${PN} += "kernel-module-cnss-utils-${KERNEL_VERSION}"
+RPROVIDES:${PN} += "kernel-module-wlan-firmware-service-${KERNEL_VERSION}"
 
 WLAN_PLATFORM_CFG = " CONFIG_CNSS_OUT_OF_TREE=y \
 	CONFIG_CNSS2=m \
@@ -40,19 +45,19 @@ SRC_URI = "file://wlan/platform/"
 S = "${WORKDIR}/wlan/platform/"
 
 EXTRA_OEMAKE += "MODNAME=${_MODNAME}"
-LDFLAGS_aarch64 = "-O1 --hash-style=gnu --as-needed"
+LDFLAGS:aarch64 = "-O1 --hash-style=gnu --as-needed"
 inherit systemd
-FILES_${PN}     += "usr/bin/init.qti.cnss2_on.sh"
-FILES_${PN}     += "usr/bin/init.qti.cnss2_off.sh"
+FILES:${PN}     += "usr/bin/init.qti.cnss2_on.sh"
+FILES:${PN}     += "usr/bin/init.qti.cnss2_off.sh"
 
-SRC_URI_append = " file://init_qti_cnss2_auto.service"
-SYSTEMD_SERVICE_${PN} = "init_qti_cnss2_auto.service"
+SRC_URI:append = " file://init_qti_cnss2_auto.service"
+SYSTEMD_SERVICE:${PN} = "init_qti_cnss2_auto.service"
 
 # disable wlan service on boot for sdxpoorwills-auto
-SYSTEMD_AUTO_ENABLE_${PN} = "disable"
+SYSTEMD_AUTO_ENABLE:${PN} = "disable"
 
-SRC_URI_append = " file://init.qti.cnss2_on.sh"
-SRC_URI_append = " file://init.qti.cnss2_off.sh"
+SRC_URI:append = " file://init.qti.cnss2_on.sh"
+SRC_URI:append = " file://init.qti.cnss2_off.sh"
 
 do_install() {
     module_do_install
@@ -71,7 +76,7 @@ do_install() {
     install -m 0644 ${S}/inc/* ${D}${includedir}/
 }
 
-do_install_append() {
+do_install:append() {
     install -d ${D}${bindir}
     install -D -m 0755 ${WORKDIR}/init.qti.cnss2_on.sh ${D}${bindir}/init.qti.cnss2_on.sh
     install -D -m 0755 ${WORKDIR}/init.qti.cnss2_off.sh ${D}${bindir}/init.qti.cnss2_off.sh
@@ -87,7 +92,7 @@ do_module_signing() {
         bbnote "Signing ${PN} module"
         ${STAGING_KERNEL_DIR}/scripts/sign-file sha512 ${STAGING_KERNEL_BUILDDIR}/signing_key.priv ${STAGING_KERNEL_BUILDDIR}/signing_key.x509 ${PKGDEST}/${PN}/lib/modules/${KERNEL_VERSION}/extra/cnss2/cnss2.ko
     elif [ -f ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.pem ]; then
-        ${STAGING_KERNEL_BUILDDIR}/scripts/sign-file sha512 ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.pem ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.x509 ${PKGDEST}/kernel-module-cnss2-${KERNEL_VERSION}/lib/modules/${KERNEL_VERSION}/extra/cnss2/cnss2.ko
+        ${STAGING_KERNEL_BUILDDIR}/scripts/sign-file sha512 ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.pem ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.x509 ${PKGDEST}/${PN}/lib/modules/${KERNEL_VERSION}/extra/cnss2/cnss2.ko
     else
         bbnote "${PN} module is not being signed"
     fi

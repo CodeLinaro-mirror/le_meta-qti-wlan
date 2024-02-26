@@ -4,23 +4,23 @@ DESCRIPTION = "Qualcomm Atheros WLAN CLD3.0 low latency driver"
 LICENSE = "ISC"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=f3b90e78ea0cffb20bf5cca7947a896d"
 
-FILES_${PN}     += "lib/firmware/wlan/*"
-FILES_${PN}     += "lib/modules/${KERNEL_VERSION}/extra/wlan.ko"
+FILES:${PN}     += "${base_libdir}/firmware/wlan/*"
+FILES:${PN}     += "${base_libdir}/modules/${KERNEL_VERSION}/extra/wlan.ko"
 PROVIDES_NAME   = "kernel-module-wlan"
-RPROVIDES_${PN} += "${PROVIDES_NAME}-${KERNEL_VERSION}"
+RPROVIDES:${PN} += "${PROVIDES_NAME}-${KERNEL_VERSION}"
 
 do_unpack[deptask] = "do_populate_sysroot"
 PR = "r8"
 
 # This DEPENDS is to serialize kernel module builds
 DEPENDS = "rtsp-alg"
-DEPENDS_remove_automotive = "rtsp-alg"
+DEPENDS:remove:automotive = "rtsp-alg"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/qcacld-3.0/"
 SRC_URI += "file://wlan/qca-wifi-host-cmn/"
 SRC_URI += "file://wlan/fw-api/"
-SRC_URI_append_automotive = " file://device/qcom/wlan/romelv/WCNSS_qcom_cfg.ini"
+SRC_URI:append:automotive = " file://device/qcom/wlan/romelv/WCNSS_qcom_cfg.ini"
 
 S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn/"
 S = "${WORKDIR}/wlan/qcacld-3.0/"
@@ -31,19 +31,19 @@ FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld"
 # simultaneous support of HL and LL.
 EXTRA_OEMAKE += "CONFIG_CLD_HL_SDIO_CORE=n CONFIG_CNSS_SDIO=n"
 
-LDFLAGS_aarch64_automotive = "-O1 --hash-style=gnu --as-needed"
+LDFLAGS:aarch64:automotive = "-O1 --hash-style=gnu --as-needed"
 
 # The common header file, 'wlan_nlink_common.h' can be installed from other
 # qcacld recipes too. To suppress the duplicate detection error, add it to
-# SSTATE_DUPWHITELIST.
-SSTATE_DUPWHITELIST += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wlan_nlink_common.h"
+# SSTATE_ALLOW_OVERLAP_FILES.
+SSTATE_ALLOW_OVERLAP_FILES += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wlan_nlink_common.h"
 
 inherit systemd
-SRC_URI_append_automotive = " file://init_qti_wlan.service"
-SYSTEMD_SERVICE_${PN}_automotive = "init_qti_wlan.service"
-SYSTEMD_AUTO_ENABLE_${PN}_automotive = "enable"
+SRC_URI:append:automotive = " file://init_qti_wlan.service"
+SYSTEMD_SERVICE:${PN}:automotive = "init_qti_wlan.service"
+SYSTEMD_AUTO_ENABLE:${PN}:automotive = "enable"
 
-do_compile_prepend_automotive() {
+do_compile:prepend:automotive() {
     #Add gnu99 for compiler compatible issues
     sed -i '$a\ccflags-y += -std=gnu99' ${S}/Kbuild
     #In yocto system, get build tag by 'git log' in wlan src dir instead of 'git reflog' in work dir
@@ -72,7 +72,7 @@ do_install () {
     install -m 0644 ${S}/wlan.ko ${WLAN_KO}/wlan/
 }
 
-do_install_append_automotive() {
+do_install:append:automotive() {
     install -D -m 0644 ${WORKDIR}/device/qcom/wlan/romelv/WCNSS_qcom_cfg.ini ${FIRMWARE_PATH}
     # Install systemd service file
     if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}; then

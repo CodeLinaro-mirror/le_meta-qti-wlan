@@ -20,12 +20,12 @@ python __anonymous () {
          d.setVar('CHIP_NAME', '')
 }
 
-FILES_${PN}     += "lib/firmware/wlan/*"
-FILES_${PN}     += "${base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko"
+FILES:${PN}     += "${base_libdir}/firmware/wlan/*"
+FILES:${PN}     += "${base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko"
 # The inherit of module.bbclass will automatically name module packages with
 # kernel-module-" prefix as required by the oe-core build environment. Also it
 # replaces '_' with '-' in the module name.
-RPROVIDES_${PN} += "${@'kernel-module-${WLAN_MODULE_NAME}-${KERNEL_VERSION}'.replace('_', '-')}"
+RPROVIDES:${PN} += "kernel-module-${@'${WLAN_MODULE_NAME}'.replace('_', '-')}-${KERNEL_VERSION}"
 PROVIDES_NAME   = "kernel-module-${WLAN_MODULE_NAME}-${KERNEL_VERSION}"
 
 do_unpack[deptask] = "do_populate_sysroot"
@@ -49,8 +49,8 @@ EXTRA_OEMAKE += "CONFIG_CLD_LL_CORE=n CONFIG_CNSS_PCI=n MODNAME=${WLAN_MODULE_NA
 
 # The common header file, 'wlan_nlink_common.h' can be installed from other
 # qcacld recipes too. To suppress the duplicate detection error, add it to
-# SSTATE_DUPWHITELIST.
-SSTATE_DUPWHITELIST += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wlan_nlink_common.h"
+# SSTATE_ALLOW_OVERLAP_FILES.
+SSTATE_ALLOW_OVERLAP_FILES += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wlan_nlink_common.h"
 
 do_install () {
     module_do_install
@@ -62,7 +62,7 @@ do_install () {
     install -m 0644 ${S}/CORE/SVC/external/wlan_nlink_common.h ${D}${includedir}/qcacld/
 }
 
-do_install_append_sdx20 () {
+do_install:append:sdx20 () {
     if [ -e ${D}/${base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko ]; then
         mv ${D}/${base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko ${D}/${base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_TARGET_NAME}.ko
     fi
