@@ -6,11 +6,11 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5
 
 _MODNAME = "qca6595"
 FW_PATH_NAME = "qcn7605"
-FILES_${PN}     += "lib/firmware/wlan/*"
-FILES_${PN}     += "lib/firmware/*"
-FILES_${PN}     += "lib/modules/${KERNEL_VERSION}/extra/${_MODNAME}.ko"
+FILES:${PN}     += "${base_libdir}/firmware/wlan/*"
+FILES:${PN}     += "${base_libdir}/firmware/*"
+FILES:${PN}     += "${base_libdir}/modules/${KERNEL_VERSION}/extra/${_MODNAME}.ko"
 PROVIDES_NAME   = "kernel-module-${_MODNAME}"
-RPROVIDES_${PN} += "${PROVIDES_NAME}-${KERNEL_VERSION}"
+RPROVIDES:${PN} += "${PROVIDES_NAME}-${KERNEL_VERSION}"
 
 do_unpack[deptask] = "do_populate_sysroot"
 PR = "r8"
@@ -22,12 +22,12 @@ FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/qcacld-3.0/"
 SRC_URI += "file://wlan/qca-wifi-host-cmn/"
 SRC_URI += "file://wlan/fw-api/"
-SRC_URI_append_sdxprairie = " file://device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qcn7605.ini"
-SRC_URI_append_sdxprairie = " file://device/qcom/wlan/sdx_auto/wlan_mac.bin"
-SRC_URI_append_sa515m = " file://device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qcn7605.ini"
-SRC_URI_append_sa515m = " file://device/qcom/wlan/sdx_auto/wlan_mac.bin"
-SRC_URI_append_sa415m = " file://device/qcom/wlan/sdx24_auto/WCNSS_qcom_cfg_qcn7605.ini"
-SRC_URI_append_sa415m = " file://device/qcom/wlan/sdx24_auto/wlan_mac.bin"
+SRC_URI:append:sdxprairie = " file://device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qcn7605.ini"
+SRC_URI:append:sdxprairie = " file://device/qcom/wlan/sdx_auto/wlan_mac.bin"
+SRC_URI:append:sa515m = " file://device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qcn7605.ini"
+SRC_URI:append:sa515m = " file://device/qcom/wlan/sdx_auto/wlan_mac.bin"
+SRC_URI:append:sa415m = " file://device/qcom/wlan/sdx24_auto/WCNSS_qcom_cfg_qcn7605.ini"
+SRC_URI:append:sa415m = " file://device/qcom/wlan/sdx24_auto/wlan_mac.bin"
 
 S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn/"
 S = "${WORKDIR}/wlan/qcacld-3.0/"
@@ -40,7 +40,7 @@ EXTRA_OEMAKE += "CONFIG_CLD_HL_SDIO_CORE=n CONFIG_CNSS_SDIO=n"
 EXTRA_OEMAKE += "CONFIG_QCA_CLD_WLAN_PROFILE=genoa.pci.debug"
 EXTRA_OEMAKE += "DYNAMIC_SINGLE_CHIP=${_MODNAME}"
 EXTRA_OEMAKE += "MODNAME=${_MODNAME}"
-EXTRA_OEMAKE_append_sa515m = " CONFIG_IPA_OFFLOAD=y"
+EXTRA_OEMAKE:append:sa515m = " CONFIG_IPA_OFFLOAD=y"
 
 _WLAN_CFG_OVERRIDE_515 = "\
 						CONFIG_WLAN_NAPI=n \
@@ -70,26 +70,26 @@ _WLAN_CFG_OVERRIDE_415 = "\
 						CONFIG_SMMU_S1_UNMAP=y \
 						CONFIG_WLAN_CE4_SZ_QCN7605=2048 \
                         "
-EXTRA_OEMAKE_append_sa515m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_515}"
-EXTRA_OEMAKE_append_sdxprairie = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_515}"
-EXTRA_OEMAKE_append_sa415m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_415}"
+EXTRA_OEMAKE:append:sa515m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_515}"
+EXTRA_OEMAKE:append:sdxprairie = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_515}"
+EXTRA_OEMAKE:append:sa415m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_415}"
 
-LDFLAGS_aarch64_automotive = "-O1 --hash-style=gnu --as-needed"
+LDFLAGS:aarch64:automotive = "-O1 --hash-style=gnu --as-needed"
 
 # The common header file, 'wlan_nlink_common.h' can be installed from other
 # qcacld recipes too. To suppress the duplicate detection error, add it to
-# SSTATE_DUPWHITELIST.
-SSTATE_DUPWHITELIST += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wlan_nlink_common.h"
+# SSTATE_ALLOW_OVERLAP_FILES.
+SSTATE_ALLOW_OVERLAP_FILES += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wlan_nlink_common.h"
 
 inherit systemd
-SRC_URI_append = " file://init_qti_wlan_auto.service"
-SYSTEMD_SERVICE_${PN} = "init_qti_wlan_auto.service"
-SYSTEMD_AUTO_ENABLE_${PN} = "disable"
+SRC_URI:append = " file://init_qti_wlan_auto.service"
+SYSTEMD_SERVICE:${PN} = "init_qti_wlan_auto.service"
+SYSTEMD_AUTO_ENABLE:${PN} = "disable"
 
-SRC_URI_append_ = " file://init.qti.wlan_on.sh"
-SRC_URI_append = " file://init.qti.wlan_off.sh"
-FILES_${PN}     += "usr/bin/init.qti.wlan_on.sh"
-FILES_${PN}     += "usr/bin/init.qti.wlan_off.sh"
+SRC_URI:append = " file://init.qti.wlan_on.sh"
+SRC_URI:append = " file://init.qti.wlan_off.sh"
+FILES:${PN}     += "${bindir}/init.qti.wlan_on.sh"
+FILES:${PN}     += "${bindir}/init.qti.wlan_off.sh"
 
 do_install () {
     module_do_install
@@ -104,7 +104,7 @@ do_install () {
     install -m 0644 ${S}/${_MODNAME}.ko ${WLAN_KO}/wlan/
 }
 
-do_install_append() {
+do_install:append() {
     install -d ${D}/lib/firmware/${FW_PATH_NAME}/
     ln -sf /firmware/image/${FW_PATH_NAME}/amss.bin ${D}/lib/firmware/${FW_PATH_NAME}/
     ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan02.b03 ${D}/lib/firmware/${FW_PATH_NAME}/
@@ -122,12 +122,12 @@ do_install_append() {
     fi
 }
 
-do_install_append_sa515m() {
+do_install:append:sa515m() {
     install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qcn7605.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
     chmod -R 0664 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
 }
 
-do_install_append_sa415m() {
+do_install:append:sa415m() {
     install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx24_auto/WCNSS_qcom_cfg_qcn7605.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
     chown -RH root:1001 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
     chmod -R 0664 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini

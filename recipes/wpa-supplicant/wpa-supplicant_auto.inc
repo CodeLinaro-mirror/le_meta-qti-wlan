@@ -3,12 +3,12 @@ LICENSE = "BSD"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/\
 ${LICENSE};md5=3775480a712fc46a69647678acb234cb"
 
-DEPENDS_remove = "qmi qmi-framework"
-CONFFILES_${PN} += "${sysconfdir}/wpa_supplicant.conf"
+DEPENDS:remove = "qmi qmi-framework"
+CONFFILES:${PN} += "${sysconfdir}/wpa_supplicant.conf"
 
 SRC_URI += "file://wpa_supplicant.conf-sane"
 
-do_configure_prepend () {
+do_configure:prepend () {
     sed -i -e 's/^CONFIG_EAP_PROXY=qmi/#CONFIG_EAP_PROXY=qmi/g' ${WORKDIR}/defconfig-qcacld
     sed -i -e 's/^CONFIG_EAP_PROXY_DUAL_SIM := true/#CONFIG_EAP_PROXY_DUAL_SIM := true/g' ${WORKDIR}/defconfig-qcacld
     sed -i -e 's/^CONFIG_EAP_PROXY_AKA_PRIME := true/#CONFIG_EAP_PROXY_AKA_PRIME := true/g' ${WORKDIR}/defconfig-qcacld
@@ -31,7 +31,7 @@ do_configure_prepend () {
     fi
 }
 
-do_install_append () {
+do_install:append () {
     install -d ${D}${docdir}/wpa_supplicant
     install -m 644 ${S}/wpa_supplicant.conf ${D}${docdir}/wpa_supplicant
 
