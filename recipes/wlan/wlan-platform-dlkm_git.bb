@@ -2,7 +2,8 @@
 inherit autotools-brokensep module qperf
 
 DESCRIPTION = "Build wlan platform drivers to kernel module"
-LICENSE = "GPL-2.0-only"
+LICENSE = "${@bb.utils.contains('LAYERSERIES_COMPAT_core', 'dunfell',\
+           'GPL-2.0','GPL-2.0-only', d)}"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=801f80980d171dd6425610833a22dbe6"
 SUMMARY = "Wlan platform drivers"
 _MODNAME = "wlan-platform-dlkm"
