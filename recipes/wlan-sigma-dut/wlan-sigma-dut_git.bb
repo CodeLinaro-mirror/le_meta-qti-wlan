@@ -10,7 +10,6 @@ PR = "r0"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/utils/sigma-dut/"
-SRC_URI += "file://0001-sigma-dut-Enable-NL80211_SUPPORT.patch"
 
 SRC_DIR = "${WORKSPACE}/wlan/utils/sigma-dut/"
 
