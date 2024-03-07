@@ -545,3 +545,6 @@ CONFIG_MBO=y
 
 #enable FILS
 CONFIG_FILS=y
+
+#Enable ERP
+CONFIG_ERP=y
