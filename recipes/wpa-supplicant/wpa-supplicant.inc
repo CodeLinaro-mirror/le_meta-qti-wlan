@@ -1,9 +1,9 @@
 inherit autotools-brokensep linux-kernel-base pkgconfig
 
 DESCRIPTION = "Wi-Fi Protected Access(WPA) Supplicant"
-LICENSE = "BSD-3-Clause-Clear"
+LICENSE = "BSD-3-Clause"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/\
-${LICENSE};md5=7a434440b651f4a472ca93716d01033a"
+${LICENSE};md5=550794465ba0ec5312d6919e203a55f9"
 
 SOLIBS='*.so'
 FILES_SOLIBSDEV=""
