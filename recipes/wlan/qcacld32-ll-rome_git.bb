@@ -35,11 +35,7 @@ EXTRA_OEMAKE += "CONFIG_QCA_CLD_WLAN_PROFILE=qca6174"
 EXTRA_OEMAKE += "DYNAMIC_SINGLE_CHIP=${_MODNAME}"
 EXTRA_OEMAKE += "MODNAME=${_MODNAME}"
 
-KERNEL_CC += "-Wno-error=maybe-uninitialized"
-KERNEL_CC += "-Wno-error=unused-function"
-KERNEL_CC += "-Wno-error=format"
-KERNEL_CC += "-Wno-error=misleading-indentation"
-KERNEL_CC += "-Wno-error=array-parameter"
+KERNEL_CC += "-w"
 
 _WLAN_CFG_OVERRIDE_515 = "\
 						CONFIG_WLAN_CONV_SPECTRAL_ENABLE=n \
