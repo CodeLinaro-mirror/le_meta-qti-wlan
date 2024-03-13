@@ -553,6 +553,10 @@ CONFIG_ERP=y
 
 # DPP
 CONFIG_DPP=y
+CONFIG_DPP2=y
 
 # WEP
 CONFIG_WEP=y
+
+# To ignore possible wrong network configurations
+CFLAGS += -DWPA_IGNORE_CONFIG_ERRORS
