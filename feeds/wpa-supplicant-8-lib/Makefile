@@ -4,6 +4,7 @@ PKG_NAME:=wpa-supplicant-8-lib
 PKG_VERSION:=1.0
 PKG_RELEASE:=1
 PKG_FIXUP:=autoreconf
+PKG_LICENSE:=BSD-3-Clause
 
 LOCAL_SRC := $(TOPDIR)/src/hardware/qcom/wlan/qcwcn/wpa_supplicant_8_lib
 

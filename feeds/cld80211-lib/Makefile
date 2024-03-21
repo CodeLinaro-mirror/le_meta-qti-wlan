@@ -3,6 +3,7 @@ PKG_NAME:=cld80211-lib
 PKG_VERSION:=1.0
 PKG_RELEASE:=1
 PKG_FIXUP:=autoreconf
+PKG_LICENSE:=BSD
 
 LOCAL_SRC := $(TOPDIR)/src/hardware/qcom/wlan/cld80211-lib
 
