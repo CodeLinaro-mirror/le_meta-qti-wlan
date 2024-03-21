@@ -5,6 +5,7 @@ PKG_NAME:=wlan-conf
 PKG_VERSION:=1.0
 PKG_RELEASE:=1
 PKG_FIXUP:=autoreconf
+PKG_LICENSE:=ISC
 
 LOCAL_SRC := $(TOPDIR)/src/mdm-init
 
