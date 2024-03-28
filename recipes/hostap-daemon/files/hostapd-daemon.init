@@ -72,8 +72,8 @@ start_service() {
 				echo "The group of ctrl_interface_folder is $group_name"
 
 				if [ $group_name != "wifi" ];then
-					echo "The ctrl_interface can't be used by $SVC_NAME, remove it"
-					rm -rf $ctrl_interface_folder
+					echo "The ctrl_interface can't be used by $SVC_NAME, change group to wifi"
+					chown ":wifi" $ctrl_interface_folder
 				fi
 			fi
 
