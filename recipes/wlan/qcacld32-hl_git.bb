@@ -37,6 +37,12 @@ SRC_URI:append = " file://device/qcom/wlan/sdx_auto/wlan_mac.bin"
 S = "${WORKDIR}/wlan/qcacld-3.0/"
 S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn/"
 
+# The common header file, 'wlan_nlink_common.h' can be installed from other
+# qcacld recipes too. To suppress the duplicate detection error, add it to
+# SSTATE_ALLOW_OVERLAP_FILES.
+SSTATE_ALLOW_OVERLAP_FILES += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wlan_nlink_common.h"
+
+
 # Append the chip name to firmware installation path
 CHIP_NAME_APPEND = "${@oe.utils.conditional('CHIP_NAME', '', '', '/${CHIP_NAME}', d)}"
 FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld${CHIP_NAME_APPEND}"
@@ -67,11 +73,10 @@ do_compile() {
 }
 
 do_install () {
-
     install -d ${FIRMWARE_PATH}
-
+    install -d ${D}${includedir}/qcacld/
     install -m 0644 ${S}/${WLAN_MODULE_NAME}.ko -D ${D}/${base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko
-
+    install -m 0644 ${WORKDIR}/wlan/qca-wifi-host-cmn/utils/nlink/inc/wlan_nlink_common.h ${D}${includedir}/qcacld/
     install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_sdio_qca6174.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
     chmod -R 0664 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
     install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/wlan_mac.bin ${FIRMWARE_PATH}/wlan_mac.bin
