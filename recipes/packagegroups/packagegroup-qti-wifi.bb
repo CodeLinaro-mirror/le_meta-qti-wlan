@@ -24,6 +24,7 @@ RDEPENDS:${PN} += "\
     qcacld32-cnss2 \
     wpa-supplicant-qcacld \
     wlan-conf \
+    system-conf \
     wlan-sigma-dut \
     "
 RDEPENDS:${PN}:remove:mdm9607 += " qcacld32-ll-hasting qcacld32-ll-hsp qcacld32-ll-genoa qcacld32-ll-rome qcacld32-cnss2"
