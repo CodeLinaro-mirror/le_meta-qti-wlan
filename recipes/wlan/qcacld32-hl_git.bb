@@ -76,7 +76,7 @@ do_install () {
     install -d ${FIRMWARE_PATH}
     install -d ${D}${includedir}/qcacld/
     install -m 0644 ${S}/${WLAN_MODULE_NAME}.ko -D ${D}/${base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko
-    install -m 0644 ${WORKDIR}/wlan/qca-wifi-host-cmn/utils/nlink/inc/wlan_nlink_common.h ${D}${includedir}/qcacld/
+    install -m 0644 ${S1}/utils/nlink/inc/wlan_nlink_common.h ${D}${includedir}/qcacld/
     install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_sdio_qca6174.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
     chmod -R 0664 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
     install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/wlan_mac.bin ${FIRMWARE_PATH}/wlan_mac.bin
