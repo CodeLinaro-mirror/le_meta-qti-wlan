@@ -28,7 +28,7 @@
 
 [Unit]
 Description=CNSS service
-After=systemrw.mount
+After=systemrw.mount dbus.service systemrw-misc-wifi.service
 Before=QCMAP_ConnectionManagerd.service
 DefaultDependencies=no
 SourcePath=/etc/initscripts/start_cnss_le
@@ -36,6 +36,19 @@ SourcePath=/etc/initscripts/start_cnss_le
 [Service]
 Restart=on-failure
 RemainAfterExit=yes
+ExecStartPre=/sbin/mount-copybind /systemrw/ipq/config/wireless /etc/config/wireless
+ExecStartPre=/sbin/mount-copybind /systemrw/ipq/config/ezmesh /etc/config/ezmesh
+ExecStartPre=/sbin/mount-copybind /systemrw/ipq/config/wsplcd /etc/config/wsplcd
+ExecStartPre=/sbin/mount-copybind /systemrw/ipq/config/repacd /etc/config/repacd
+ExecStartPre=/sbin/mount-copybind /systemrw/ipq/config/ezlbd /etc/config/ezlbd
+ExecStartPre=/sbin/mount-copybind /systemrw/ipq/config/bss-policy.conf /etc/wsplcd/map/bss-policy.conf
+ExecStartPre=/sbin/mount-copybind /systemrw/ipq/config/map.conf /etc/config/map.conf
+ExecStartPre=/sbin/mount-copybind /systemrw/ipq/config/scheme-a.conf /etc/wsplcd/map/templates/scheme-a.conf
+ExecStartPre=/sbin/mount-copybind /systemrw/ipq/config/scheme-b.conf /etc/wsplcd/map/templates/scheme-b.conf
+ExecStartPre=/sbin/mount-copybind /systemrw/ipq/config/scheme-c.conf /etc/wsplcd/map/templates/scheme-c.conf
+ExecStartPre=/sbin/mount-copybind /systemrw/ipq/config/scheme-d.conf /etc/wsplcd/map/templates/scheme-d.conf
+ExecStartPre=/sbin/mount-copybind /systemrw/ipq/config/scheme-e.conf /etc/wsplcd/map/templates/scheme-e.conf
+ExecStartPre=/sbin/mount-copybind /systemrw/ipq/config/sp-rules.conf /etc/ezmesh/sp-rules.conf
 ExecStart=/etc/initscripts/start_cnss_le start
 ExecStop=/etc/initscripts/start_cnss_le stop
 
