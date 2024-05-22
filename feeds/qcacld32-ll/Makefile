@@ -5,6 +5,7 @@ PKG_NAME:=qcacld32-ll
 PKG_VERSION:=1.0
 PKG_RELEASE:=1
 PKG_FIXUP:=autoreconf
+PKG_LICENSE:=ISC
 
 ifeq ($(TARGET_VARIANT),perf)
   COMPILE_MODE :=perf
