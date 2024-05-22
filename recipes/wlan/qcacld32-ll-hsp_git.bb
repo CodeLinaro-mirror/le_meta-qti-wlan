@@ -45,6 +45,8 @@ EXTRA_OEMAKE_append = " CONFIG_CLD_HL_SDIO_CORE=n \
 KERNEL_CC += "-Wno-error=maybe-uninitialized"
 KERNEL_CC += "-Wno-error=unused-function"
 KERNEL_CC += "-Wno-error=format"
+KERNEL_CC += "-Wno-error=misleading-indentation"
+KERNEL_CC += "-Wno-error=array-parameter"
 
 #Enable/Disable IPA by MACHINE name
 EXTRA_OEMAKE_append_sa515m = " CONFIG_ENABLE_IPA=n"
