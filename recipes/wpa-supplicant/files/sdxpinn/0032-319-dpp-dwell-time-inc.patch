@@ -1,0 +1,63 @@
+From 23a1ffd920e65b3162f7d5526f07d99b99e1beb5 Mon Sep 17 00:00:00 2001
+From: Xinyue Ling <quic_xinyling@quicinc.com>
+Date: Tue, 30 Apr 2024 15:01:46 +0800
+Subject: [PATCH 32/41] 319-dpp-dwell-time-inc
+
+Change-Id: I547529066ec160e898f15b934313172f406ea4d1
+Signed-off-by: Chenming Huang <quic_chenhuan@quicinc.com>
+---
+ wpa_supplicant/dpp_supplicant.c | 6 +++---
+ wpa_supplicant/gas_query.c      | 4 ++--
+ 2 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/wpa_supplicant/dpp_supplicant.c b/wpa_supplicant/dpp_supplicant.c
+index d6ede31495..14e45132eb 100644
+--- a/wpa_supplicant/dpp_supplicant.c
++++ b/wpa_supplicant/dpp_supplicant.c
+@@ -2043,7 +2043,7 @@ fail:
+ 				       addr, wpa_s->own_addr, broadcast,
+ 				       wpabuf_head(msg),
+ 				       wpabuf_len(msg),
+-				       500, wpas_dpp_tx_status, 0);
++				       1000, wpas_dpp_tx_status, 0);
+ 		wpabuf_free(msg);
+ 
+ 		/* This exchange will be terminated in the TX status handler */
+@@ -2204,7 +2204,7 @@ static void wpas_dpp_rx_auth_resp(struct wpa_supplicant *wpa_s, const u8 *src,
+ 	offchannel_send_action(wpa_s, auth->curr_freq,
+ 			       src, wpa_s->own_addr, broadcast,
+ 			       wpabuf_head(msg), wpabuf_len(msg),
+-			       500, wpas_dpp_tx_status, 0);
++			       1000, wpas_dpp_tx_status, 0);
+ 	wpabuf_free(msg);
+ 	wpa_s->dpp_auth_ok_on_ack = 1;
+ }
+@@ -4518,7 +4518,7 @@ wpas_dpp_gas_status_handler(void *ctx, struct wpabuf *resp, int ok)
+ 		wpabuf_free(resp);
+ 		eloop_cancel_timeout(wpas_dpp_config_result_wait_timeout,
+ 				     wpa_s, NULL);
+-		eloop_register_timeout(4, 0,
++		eloop_register_timeout(8, 0,
+ 				       wpas_dpp_config_result_wait_timeout,
+ 				       wpa_s, NULL);
+ 		return;
+diff --git a/wpa_supplicant/gas_query.c b/wpa_supplicant/gas_query.c
+index 5d3a1f4b32..678d1bcdca 100644
+--- a/wpa_supplicant/gas_query.c
++++ b/wpa_supplicant/gas_query.c
+@@ -24,10 +24,10 @@
+ 
+ 
+ /** GAS query timeout in seconds */
+-#define GAS_QUERY_TIMEOUT_PERIOD 6
++#define GAS_QUERY_TIMEOUT_PERIOD 8
+ 
+ /* GAS query wait-time / duration in ms */
+-#define GAS_QUERY_WAIT_TIME_INITIAL 4000
++#define GAS_QUERY_WAIT_TIME_INITIAL 6000
+ #define GAS_QUERY_WAIT_TIME_COMEBACK 1000
+ 
+ #define GAS_QUERY_MAX_COMEBACK_DELAY 60000
+-- 
+2.17.1
+
