@@ -20,8 +20,8 @@ FILES_${PN} += "/lib/systemd/system"
 
 do_install_append_auto() {
 	install -d ${D}${bindir}
-	install -D -m 0755 ${WORKDIR}/init.qti.cnss2_on.sh ${D}${bindir}/init.qti.cnss2_on.sh
-	install -D -m 0755 ${WORKDIR}/init.qti.cnss2_off.sh ${D}${bindir}/init.qti.cnss2_off.sh
+	install -D -m 0555 ${WORKDIR}/init.qti.cnss2_on.sh ${D}${bindir}/init.qti.cnss2_on.sh
+	install -D -m 0555 ${WORKDIR}/init.qti.cnss2_off.sh ${D}${bindir}/init.qti.cnss2_off.sh
 	install -d ${D}${systemd_unitdir}/system
 	install -d ${D}${systemd_unitdir}/system/multi-user.target.wants
 	install -m 0644 ${WORKDIR}/init_qti_cnss2_auto.service ${D}${systemd_unitdir}/system/init_qti_cnss2_auto.service
@@ -43,8 +43,8 @@ do_install_append_sa515m() {
 
 do_install_append_sa525m() {
         install -d ${D}${bindir}
-        install -D -m 0755 ${WORKDIR}/init.qti.cnss2_on.sh ${D}${bindir}/init.qti.cnss2_on.sh
-        install -D -m 0755 ${WORKDIR}/init.qti.cnss2_off.sh ${D}${bindir}/init.qti.cnss2_off.sh
+        install -D -m 0555 ${WORKDIR}/init.qti.cnss2_on.sh ${D}${bindir}/init.qti.cnss2_on.sh
+        install -D -m 0555 ${WORKDIR}/init.qti.cnss2_off.sh ${D}${bindir}/init.qti.cnss2_off.sh
         install -d ${D}${systemd_unitdir}/system
         install -d ${D}${systemd_unitdir}/system/multi-user.target.wants
         install -m 0644 ${WORKDIR}/init_qti_cnss2_auto.service ${D}${systemd_unitdir}/system/init_qti_cnss2_auto.service
