@@ -73,8 +73,8 @@ do_install() {
 
 do_install_append() {
     install -d ${D}${bindir}
-    install -D -m 0755 ${WORKDIR}/init.qti.cnss2_on.sh ${D}${bindir}/init.qti.cnss2_on.sh
-    install -D -m 0755 ${WORKDIR}/init.qti.cnss2_off.sh ${D}${bindir}/init.qti.cnss2_off.sh
+    install -D -m 0555 ${WORKDIR}/init.qti.cnss2_on.sh ${D}${bindir}/init.qti.cnss2_on.sh
+    install -D -m 0555 ${WORKDIR}/init.qti.cnss2_off.sh ${D}${bindir}/init.qti.cnss2_off.sh
     # Install systemd service file
     if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}; then
         install -m 0644 ${WORKDIR}/init_qti_cnss2_auto.service -D ${D}${systemd_unitdir}/system/init_qti_cnss2_auto.service
