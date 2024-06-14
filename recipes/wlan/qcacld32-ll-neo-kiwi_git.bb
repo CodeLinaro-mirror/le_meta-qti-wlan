@@ -42,6 +42,9 @@ BUILD_FLAGS = "CONFIG_QCA_CLD_WLAN_PROFILE=${TARGET_WLAN_CHIP} MODNAME=${WLAN_CH
 do_configure:append:sxrneo() {
     sed -i '1i DYNAMIC_SINGLE_CHIP=${TARGET_WLAN_CHIP}' ${WORKDIR}/wlan/qcacld-3.0/configs/${TARGET_WLAN_CHIP}_defconfig
     sed -i 's/CONFIG_WLAN_FEATURE_COAP := y/#CONFIG_WLAN_FEATURE_COAP := y/g' ${WORKDIR}/wlan/qcacld-3.0/configs/${TARGET_WLAN_CHIP}_defconfig
+    echo "CONFIG_WLAN_SUPPORT_SERVICE_CLASS := y" >> ${WORKDIR}/wlan/qcacld-3.0/configs/${TARGET_WLAN_CHIP}_defconfig
+    echo "CONFIG_WLAN_SUPPORT_FLOW_PRIORTIZATION := y" >> ${WORKDIR}/wlan/qcacld-3.0/configs/${TARGET_WLAN_CHIP}_defconfig
+    echo "CONFIG_WLAN_SUPPORT_LAPB := y" >> ${WORKDIR}/wlan/qcacld-3.0/configs/${TARGET_WLAN_CHIP}_defconfig
 }
 
 do_compile() {
