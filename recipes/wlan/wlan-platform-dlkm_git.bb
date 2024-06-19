@@ -138,6 +138,12 @@ do_install:append() {
     fi
 }
 
+do_deploy:sa525m() {
+    install -d ${DEPLOYDIR}/kernel_modules/wlan-platform-dlkm
+    install -D -m 0644 ${B}/cnss2/*.ko ${DEPLOYDIR}/kernel_modules/wlan-platform-dlkm/
+    install -D -m 0644 ${B}/cnss_genl/*.ko ${DEPLOYDIR}/kernel_modules/wlan-platform-dlkm/
+    install -D -m 0644 ${B}/cnss_utils/*.ko ${DEPLOYDIR}/kernel_modules/wlan-platform-dlkm/
+}
 
 do_module_signing() {
     if [ "${BASEMACHINE}" != "sa510m" ]; then
