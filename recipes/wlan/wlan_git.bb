@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5
 KERNEL_VERSION = "${@get_kernelversion_headers('${STAGING_KERNEL_DIR}')}"
 
 FILES:${PN} += "\
-    ${base_libdir}/modules/${KERNEL_VERSION}/kernel/drivers/net/wireless/ar6000.ko \
+    ${nonarch_base_libdir}/modules/${KERNEL_VERSION}/kernel/drivers/net/wireless/ar6000.ko \
     "
 
 PR = "r2"
@@ -23,7 +23,7 @@ ATH_BUILD_TYPE="mdm9x15"
 ATH_BUS_TYPE="SDIO"
 
 EXTRA_OEMAKE = "\
-    ATH_LINUXPATH=${STAGING_DIR_HOST}${base_libdir}/modules/${KERNEL_VERSION}/build \
+    ATH_LINUXPATH=${STAGING_DIR_HOST}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/build \
     ATH_CROSS_COMPILE_TYPE=${STAGING_BINDIR_TOOLCHAIN}/${HOST_PREFIX} \
     ATH_BUILD_TYPE=${ATH_BUILD_TYPE} \
     ATH_BUS_TYPE=${ATH_BUS_TYPE} \
@@ -40,7 +40,7 @@ EXTRA_OEMAKE = "\
     "
 
 ATH_IMAGE_DIR = "${S}/.output/${ATH_BUILD_TYPE}-${ATH_BUS_TYPE}/image"
-ATH_MODULE_DIR = "${D}${base_libdir}/modules/${KERNEL_VERSION}/kernel/drivers/net/wireless"
+ATH_MODULE_DIR = "${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/kernel/drivers/net/wireless"
 
 do_compile() {
     unset LDFLAGS

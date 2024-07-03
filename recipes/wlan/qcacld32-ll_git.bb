@@ -4,8 +4,8 @@ DESCRIPTION = "Qualcomm Atheros WLAN CLD3.0 low latency driver"
 LICENSE = "ISC"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=f3b90e78ea0cffb20bf5cca7947a896d"
 
-FILES:${PN}     += "${base_libdir}/firmware/wlan/*"
-FILES:${PN}     += "${base_libdir}/modules/${KERNEL_VERSION}/extra/wlan.ko"
+FILES:${PN}     += "${nonarch_base_libdir}/firmware/wlan/*"
+FILES:${PN}     += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/wlan.ko"
 PROVIDES_NAME   = "kernel-module-wlan"
 RPROVIDES:${PN} += "${PROVIDES_NAME}-${KERNEL_VERSION}"
 
