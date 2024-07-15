@@ -1,8 +1,8 @@
 diff --git a/wpa_supplicant/Android.mk b/wpa_supplicant/Android.mk
-index 91c3cba..2056e5d 100644
+index 0aacafd4a..1f6b2eada 100644
 --- a/wpa_supplicant/Android.mk
 +++ b/wpa_supplicant/Android.mk
-@@ -232,6 +232,10 @@ ifdef CONFIG_NO_CONFIG_WRITE
+@@ -201,6 +201,10 @@ ifdef CONFIG_NO_CONFIG_WRITE
  L_CFLAGS += -DCONFIG_NO_CONFIG_WRITE
  endif
  
@@ -14,10 +14,10 @@ index 91c3cba..2056e5d 100644
  L_CFLAGS += -DCONFIG_NO_CONFIG_BLOBS
  endif
 diff --git a/wpa_supplicant/Makefile b/wpa_supplicant/Makefile
-index 92e0744..42d9f0a 100644
+index ce1c8b2e3..cc862a277 100644
 --- a/wpa_supplicant/Makefile
 +++ b/wpa_supplicant/Makefile
-@@ -211,6 +211,10 @@ ifdef CONFIG_NO_CONFIG_WRITE
+@@ -216,6 +216,10 @@ ifdef CONFIG_NO_CONFIG_WRITE
  CFLAGS += -DCONFIG_NO_CONFIG_WRITE
  endif
  
@@ -29,10 +29,10 @@ index 92e0744..42d9f0a 100644
  CFLAGS += -DCONFIG_NO_CONFIG_BLOBS
  endif
 diff --git a/wpa_supplicant/android.config b/wpa_supplicant/android.config
-index 168b72c..95d26fd 100644
+index 283f8eb0a..c1f04c013 100644
 --- a/wpa_supplicant/android.config
 +++ b/wpa_supplicant/android.config
-@@ -226,6 +226,12 @@ CONFIG_BACKEND=file
+@@ -229,6 +229,12 @@ CONFIG_BACKEND=file
  # about 3.5 kB.
  #CONFIG_NO_CONFIG_WRITE=y
  
@@ -46,10 +46,10 @@ index 168b72c..95d26fd 100644
  #CONFIG_NO_CONFIG_BLOBS=y
  
 diff --git a/wpa_supplicant/config_file.c b/wpa_supplicant/config_file.c
-index 9fbfbf9..123aadf 100644
+index 54fb72d8c..93c777c1a 100644
 --- a/wpa_supplicant/config_file.c
 +++ b/wpa_supplicant/config_file.c
-@@ -1537,6 +1537,121 @@ static void wpa_config_write_global(FILE *f, struct wpa_config *config)
+@@ -1547,6 +1547,124 @@ static void wpa_config_write_global(FILE *f, struct wpa_config *config)
  
  #endif /* CONFIG_NO_CONFIG_WRITE */
  
@@ -81,6 +81,9 @@ index 9fbfbf9..123aadf 100644
 +    tmp_name = os_malloc(tmp_len);
 +       if (tmp_name) {
 +               os_snprintf(tmp_name, tmp_len, "%s%s.tmp", QCS405_TEMP_CONFIG_PREFIX, filename);
++       } else {
++               wpa_printf(MSG_DEBUG, "Failed allocate tmp_name");
++               return -1;
 +       }
 +
 +    system_cp_len = os_strlen(tmp_name) + os_strlen(orig_name) + 5;
@@ -171,7 +174,7 @@ index 9fbfbf9..123aadf 100644
  
  int wpa_config_write(const char *name, struct wpa_config *config)
  {
-@@ -1629,3 +1744,4 @@ int wpa_config_write(const char *name, struct wpa_config *config)
+@@ -1639,3 +1757,4 @@ int wpa_config_write(const char *name, struct wpa_config *config)
  	return -1;
  #endif /* CONFIG_NO_CONFIG_WRITE */
  }
