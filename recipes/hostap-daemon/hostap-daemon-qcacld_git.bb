@@ -17,17 +17,17 @@ do_configure() {
     echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
 }
 
-do_install_append_automotive() {
+do_install:append:automotive() {
     install -d ${D}${sysconfdir}
     install -m 0644 ${S}/hostapd.conf ${D}${sysconfdir}/hostapd.conf
 }
 
-do_install_append_auto() {
+do_install:append:auto() {
     install -d ${D}${sysconfdir}
     install -m 0644 ${S}/hostapd.conf ${D}${sysconfdir}/hostapd.conf
 }
 
-do_install_append_sa515m() {
+do_install:append:sa515m() {
     install -d ${D}${sysconfdir}
     install -m 0644 ${S}/hostapd.conf ${D}${sysconfdir}/hostapd.conf
 }
