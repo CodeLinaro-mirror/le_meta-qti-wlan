@@ -40,7 +40,7 @@ index fb46e79bcf..36dee12935 100644
  #endif /* CONFIG_TESTING_OPTIONS */
 +        if(initiator) {
 +                wpa_printf(MSG_INFO, "DPP: Started gas request wait.");
-+                eloop_register_timeout(10, 0, hostapd_gas_req_wait,
++                eloop_register_timeout(15, 0, hostapd_gas_req_wait,
 +                                       hapd, NULL);
 +        }
  
