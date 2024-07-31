@@ -22,11 +22,30 @@ EXTRA_ADDR :=lib/modules/$(LINUX_VERSION)-${COMPILE_MODE}/extra
 
 include $(INCLUDE_DIR)/package.mk
 
+ifeq ($(BOARD),sdx75)
+  #Dependency when CONFIG_FEATURE_SMEM_MAILBOX=y
+  DATA_SMEM_MODULE := kmod-smem-mailbox
+  DATA_SMEM_MAKEOPTS := CONFIG_FEATURE_SMEM_MAILBOX=y
+
+  #Hard-code SMEM module's include folder, when CONFIG_FEATURE_SMEM_MAILBOX=y
+  DATA_SMEM_INC := $(TOPDIR)/src/data-kernel/drivers/smem-mailbox/include
+  NOSTDINC_FLAGS += -I$(DATA_SMEM_INC)
+  DATA_SMEM_MAKEOPTS += NOSTDINC_FLAGS="$(NOSTDINC_FLAGS)"
+
+  #Hard-code SMEM module's PKG NAME & PKG_VERSION, when CONFIG_FEATURE_SMEM_MAILBOX=y
+  DATA_SMEM_SYMBOLS = $(PKG_BUILD_DIR)../smem-mailbox-1.0/Module.symvers
+  DATA_SMEM_MAKEOPTS += KBUILD_EXTRA_SYMBOLS=$(DATA_SMEM_SYMBOLS)
+else
+  DATA_SMEM_MODULE :=
+  DATA_SMEM_MAKEOPTS :=
+endif
+
 define KernelPackage/wlan-cnss2
   SECTION:=Kernel Modules
   CATEGORY:=External Kernel Modules
   TITLE:=CNSS platform driver
   VARIANT:=cnss2
+  DEPENDS := +$(DATA_SMEM_MODULE)
 endef
 
 define KernelPackage/wlan-cnss-legacy
@@ -47,6 +66,7 @@ endef
 ifeq ($(BUILD_VARIANT),cnss2)
 CNSS_MAKEOPTS = CONFIG_CNSS_OUT_OF_TREE=y \
 		CONFIG_MHI_BUS_MISC=y \
+		$(DATA_SMEM_MAKEOPTS) \
 		M="$(PKG_BUILD_DIR)"
 
 else ifeq ($(BUILD_VARIANT),legacy)
