@@ -13,8 +13,8 @@ PACKAGES = "\
 ALLOW_EMPTY_${PN} = "1"
 
 DRIVERS ?= 'qcacld32-ll-rome qcacld32-ll-hasting qcacld32-ll-genoa qcacld32-ll-hsp'
-DRIVERS_sa410m = 'qcacld32-ll-rome'
-DRIVERS_sa525m = 'qcacld32-ll-rome qcacld32-ll-hsp'
+DRIVERS:sa410m = 'qcacld32-ll-rome'
+DRIVERS:sa525m = 'qcacld32-ll-rome qcacld32-ll-hsp qcacld32-ll-hmt'
 
 RDEPENDS_${PN} += "\
     rfkill \

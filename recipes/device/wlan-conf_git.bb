@@ -7,8 +7,12 @@ ${LICENSE};md5=550794465ba0ec5312d6919e203a55f9"
 PR = "r0"
 
 FILESPATH =+ "${WORKSPACE}:"
-FILES_${PN} += "lib/firmware/wlan/*"
-FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld/qca6490"
+FILES:${PN} += "lib/firmware/wlan/*"
+FILES:${PN} += "/data/qca6490/*"
+FILES:${PN} += "/data/qca6574/*"
+FILES:${PN} += "/data/qca6797/*"
+FIRMWARE_PATH_HSP = "${D}/lib/firmware/wlan/qca_cld/qca6490"
+FIRMWARE_PATH_HMT = "${D}/lib/firmware/wlan/qca_cld/qca6797"
 FIRMWARE_PATH_ROME = "${D}/lib/firmware/wlan/qca_cld/qca6574"
 
 # Provide a baseline
@@ -35,12 +39,22 @@ do_install_append_sa410m(){
 do_install_append_sa525m(){
 	install -d ${D}/etc/misc/wifi
 	install -m 0644 ${S}/qcom/wlan/sdx_auto/*.conf ${D}/etc/misc/wifi
-	install -d ${FIRMWARE_PATH}
+	chown -R radio:radio ${D}/etc/misc/wifi
+	install -d ${FIRMWARE_PATH_HSP}
 	install -d ${FIRMWARE_PATH_ROME}
-	install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6174.ini ${FIRMWARE_PATH_ROME}/WCNSS_qcom_cfg.ini
-	chmod -R 0664 ${FIRMWARE_PATH_ROME}/WCNSS_qcom_cfg.ini
-	install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6490.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
-	chmod -R 0664 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
+	install -d ${FIRMWARE_PATH_HMT}
+	install -d ${D}/data/qca6574
+	install -d ${D}/data/qca6490
+	install -d ${D}/data/qca6797
+	install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6174.ini ${D}/data/qca6574/WCNSS_qcom_cfg.ini
+	chmod -R 0664 ${D}/data/qca6574/WCNSS_qcom_cfg.ini
+	install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6490.ini ${D}/data/qca6490/WCNSS_qcom_cfg.ini
+	chmod -R 0664 ${D}/data/qca6490/WCNSS_qcom_cfg.ini
+	install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6797.ini ${D}/data/qca6797/WCNSS_qcom_cfg.ini
+        chmod -R 0664 ${D}/data/qca6797/WCNSS_qcom_cfg.ini
+        ln -sf /data/qca6574/WCNSS_qcom_cfg.ini ${FIRMWARE_PATH_ROME}/
+        ln -sf /data/qca6490/WCNSS_qcom_cfg.ini ${FIRMWARE_PATH_HSP}/
+        ln -sf /data/qca6797/WCNSS_qcom_cfg.ini ${FIRMWARE_PATH_HMT}/
 }
 
 do_install_append_sa415m_auto(){
