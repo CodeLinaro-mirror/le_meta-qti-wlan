@@ -41,6 +41,9 @@ if (lspci -k|grep cnss_pci);then
 	elif (lspci -k|grep 1103);then
 		echo "##########unload qca6490#############"
 		rmmod qca6490
+	elif (lspci -k|grep 1107);then
+		echo "##########unload qca6797#############"
+		rmmod qca6797
 	else
 		echo "##########unload default wlan########"
 		rmmod wlan

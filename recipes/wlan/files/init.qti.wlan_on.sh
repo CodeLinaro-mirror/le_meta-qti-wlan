@@ -56,6 +56,9 @@ if (lspci -k|grep cnss_pci);then
 	elif (lspci -k|grep 1103);then
 		echo "##########load qca6490#############"
 		modprobe qca6490
+	elif (lspci -k|grep 1107);then
+		echo "##########load qca6797#############"
+		modprobe qca6797
 	else
 		echo "##########load default wlan########"
 		modprobe wlan
