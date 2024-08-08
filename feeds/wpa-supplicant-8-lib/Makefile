@@ -32,13 +32,12 @@ ifeq ($(BOARD),sdx75)
 	TARGET_LOCAL_NAME :=sdxpinn
 endif
 
-TARGET_PATCH_EXIST := $(shell if [ -d "./files/$(TARGET_LOCAL_NAME)" ]; then \
+TARGET_PATCH_EXIST := $(shell if [ -n "$(TARGET_LOCAL_NAME)" ]; then \
 	echo "yes"; else echo "no"; fi)
 ifeq ($(TARGET_PATCH_EXIST), yes)
 	TARGET_PATCH_PATH := $(TARGET_LOCAL_NAME)
+	COPY_PATCH_FILES := $(CP) ./files/$(TARGET_PATCH_PATH)/*.patch ./patches/
 endif
-
-COPY_PATCH_FILES := $(CP) ./files/$(TARGET_PATCH_PATH)/*.patch ./patches/
 
 define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)/
