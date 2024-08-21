@@ -13,11 +13,11 @@
 #ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 #OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE
 
-. /lib/wifi/wifi-utils.sh
+. /lib/wifi/qcacld32-utils.sh
 START=20
 
 boot() {
-    local KO_PATH="$(get_ap_sdxpinn_ko_path)"
+    local KO_PATH="$(get_ko_path)"
 
     [ -f $KO_PATH/emesh-sp.ko ] && insmod "$KO_PATH/emesh-sp.ko"
     [ -f $KO_PATH/hyfi-bridging.ko ] && insmod "$KO_PATH/hyfi-bridging.ko"
