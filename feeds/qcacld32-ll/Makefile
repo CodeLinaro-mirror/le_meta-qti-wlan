@@ -89,6 +89,30 @@ define Build/InstallDev
 	mkdir -p $(1)/$(EXTRA_ADDR)
 	mkdir -p $(1)/usr/include/qcacld
 	$(CP) $(PKG_BUILD_DIR)/qca-wifi-host-cmn/utils/nlink/inc/wlan_nlink_common.h $(1)/usr/include/qcacld/
+
+ifeq ($(BOARD),sdx75)
+# For EasyMesh packages
+	$(CP) $(PKG_BUILD_DIR)/qcacld-3.0/os_if/son/inc/cfg80211_ven_cmd.h $(1)/usr/include/
+	$(CP) $(PKG_BUILD_DIR)/qcacld-3.0/os_if/son/inc/ext_ioctl_drv_if.h $(1)/usr/include/
+	$(CP) $(PKG_BUILD_DIR)/qcacld-3.0/os_if/son/inc/ieee80211_defines.h $(1)/usr/include/
+	$(CP) $(PKG_BUILD_DIR)/qcacld-3.0/os_if/son/inc/ieee80211_external.h $(1)/usr/include/
+	$(CP) $(PKG_BUILD_DIR)/qcacld-3.0/os_if/son/inc/_ieee80211.h $(1)/usr/include/
+	$(CP) $(PKG_BUILD_DIR)/qcacld-3.0/os_if/son/inc/ieee80211.h $(1)/usr/include/
+	$(CP) $(PKG_BUILD_DIR)/qcacld-3.0/os_if/son/inc/ieee80211_ioctl.h $(1)/usr/include/
+	$(CP) $(PKG_BUILD_DIR)/qcacld-3.0/os_if/son/inc/ieee80211_rrm.h $(1)/usr/include/
+	$(CP) $(PKG_BUILD_DIR)/qcacld-3.0/os_if/son/inc/ieee80211_wnm_proto.h $(1)/usr/include/
+	$(CP) $(PKG_BUILD_DIR)/qcacld-3.0/uapi/linux/a_types.h $(1)/usr/include/
+	$(CP) $(PKG_BUILD_DIR)/qcacld-3.0/api/fw/athdefs.h $(1)/usr/include/
+
+	$(CP) $(PKG_BUILD_DIR)/qca-wifi-host-cmn/qdf/inc/qdf_types.h $(1)/usr/include/
+	$(CP) $(PKG_BUILD_DIR)/qca-wifi-host-cmn/qdf/inc/qdf_status.h $(1)/usr/include/
+	$(CP) $(PKG_BUILD_DIR)/qca-wifi-host-cmn/qdf/linux/src/i_qdf_types.h $(1)/usr/include/
+	$(CP) $(PKG_BUILD_DIR)/qca-wifi-host-cmn/os_if/linux/qca_vendor.h $(1)/usr/include/
+	$(CP) $(PKG_BUILD_DIR)/qca-wifi-host-cmn/dp/inc/cdp_txrx_stats_struct.h $(1)/usr/include/
+	$(CP) $(PKG_BUILD_DIR)/qca-wifi-host-cmn/dp/inc/cdp_txrx_hist_struct.h $(1)/usr/include/
+	$(CP) $(PKG_BUILD_DIR)/qca-wifi-host-cmn/umac/dfs/dispatcher/inc/wlan_dfs_ioctl.h $(1)/usr/include/
+	$(CP) $(PKG_BUILD_DIR)/qca-wifi-host-cmn/utils/sys/queue.h $(1)/usr/include/
+endif
 endef
 
 define  KernelPackage/$(PKG_NAME)/install
