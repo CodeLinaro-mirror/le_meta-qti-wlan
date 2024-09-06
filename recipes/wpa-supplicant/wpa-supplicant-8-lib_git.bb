@@ -29,13 +29,8 @@ CFLAGS:append= " -fcommon  -lcutils "
 do_patch() {
     cd ${PATCH_DIR}
 
-    if [ "$(ls -A "${WORKDIR}/${BASEMACHINE}")" ]
+    if [ "${MACHINE}" == "sxrneo" ]
     then
-        bbwarn "============================================================"
-        bbwarn "picking ${WORKDIR}/${BASEMACHINE}"
-        bbwarn "============================================================"
-        patch -p1 < ${WORKDIR}/${BASEMACHINE}/0001-wpa_supplicant_8_lib-Remove-deprecated-send_and_recv.patch
-    else
         bbwarn "============================================================"
         bbwarn "picking ${WORKDIR}/misc"
         bbwarn "============================================================"
