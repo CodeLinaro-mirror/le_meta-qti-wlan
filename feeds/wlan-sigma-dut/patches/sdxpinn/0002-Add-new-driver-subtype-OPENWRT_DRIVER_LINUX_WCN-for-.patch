@@ -1,0 +1,148 @@
+From 54b7e30f21d010818b1a872b5168358822a61498 Mon Sep 17 00:00:00 2001
+From: Hu Wang <quic_huw@quicinc.com>
+Date: Tue, 7 May 2024 02:10:30 -0700
+Subject: [PATCH 02/10] Add new driver subtype OPENWRT_DRIVER_LINUX_WCN for
+ qcacld
+
+Add new driver subtype OPENWRT_DRIVER_LINUX_WCN for qcacld.
+
+CRs-Fixed: 3893994
+Change-Id: I28a2583a2275d8a742b1ce9c73052a8810dfbb22
+Signed-off-by: Chenming Huang <quic_chenhuan@quicinc.com>
+---
+ ap.c        | 25 ++++++++++++++++++++-----
+ sigma_dut.c |  3 ++-
+ sigma_dut.h |  3 ++-
+ utils.c     |  3 +++
+ 4 files changed, 27 insertions(+), 7 deletions(-)
+
+diff --git a/ap.c b/ap.c
+index 7922a70..20bfed4 100644
+--- a/ap.c
++++ b/ap.c
+@@ -1571,6 +1571,9 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+ 			case OPENWRT_DRIVER_ATHEROS:
+ 				ath_config_dyn_bw_sig(dut, ifname, val);
+ 				break;
++			case OPENWRT_DRIVER_LINUX_WCN:
++				wcn_config_dyn_bw_sig(dut, ifname, val);
++				break;
+ 			default:
+ 				send_resp(dut, conn, SIGMA_ERROR,
+ 					  "errorCode,Unsupported DYN_BW_SGNL with OpenWrt driver");
+@@ -2705,6 +2708,11 @@ static enum sigma_cmd_result cmd_ap_send_addba_req(struct sigma_dut *dut,
+ 		switch (get_openwrt_driver_type()) {
+ 		case OPENWRT_DRIVER_ATHEROS:
+ 			return ath_ap_send_addba_req(dut, conn, cmd);
++		case OPENWRT_DRIVER_LINUX_WCN:
++			/* AP automatically sends ADDBA request after association. */
++			sigma_dut_print(dut, DUT_MSG_INFO,
++				"ap_send_addba_req command ignored");
++			return 1;
+ 		default:
+ 			send_resp(dut, conn, SIGMA_ERROR,
+ 				  "errorCode,ap_send_addba_req not supported with this driver");
+@@ -3626,7 +3634,8 @@ static int owrt_ap_config_radio(struct sigma_dut *dut)
+ 	}
+ 
+ 	if (dut->ap_channel == 140 || dut->ap_channel == 144) {
+-		if (get_openwrt_driver_type() == OPENWRT_DRIVER_ATHEROS)
++		if (get_openwrt_driver_type() == OPENWRT_DRIVER_ATHEROS ||
++		    get_openwrt_driver_type() == OPENWRT_DRIVER_LINUX_WCN)
+ 			owrt_ap_set_radio(dut, radio_id[0], "set_ch_144", "3");
+ 	}
+ 
+@@ -5163,7 +5172,8 @@ static int owrt_ap_post_config_commit(struct sigma_dut *dut,
+ 		}
+ 	}
+ 
+-	if (get_openwrt_driver_type() == OPENWRT_DRIVER_ATHEROS)
++	if (get_openwrt_driver_type() == OPENWRT_DRIVER_ATHEROS ||
++	    get_openwrt_driver_type() == OPENWRT_DRIVER_LINUX_WCN)
+ 		ath_ap_set_params(dut);
+ 
+ 	/* Send response */
+@@ -10957,7 +10967,8 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+ 		else
+ 			dut->ap_tx_stbc = VALUE_ENABLED;
+ 		dut->ap_dyn_bw_sig = VALUE_ENABLED;
+-		if (get_openwrt_driver_type() == OPENWRT_DRIVER_ATHEROS)
++		if (get_openwrt_driver_type() == OPENWRT_DRIVER_ATHEROS ||
++		    get_openwrt_driver_type() == OPENWRT_DRIVER_LINUX_WCN)
+ 			dut->ap_dfs_mode = AP_DFS_MODE_ENABLED;
+ 		if (get_driver_type(dut) == DRIVER_ATHEROS)
+ 			ath_reset_vht_defaults(dut);
+@@ -11105,7 +11116,8 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+ #endif /* NL80211_SUPPORT */
+ 			}
+ 		}
+-		if (get_openwrt_driver_type() == OPENWRT_DRIVER_ATHEROS)
++		if (get_openwrt_driver_type() == OPENWRT_DRIVER_ATHEROS ||
++		    get_openwrt_driver_type() == OPENWRT_DRIVER_LINUX_WCN)
+ 			dut->ap_dfs_mode = AP_DFS_MODE_ENABLED;
+ 	}
+ 
+@@ -11233,7 +11245,8 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+ 
+ 	dut->hostapd_running = 0;
+ 
+-	if (get_openwrt_driver_type() == OPENWRT_DRIVER_ATHEROS)
++	if (get_openwrt_driver_type() == OPENWRT_DRIVER_ATHEROS ||
++	    get_openwrt_driver_type() == OPENWRT_DRIVER_LINUX_WCN)
+ 		return 1;
+ 
+ 	if (dut->use_hostapd_pid_file) {
+@@ -15528,6 +15541,8 @@ static enum sigma_cmd_result cmd_ap_set_rfeature(struct sigma_dut *dut,
+ 		switch (get_openwrt_driver_type()) {
+ 		case OPENWRT_DRIVER_ATHEROS:
+ 			return ath_ap_set_rfeature(dut, conn, cmd);
++		case OPENWRT_DRIVER_LINUX_WCN:
++			return wcn_ap_set_rfeature(dut, conn, cmd);
+ 		default:
+ 			send_resp(dut, conn, SIGMA_ERROR,
+ 				  "errorCode,Unsupported ap_set_rfeature with the current openwrt driver");
+diff --git a/sigma_dut.c b/sigma_dut.c
+index 38d08cd..1299437 100644
+--- a/sigma_dut.c
++++ b/sigma_dut.c
+@@ -1358,7 +1358,8 @@ int main(int argc, char *argv[])
+ 				"Interface should be provided for QNX/LINUX-WCN driver - check option M and S");
+ 	}
+ 
+-	if (get_openwrt_driver_type() == OPENWRT_DRIVER_ATHEROS)
++	if (get_openwrt_driver_type() == OPENWRT_DRIVER_ATHEROS ||
++	    get_openwrt_driver_type() == OPENWRT_DRIVER_LINUX_WCN)
+ 		get_nl80211_config_enable_option(&sigma_dut);
+ 
+ 	sigma_dut_get_device_driver_name(get_main_ifname(&sigma_dut),
+diff --git a/sigma_dut.h b/sigma_dut.h
+index e526c8b..03ca4de 100644
+--- a/sigma_dut.h
++++ b/sigma_dut.h
+@@ -1334,7 +1334,8 @@ enum driver_type {
+ 
+ enum openwrt_driver_type {
+ 	OPENWRT_DRIVER_NOT_SET,
+-	OPENWRT_DRIVER_ATHEROS
++	OPENWRT_DRIVER_ATHEROS,
++	OPENWRT_DRIVER_LINUX_WCN
+ };
+ 
+ #define DRIVER_NAME_60G "wil6210"
+diff --git a/utils.c b/utils.c
+index 6af6eb7..13bb7b7 100644
+--- a/utils.c
++++ b/utils.c
+@@ -121,6 +121,9 @@ enum openwrt_driver_type get_openwrt_driver_type(void)
+ 		if (stat("/sys/module/umac", &s) == 0 ||
+ 		    stat("/sys/module/atd", &s) == 0)
+ 			openwrt_chip_type = OPENWRT_DRIVER_ATHEROS;
++		else if (stat("/sys/module/cnss_utils", &s) == 0 ||
++			 stat("/sys/module/cnss_nl", &s) == 0)
++			openwrt_chip_type = OPENWRT_DRIVER_LINUX_WCN;
+ 	}
+ 
+ 	return openwrt_chip_type;
+-- 
+2.17.1
+
