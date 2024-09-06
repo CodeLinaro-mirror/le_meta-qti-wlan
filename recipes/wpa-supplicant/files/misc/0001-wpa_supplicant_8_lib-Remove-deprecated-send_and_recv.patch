@@ -1,0 +1,61 @@
+This patch file is from Qualcomm Innovation Center, Inc. and is provided under the following license:
+
+Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+SPDX-License-Identifier: BSD-3-Clause-Clear
+
+From 967b6c5ccb3e3c78b58938a0df6cab7713a057cc Mon Sep 17 00:00:00 2001
+From: Chenming Huang <quic_chenhuan@quicinc.com>
+Date: Wed, 15 May 2024 19:06:07 +0530
+Subject: [PATCH] wpa_supplicant_8_lib: Remove deprecated send_and_recv_msgs
+
+Remove deprecated send_and_recv_msgs and replace with send_and_recv
+or send_and_recv_cmd.
+
+Change-Id: I25f20dfa55616d02df87f3e42fda754e4affc436
+---
+ qcwcn/wpa_supplicant_8_lib/driver_cmd_nl80211.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/driver_cmd_nl80211.c b/driver_cmd_nl80211.c
+index b4f7606..9301a5c 100644
+--- a/driver_cmd_nl80211.c
++++ b/driver_cmd_nl80211.c
+@@ -298,7 +298,7 @@ static int wpa_driver_cmd_set_ani_level(struct i802_bss *bss, int mode, int ofdm
+ 		}
+ 	}
+ 	nla_nest_end(msg, params);
+-	ret = send_and_recv_msgs(drv, msg, NULL, NULL, NULL, NULL);
++	ret = send_and_recv_cmd(drv, msg);
+ 	if (!ret)
+ 		return 0;
+ 	wpa_printf(MSG_ERROR, "%s: Failed set_ani_level, ofdmlvl=%d, ret=%d",
+@@ -355,7 +355,7 @@ static int wpa_driver_cmd_set_congestion_report(struct i802_bss *bss, char *cmd)
+ 		}
+ 	}
+ 	nla_nest_end(msg, params);
+-	ret = send_and_recv_msgs(drv, msg, NULL, NULL, NULL, NULL);
++	ret = send_and_recv_cmd(drv, msg);
+ 	wpa_printf(MSG_INFO, "%s: set congestion report: enable=%d, threshold=%d,"
+ 			"interval=%d", __FUNCTION__, enable, threshold, interval);
+ 	if (!ret)
+@@ -393,7 +393,7 @@ static int wpa_driver_cmd_set_tx_power(struct i802_bss *bss, char *cmd)
+ 		return -ENOBUFS;
+ 	}
+ 
+-	ret = send_and_recv_msgs(drv, msg, NULL, NULL, NULL, NULL);
++	ret = send_and_recv_cmd(drv, msg);
+ 	if (!ret)
+ 		return 0;
+ 
+@@ -2251,7 +2251,7 @@ static int wpa_driver_cmd_get_thermal_info(struct i802_bss *bss, int *result, in
+ 	}
+ 
+ 	nla_nest_end(msg, params);
+-	ret = send_and_recv_msgs(drv, msg, thermal_info_handler, result, NULL, NULL);
++	ret = send_and_recv(drv->global, drv->global->nl, msg, thermal_info_handler, result, NULL, NULL, NULL);
+ 	if (!ret)
+ 		return 0;
+ 	wpa_printf(MSG_ERROR, "%s: Failed get thermal info, ret=%d(%s)",
+-- 
+2.17.1
+
