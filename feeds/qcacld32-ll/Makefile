@@ -101,6 +101,9 @@ ifeq ($(BOARD),sdx75)
 	$(CP) $(PKG_BUILD_DIR)/qcacld-3.0/os_if/son/inc/ieee80211_ioctl.h $(1)/usr/include/
 	$(CP) $(PKG_BUILD_DIR)/qcacld-3.0/os_if/son/inc/ieee80211_rrm.h $(1)/usr/include/
 	$(CP) $(PKG_BUILD_DIR)/qcacld-3.0/os_if/son/inc/ieee80211_wnm_proto.h $(1)/usr/include/
+	$(CP) $(PKG_BUILD_DIR)/qcacld-3.0/os_if/son/inc/ieee80211_external_config.h $(1)/usr/include/
+	$(CP) $(PKG_BUILD_DIR)/qcacld-3.0/os_if/son/inc/if_athioctl.h $(1)/usr/include/
+	$(CP) $(PKG_BUILD_DIR)/qcacld-3.0/os_if/son/inc/ol_ath_ucfg.h $(1)/usr/include/
 	$(CP) $(PKG_BUILD_DIR)/qcacld-3.0/uapi/linux/a_types.h $(1)/usr/include/
 	$(CP) $(PKG_BUILD_DIR)/qcacld-3.0/api/fw/athdefs.h $(1)/usr/include/
 
