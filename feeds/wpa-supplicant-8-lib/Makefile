@@ -28,9 +28,26 @@ endef
 
 CONFIGURE_ARGS += WPA_SUPPLICANT_DIR=$(WPA_SUPPLICANT_DIR)
 
+ifeq ($(BOARD),sdx75)
+	TARGET_LOCAL_NAME :=sdxpinn
+endif
+
+TARGET_PATCH_EXIST := $(shell if [ -n "$(TARGET_LOCAL_NAME)" ]; then \
+	echo "yes"; else echo "no"; fi)
+ifeq ($(TARGET_PATCH_EXIST), yes)
+	TARGET_PATCH_PATH := $(TARGET_LOCAL_NAME)
+	COPY_PATCH_FILES := $(CP) ./files/$(TARGET_PATCH_PATH)/*.patch ./patches/
+endif
+
 define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)/
 	$(CP) $(LOCAL_SRC)/* $(PKG_BUILD_DIR)/
+	if [ -d "./patches/" ]; then \
+		rm -rf ./patches; \
+	fi
+	mkdir patches
+	${COPY_PATCH_FILES}
+	$(Build/Patch)
 endef
 
 define Build/InstallDev
