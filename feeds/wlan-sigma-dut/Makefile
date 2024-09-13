@@ -24,9 +24,14 @@ define Package/$(PKG_NAME)/Description
 	sigma dut tool
 endef
 
+ifeq ($(BOARD),sdx75)
+	COPY_PATCH_FILES := $(CP) ./patches/sdxpinn/*.patch ./patches/
+endif
+
 define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)/
 	$(CP) $(LOCAL_SRC)/* $(PKG_BUILD_DIR)/
+	${COPY_PATCH_FILES}
 	$(Build/Patch)
 endef
 
