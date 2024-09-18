@@ -96,6 +96,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hostapd/hostapd $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hostapd/hostapd_cli $(1)/usr/sbin/
+	$(INSTALL_BIN) ./files/hostapd-global.init $(1)/etc/init.d/
 	$(INSTALL_BIN) ./files/hostapd-daemon.init $(1)/etc/init.d/
 	$(INSTALL_DATA) ./files/hostapd-daemon_acl.json $(1)/usr/share/acl.d/
 	$(INSTALL_DATA) ./files/hostapd-daemon.json $(1)/etc/capabilities/
