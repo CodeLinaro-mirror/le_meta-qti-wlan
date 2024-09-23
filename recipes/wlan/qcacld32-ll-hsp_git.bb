@@ -14,10 +14,10 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5
 PR = "r8"
 _MODNAME = "qca6490"
 FW_PATH_NAME = "qca6490"
-FILES:${PN}     += "${base_libdir}/firmware/wlan/*"
-FILES:${PN}     += "${base_libdir}/firmware/*"
-FILES:${PN}     += "${base_libdir}/modules/${KERNEL_VERSION}/extra/${_MODNAME}.ko"
-FILES:${PN}     += "${base_libdir}/modules/${KERNEL_VERSION}/extra/"
+FILES:${PN}     += "${nonarch_base_libdir}/firmware/wlan/*"
+FILES:${PN}     += "${nonarch_base_libdir}/firmware/*"
+FILES:${PN}     += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/${_MODNAME}.ko"
+FILES:${PN}     += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/"
 PROVIDES_NAME   = "kernel-module-${_MODNAME}"
 RPROVIDES:${PN} += "${PROVIDES_NAME}-${KERNEL_VERSION}"
 
@@ -200,6 +200,7 @@ _WLAN_CFG_OVERRIDE_525 = "\
 						CONFIG_WLAN_CFR_ADRASTEA=n \
 						CONFIG_ENABLE_VALLOC_REPLACE_MALLOC=y \
 						CONFIG_MDM_PLATFORM=y \
+						CONFIG_SHUTDOWN_WLAN_IN_SYSTEM_SUSPEND=y \
 						"
 
 EXTRA_OEMAKE:append:sa515m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_515}"
