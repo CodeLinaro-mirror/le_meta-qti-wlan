@@ -102,11 +102,15 @@ define Build/Compile
 endef
 
 define Build/InstallDev
-	@true
+	$(INSTALL_DIR) $(1)/usr/include
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_BUILD_DIR)/src/common/wpa_ctrl.h $(1)/usr/include/
+	$(CP) $(PKG_BUILD_DIR)/wpa_supplicant/libwpa_client.so $(STAGING_DIR)/usr/lib/
 endef
 
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_DIR) $(1)/etc/init.d/
 	$(INSTALL_DIR) $(1)/usr/share/acl.d
 	$(INSTALL_DIR) $(1)/etc/capabilities
@@ -117,6 +121,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DATA) ./files/wpa_supplicant_acl.json $(1)/usr/share/acl.d/
 	$(INSTALL_DATA) ./files/wpa_supplicant.json $(1)/etc/capabilities/
 	$(CP) ./files/wpa_supplicant $(1)/etc/config/
+	$(CP) $(PKG_BUILD_DIR)/wpa_supplicant/libwpa_client.so $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
