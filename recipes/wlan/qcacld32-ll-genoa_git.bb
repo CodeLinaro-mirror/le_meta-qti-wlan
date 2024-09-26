@@ -59,7 +59,8 @@ _WLAN_CFG_OVERRIDE_515 = "\
 						CONFIG_FW_THERMAL_THROTTLE=y\
 						CONFIG_SMMU_S1_UNMAP=y \
 						CONFIG_WLAN_CE4_SZ_QCN7605=2048 \
-                                                CONFIG_SIR_SAP_MAX_NUM_PEERS=32 \
+						CONFIG_SIR_SAP_MAX_NUM_PEERS=32 \
+						CONFIG_AUTO_PLATFORM=y \
 						"
 _WLAN_CFG_OVERRIDE_415 = "\
 						CONFIG_WLAN_NAPI=n \
@@ -70,7 +71,8 @@ _WLAN_CFG_OVERRIDE_415 = "\
 						CONFIG_QCOM_LTE_COEX=y \
 						CONFIG_SMMU_S1_UNMAP=y \
 						CONFIG_WLAN_CE4_SZ_QCN7605=2048 \
-                                                CONFIG_SIR_SAP_MAX_NUM_PEERS=32 \
+						CONFIG_SIR_SAP_MAX_NUM_PEERS=32 \
+						CONFIG_AUTO_PLATFORM=y \
                         "
 EXTRA_OEMAKE_append_sa515m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_515}"
 EXTRA_OEMAKE_append_sdxprairie = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_515}"
