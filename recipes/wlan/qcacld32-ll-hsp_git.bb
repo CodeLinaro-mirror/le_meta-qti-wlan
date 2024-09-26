@@ -46,6 +46,7 @@ EXTRA_OEMAKE:append = " CONFIG_CLD_HL_SDIO_CORE=n \
 
 KERNEL_CC += "-Wno-error=misleading-indentation"
 KERNEL_CC += "-w"
+KERNEL_CC += "-Wno-packed-bitfield-compat"
 
 #Enable/Disable IPA by MACHINE name
 EXTRA_OEMAKE:append:sa515m = " CONFIG_ENABLE_IPA=n"
