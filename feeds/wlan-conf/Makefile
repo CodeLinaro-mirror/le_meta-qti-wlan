@@ -26,6 +26,12 @@ else ifeq ($(BOARD),sdx75)
 	ifeq ($(TARGET_VARIANT),perf)
 		WLAN_INI_FILE := $(WLAN_INI_PERF)
 	endif
+else ifeq ($(BOARD),sdx85)
+	CONFIGURE_ARGS += --enable-target-sdxkova=yes
+	WLAN_SUB_ADDR :=wlan_sdxkova
+	ifeq ($(TARGET_VARIANT),perf)
+		WLAN_INI_FILE := $(WLAN_INI_PERF)
+	endif
 else ifeq ($(BOARD),sdx35)
 	CONFIGURE_ARGS += --enable-target-sdxbaagha=yes
 	WLAN_SUB_ADDR :=wlan_sdxbaagha
