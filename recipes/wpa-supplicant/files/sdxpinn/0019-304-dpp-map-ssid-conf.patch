@@ -1,0 +1,163 @@
+From 03d7bdf5eb0bfda18b8846f18172ce7511bbe0bb Mon Sep 17 00:00:00 2001
+From: Xinyue Ling <quic_xinyling@quicinc.com>
+Date: Tue, 30 Apr 2024 14:43:33 +0800
+Subject: [PATCH 19/41] 304-dpp-map-ssid-conf
+
+Change-Id: I781dabd598d6cb764cca74222aa062a50d29ed91
+Signed-off-by: Chenming Huang <quic_chenhuan@quicinc.com>
+---
+ src/ap/dpp_hostapd.c            |  5 +++--
+ src/ap/wpa_auth.c               |  1 +
+ src/common/dpp.c                | 10 +++++++---
+ src/rsn_supp/wpa.c              |  1 +
+ wpa_supplicant/dpp_supplicant.c | 13 ++++++++-----
+ wpa_supplicant/gas_query.c      |  6 +++---
+ 6 files changed, 23 insertions(+), 13 deletions(-)
+
+diff --git a/src/ap/dpp_hostapd.c b/src/ap/dpp_hostapd.c
+index d3ab9d0235..0cddf63863 100644
+--- a/src/ap/dpp_hostapd.c
++++ b/src/ap/dpp_hostapd.c
+@@ -711,8 +711,9 @@ static void hostapd_dpp_set_testing_options(struct hostapd_data *hapd,
+ 			os_strdup(hapd->dpp_discovery_override);
+ 	if (hapd->dpp_groups_override)
+ 		auth->groups_override = os_strdup(hapd->dpp_groups_override);
+-	auth->ignore_netaccesskey_mismatch =
+-		hapd->dpp_ignore_netaccesskey_mismatch;
++	if (hapd->dpp_ignore_netaccesskey_mismatch)
++		auth->ignore_netaccesskey_mismatch =
++			hapd->dpp_ignore_netaccesskey_mismatch;
+ #endif /* CONFIG_TESTING_OPTIONS */
+ }
+ 
+diff --git a/src/ap/wpa_auth.c b/src/ap/wpa_auth.c
+index 75416d7dca..f06fb0d667 100644
+--- a/src/ap/wpa_auth.c
++++ b/src/ap/wpa_auth.c
+@@ -3928,6 +3928,7 @@ SM_STATE(WPA_PTK, PTKCALCNEGOTIATING)
+ 			   kde.dpp_kde[0], kde.dpp_kde[1]);
+ 		if (sm->wpa_key_mgmt == WPA_KEY_MGMT_DPP &&
+ 		    wpa_auth->conf.dpp_pfs != 2 &&
++		    !wpa_auth->conf.no_group_delay &&
+ 		    (kde.dpp_kde[1] & DPP_KDE_PFS_ALLOWED) &&
+ 		    !sm->dpp_z) {
+ 			wpa_printf(MSG_INFO,
+diff --git a/src/common/dpp.c b/src/common/dpp.c
+index eebbdb4d3c..6b8dca7768 100644
+--- a/src/common/dpp.c
++++ b/src/common/dpp.c
+@@ -1260,6 +1260,10 @@ static int dpp_configuration_parse_helper(struct dpp_authentication *auth,
+ 		/* use a default SSID for legacy testing reasons */
+ 		os_memcpy(conf->ssid, "test", 4);
+ 		conf->ssid_len = 4;
++		if (!auth->dpp_map) {
++			os_memcpy(conf->ssid, "test", 4);
++			conf->ssid_len = 4;
++		}
+ #else /* CONFIG_TESTING_OPTIONS */
+ 		goto fail;
+ #endif /* CONFIG_TESTING_OPTIONS */
+@@ -1358,7 +1362,7 @@ static int dpp_configuration_parse_helper(struct dpp_authentication *auth,
+ 			goto fail;
+ 	}
+ 
+-	if (!dpp_configuration_valid(conf))
++	if (!auth->dpp_map && !dpp_configuration_valid(conf))
+ 		goto fail;
+ 
+ 	if (idx == 0) {
+@@ -3264,13 +3268,13 @@ static enum dpp_akm dpp_akm_from_str(const char *akm)
+ 		return DPP_AKM_PSK;
+ 	if (os_strcmp(akm, "sae") == 0)
+ 		return DPP_AKM_SAE;
+-	if (os_strcmp(akm, "psk+sae") == 0)
++	if (os_strcmp(akm, "psk+sae") == 0 || os_strcmp(akm, "sae+psk") == 0)
+ 		return DPP_AKM_PSK_SAE;
+ 	if (os_strcmp(akm, "dpp") == 0)
+ 		return DPP_AKM_DPP;
+ 	if (os_strcmp(akm, "dpp+sae") == 0)
+ 		return DPP_AKM_SAE_DPP;
+-	if (os_strcmp(akm, "dpp+psk+sae") == 0)
++	if (os_strcmp(akm, "dpp+psk+sae") == 0 || os_strcmp(akm, "dpp+sae+psk") == 0)
+ 		return DPP_AKM_PSK_SAE_DPP;
+ 	if (os_strcmp(akm, "dot1x") == 0)
+ 		return DPP_AKM_DOT1X;
+diff --git a/src/rsn_supp/wpa.c b/src/rsn_supp/wpa.c
+index 74ece31f3f..85f28e9b53 100644
+--- a/src/rsn_supp/wpa.c
++++ b/src/rsn_supp/wpa.c
+@@ -2691,6 +2691,7 @@ static void wpa_supplicant_process_3_of_4(struct wpa_sm *sm,
+ 			   "DPP: peer Protocol Version %u Flags 0x%x",
+ 			   ie.dpp_kde[0], ie.dpp_kde[1]);
+ 		if (sm->key_mgmt == WPA_KEY_MGMT_DPP && sm->dpp_pfs != 2 &&
++		    !sm->skip_validate_ie &&
+ 		    (ie.dpp_kde[1] & DPP_KDE_PFS_ALLOWED) && !sm->dpp_z) {
+ 			wpa_printf(MSG_INFO,
+ 				   "DPP: Peer indicated it supports PFS and local configuration allows this, but PFS was not negotiated for the association");
+diff --git a/wpa_supplicant/dpp_supplicant.c b/wpa_supplicant/dpp_supplicant.c
+index e2c22f5a88..18d0d2b5ff 100644
+--- a/wpa_supplicant/dpp_supplicant.c
++++ b/wpa_supplicant/dpp_supplicant.c
+@@ -721,8 +721,9 @@ static void wpas_dpp_set_testing_options(struct wpa_supplicant *wpa_s,
+ 	if (wpa_s->dpp_groups_override)
+ 		auth->groups_override =
+ 			os_strdup(wpa_s->dpp_groups_override);
+-	auth->ignore_netaccesskey_mismatch =
+-		wpa_s->dpp_ignore_netaccesskey_mismatch;
++	if (wpa_s->dpp_ignore_netaccesskey_mismatch)
++		auth->ignore_netaccesskey_mismatch =
++			wpa_s->dpp_ignore_netaccesskey_mismatch;
+ #endif /* CONFIG_TESTING_OPTIONS */
+ }
+ 
+@@ -1741,7 +1742,8 @@ static int wpas_dpp_handle_config_obj(struct wpa_supplicant *wpa_s,
+ 		 * message. */
+ 		wpa_msg(wpa_s, MSG_INFO, DPP_EVENT_CONNECTOR "%s",
+ 			conf->connector);
+-	} else if (conf->passphrase[0]) {
++	}
++	if (conf->passphrase[0]) {
+ 		char hex[64 * 2 + 1];
+ 
+ 		wpa_snprintf_hex(hex, sizeof(hex),
+@@ -1749,7 +1751,8 @@ static int wpas_dpp_handle_config_obj(struct wpa_supplicant *wpa_s,
+ 				 os_strlen(conf->passphrase));
+ 		wpa_msg(wpa_s, MSG_INFO, DPP_EVENT_CONFOBJ_PASS "%s",
+ 			hex);
+-	} else if (conf->psk_set) {
++	}
++	if (conf->psk_set) {
+ 		char hex[PMK_LEN * 2 + 1];
+ 
+ 		wpa_snprintf_hex(hex, sizeof(hex), conf->psk, PMK_LEN);
+@@ -4507,7 +4510,7 @@ wpas_dpp_gas_status_handler(void *ctx, struct wpabuf *resp, int ok)
+ 		wpabuf_free(resp);
+ 		eloop_cancel_timeout(wpas_dpp_config_result_wait_timeout,
+ 				     wpa_s, NULL);
+-		eloop_register_timeout(2, 0,
++		eloop_register_timeout(4, 0,
+ 				       wpas_dpp_config_result_wait_timeout,
+ 				       wpa_s, NULL);
+ 		return;
+diff --git a/wpa_supplicant/gas_query.c b/wpa_supplicant/gas_query.c
+index 7d29931796..5d3a1f4b32 100644
+--- a/wpa_supplicant/gas_query.c
++++ b/wpa_supplicant/gas_query.c
+@@ -24,11 +24,11 @@
+ 
+ 
+ /** GAS query timeout in seconds */
+-#define GAS_QUERY_TIMEOUT_PERIOD 2
++#define GAS_QUERY_TIMEOUT_PERIOD 6
+ 
+ /* GAS query wait-time / duration in ms */
+-#define GAS_QUERY_WAIT_TIME_INITIAL 1000
+-#define GAS_QUERY_WAIT_TIME_COMEBACK 150
++#define GAS_QUERY_WAIT_TIME_INITIAL 4000
++#define GAS_QUERY_WAIT_TIME_COMEBACK 1000
+ 
+ #define GAS_QUERY_MAX_COMEBACK_DELAY 60000
+ 
+-- 
+2.17.1
+
