@@ -16,6 +16,10 @@ HOSTAPD_CONFIG_FILE := $(PKG_BUILD_DIR)/hostapd/.config
 ifeq ($(BOARD),sdx65)
 	TARGET_ADD_CONFIG += echo -e "\nCONFIG_WEP=y" >> $(HOSTAPD_CONFIG_FILE)
 	TARGET_LOCAL_NAME :=sdxlemur
+else ifeq ($(BOARD),sdx85)
+	TARGET_ADD_CONFIG += echo -e "\nCONFIG_WEP=y" >> $(HOSTAPD_CONFIG_FILE)
+	TARGET_CFLAGS += -DCONFIG_CTRL_IFACE_DIR=\\\"/data/vendor/wifi/hostapd\\\"
+	TARGET_LOCAL_NAME :=sdxkova
 else ifeq ($(BOARD),sdx75)
 	TARGET_ADD_CONFIG += echo -e "\nCONFIG_WEP=y" >> $(HOSTAPD_CONFIG_FILE)
 	TARGET_CFLAGS += -DCONFIG_CTRL_IFACE_DIR=\\\"/data/vendor/wifi/hostapd\\\"
