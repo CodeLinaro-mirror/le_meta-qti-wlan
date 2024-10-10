@@ -196,10 +196,11 @@ do_module_signing() {
         bbnote "Signing ${PN} module"
         ${STAGING_KERNEL_DIR}/scripts/sign-file sha512 ${STAGING_KERNEL_BUILDDIR}/signing_key.priv ${STAGING_KERNEL_BUILDDIR}/signing_key.x509 ${PKGDEST}/${PROVIDES_NAME}/lib/modules/${KERNEL_VERSION}/extra/${_MODNAME}.ko
     elif [ -f ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.pem ]; then
+        bbnote "Signing ${PN} module with pem"
         ${STAGING_KERNEL_BUILDDIR}/scripts/sign-file sha512 ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.pem ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.x509 ${PKGDEST}/${PN}/lib/modules/${KERNEL_VERSION}/extra/${_MODNAME}.ko
     else
         bbnote "${PN} module is not being signed"
     fi
 }
 
-addtask module_signing after do_package before do_package_write_ipk
+addtask module_signing after do_package before do_package_qa do_package_write_ipk
