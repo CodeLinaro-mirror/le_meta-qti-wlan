@@ -91,4 +91,4 @@ do_module_signing() {
     fi
 }
 
-addtask module_signing after do_package before do_package_write_ipk
+addtask module_signing after do_package before do_package_qa do_package_write_ipk
