@@ -229,9 +229,9 @@ index 771f37b..7e1b379 100644
 +#define WIFI_CFG_CMD 1
 +#endif
 +
- #define RADIO_PREFIX "pdev"
- #define RADIO0_NAME "pdev0"
- #define RADIO1_NAME "pdev1"
+ #define RADIO_PREFIX "wifi"
+ #define RADIO0_NAME "wifi0"
+ #define RADIO1_NAME "wifi1"
 -- 
 2.17.1
 
