@@ -1,16 +1,18 @@
-From 531a7d09f6ef7468b3e2d5941345e7ce096373ae Mon Sep 17 00:00:00 2001
+From 1e2fa3e716671abc399d9844ece30148c79355cc Mon Sep 17 00:00:00 2001
 From: Chenming Huang <quic_chenhuan@quicinc.com>
 Date: Wed, 4 Sep 2024 09:44:45 +0530
-Subject: [PATCH 10/10] sigma-dut: Fix KW issues
+Subject: [PATCH 10/10] sigma-dut: Fix KW issues and reset configures
 
-Fix KW static analysis issues.
+Fix KW static analysis issues. Meanwhile, this change also reset
+/etc/config/ezlbd,ezmesh,repacd,wireless,wsplcd, in case different
+test case required different configures.
 
 Change-Id: I9a62b133010b300f9e32116d06da47d93a7b8413
 Signed-off-by: Chenming Huang <quic_chenhuan@quicinc.com>
 ---
- dpp.c | 4 ++++
- map.c | 5 +++++
- 2 files changed, 9 insertions(+)
+ dpp.c |  4 ++++
+ map.c | 10 ++++++++++
+ 2 files changed, 14 insertions(+)
 
 diff --git a/dpp.c b/dpp.c
 index d3c3985..3bb7e9f 100644
@@ -28,7 +30,7 @@ index d3c3985..3bb7e9f 100644
  	if (dut->program == PROGRAM_MAP ||
  	    dut->program == PROGRAM_MAPR2 ||
 diff --git a/map.c b/map.c
-index 0ef27b6..c199910 100644
+index 0ef27b6..5f92d5a 100644
 --- a/map.c
 +++ b/map.c
 @@ -1173,6 +1173,11 @@ int map_dpp_get_local_bootstrap(struct sigma_dut *dut, struct sigma_conn *conn,
@@ -43,6 +45,18 @@ index 0ef27b6..c199910 100644
  	index = max - 1;
  	if (success)
  		*success = 0;
+@@ -4904,6 +4909,11 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 	int radio_count, radio_no;
+ 	char buf[64];
+ 
++	/* Incase different case/config side effect, reset
++	 *  /etc/config/ezlbd,ezmesh,repacd,wireless,wsplcd
++	 */
++	run_system_wrapper(dut, "ucitool restore_default_config");
++
+ 	for (radio_count = 0; radio_count < MAX_RADIO; radio_count++) {
+ 		snprintf(buf, sizeof(buf), "RADIO_PREFIX%d", radio_count);
+ 		for (radio_no = 0; radio_no < MAX_RADIO; radio_no++) {
 -- 
 2.17.1
 
