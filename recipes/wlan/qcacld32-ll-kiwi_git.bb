@@ -11,6 +11,7 @@ do_unpack[deptask] = "do_populate_sysroot"
 PR = "r8"
 PV = "2.0"
 DEPENDS += "wlan-platform"
+DEPENDS:append:kalama:ubuntu = " cfg80211w"
 
 do_configure[depends] += "virtual/kernel:do_shared_workdir"
 
@@ -34,6 +35,10 @@ BUILD_FLAGS = "CONFIG_QCA_CLD_WLAN_PROFILE=${TARGET_WLAN_CHIP} MODNAME=${WLAN_CH
 
 KERNEL_VERSION = "${@get_kernelversion_file("${STAGING_KERNEL_BUILDDIR}")}"
 EXT_MODULES = "${@os.path.relpath("${S}", "${KERNEL_PLATFORM_PATH}")}"
+SYMVERS = "KBUILD_EXTRA_SYMBOLS=${STAGING_DIR_HOST}/lib/modules/${KERNEL_VERSION}/cnsswlan-kernel/Module.symvers"
+SYMVERS:append:kalama:ubuntu = " KBUILD_EXTRA_SYMBOLS+=${STAGING_DIR_HOST}/lib/modules/${KERNEL_VERSION}/cfg80211w/cfg80211w.symvers"
+ADDITIONAL_CONFIGS = ""
+ADDITIONAL_CONFIGS:append:kalama:ubuntu = " CONFIG_CFG80211_PROP_MULTI_LINK_SUPPORT=y CONFIG_NL80211_TESTMODE=y "
 
 do_configure:append:sxrneo() {
     sed -i '1i DYNAMIC_SINGLE_CHIP=${TARGET_WLAN_CHIP}' ${WORKDIR}/wlan/qcacld-3.0/configs/${TARGET_WLAN_CHIP}_defconfig
@@ -46,9 +51,9 @@ do_compile() {
     cd ${KERNEL_PLATFORM_PATH}
     BUILD_CONFIG=msm-kernel/${KERNEL_CONFIG} \
     EXT_MODULES=../../wlan/qcacld-3.0/ \
+    KERNEL_KIT=${KERNEL_PREBUILT_PATH} \
     ROOTDIR=${WORKDIR}/ \
-    MODULE_OUT=${S} \
-    OUT_DIR=../out/${KERNEL_DEFCONFIG} \
+    OUT_DIR=${WORKDIR}/out/${KERNEL_DEFCONFIG} \
     KERNEL_UAPI_HEADERS_DIR=${STAGING_KERNEL_BUILDDIR} \
     ./build/build_module.sh \
     WLAN_PROFILE=${MODULE_NAME} \
@@ -70,7 +75,8 @@ do_compile() {
     CONFIG_WLAN_DP_LOCAL_PKT_CAPTURE=n \
     KERNEL_SUPPORTS_NESTED_COMPOSITES=n \
     BUILD_DEBUG_VERSION=y \
-    KBUILD_EXTRA_SYMBOLS=${STAGING_DIR_HOST}/lib/modules/${KERNEL_VERSION}/cnsswlan-kernel/Module.symvers
+    ${ADDITIONAL_CONFIGS} \
+    ${SYMVERS}
 }
 
 do_install() {
