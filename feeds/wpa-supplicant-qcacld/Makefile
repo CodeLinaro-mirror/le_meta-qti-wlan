@@ -31,7 +31,9 @@ else ifeq ($(BOARD),sdx75)
 		echo -e "\nCONFIG_WEP=y" >> $(SUPPLICANT_CONFIG_FILE)
 
 else ifeq ($(BOARD),sdx85)
-	TARGET_LOCAL_NAME :=sdxkova
+	# Reuse sdxpinn for now.
+	# To be revised if hostapd branch out later or divergency.
+	TARGET_LOCAL_NAME :=sdxpinn
 	TARGET_CPPFLAGS += -I$(STAGING_DIR)/usr/include/qmi
 	TARGET_CFLAGS += -DCONFIG_CTRL_IFACE_DIR=\\\"/data/vendor/wifi/wpa_supplicant\\\"
 	TARGET_ADD_CONFIG := echo -e "\nCONFIG_EAP_PROXY=qmi" >> $(SUPPLICANT_CONFIG_FILE) && \
