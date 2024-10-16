@@ -33,7 +33,7 @@ S = "${WORKDIR}/wlan/qcacld-3.0/"
 
 FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld"
 
-do_configure:append:sxrneo() {
+do_configure:append:neo() {
     sed -i '1i CONFIG_CLD_HL_SDIO_CORE=n' ${WORKDIR}/wlan/qcacld-3.0/configs/default_defconfig
     sed -i '1i CONFIG_CNSS_SDIO=n' ${WORKDIR}/wlan/qcacld-3.0/configs/default_defconfig
     sed -i '1i CONFIG_CNSS_QCA6750=y' ${WORKDIR}/wlan/qcacld-3.0/configs/default_defconfig

@@ -23,6 +23,11 @@ else ifeq ($(TARGET_MACHINE),sxrneo)
 			     echo -e "\nLIBS +=-llog" >> $(HOSTAPD_CONFIG_FILE)
 	TARGET_LOCAL_NAME :=sxrneo
 	TARGET_CFLAGS += -DCONFIG_ANDROID_LOG
+else ifeq ($(TARGET_MACHINE),sxrneo-ar-sg1)
+	TARGET_ADD_CONFIG += echo -e "\nLIBS_c +=-llog" >> $(HOSTAPD_CONFIG_FILE) && \
+			     echo -e "\nLIBS +=-llog" >> $(HOSTAPD_CONFIG_FILE)
+	TARGET_LOCAL_NAME :=sxrneo-ar-sg1
+	TARGET_CFLAGS += -DCONFIG_ANDROID_LOG
 else
 	TARGET_LOCAL_NAME :=$(TARGET_MACHINE)
 endif

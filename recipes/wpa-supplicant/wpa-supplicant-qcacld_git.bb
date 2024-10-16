@@ -9,7 +9,7 @@ FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://external/wpa_supplicant_8/"
 SRC_URI += "file://${BASEMACHINE}/"
 SRC_URI += "file://misc/"
-SRC_URI:append:sxrneo += "file://${MACHINE}/"
+SRC_URI:append:neo += "file://${BASEMACHINE}/"
 
 DEPENDS += "glib-2.0 wpa-supplicant-8-lib dbus liblog"
 DEPENDS:append:kalama = " qmi-framework "
@@ -21,8 +21,8 @@ FILES:${PN} += "/usr/include/*"
 S = "${WORKDIR}/external/wpa_supplicant_8/wpa_supplicant"
 PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"
 
-LDFLAGS:append:sxrneo = " -Wl,--no-as-needed -L${RECIPE_SYSROOT}/usr/lib -llog"
-CFLAGS:append:sxrneo =" -DCONFIG_ANDROID_LOG"
+LDFLAGS:append:neo = " -Wl,--no-as-needed -L${RECIPE_SYSROOT}/usr/lib -llog"
+CFLAGS:append:neo =" -DCONFIG_ANDROID_LOG"
 
 do_configure() {
     if [ "$(ls -A "${WORKDIR}/${BASEMACHINE}")" ]
@@ -41,11 +41,11 @@ do_configure() {
     fi
 }
 
-do_configure:sxrneo() {
+do_configure:neo() {
     bbwarn "============================================================"
-    bbwarn "picking ${WORKDIR}/${MACHINE}"
+    bbwarn "picking ${WORKDIR}/${BASEMACHINE}"
     bbwarn "============================================================"
-    install -m 0644 ${WORKDIR}/${MACHINE}/defconfig-qcacld .config
+    install -m 0644 ${WORKDIR}/${BASEMACHINE}/defconfig-qcacld .config
     echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
     rm -rf ${STAGING_LIBDIR}/libwpa_supplicant_8_lib.so*
     echo "EXTRALIBS +=\"-llog\"" >> .config
@@ -77,13 +77,13 @@ do_patch() {
     fi
 }
 
-do_patch:sxrneo() {
+do_patch:neo() {
     cd ${PATCH_DIR}
-    if [ "$(ls -A "${WORKDIR}/${MACHINE}")" ]
+    if [ "$(ls -A "${WORKDIR}/${BASEMACHINE}")" ]
     then
         bbwarn "============================================================"
-        bbwarn "picking ${WORKDIR}/${MACHINE}"
+        bbwarn "picking ${WORKDIR}/${BASEMACHINE}"
         bbwarn "============================================================"
-        patch -p1 < ${WORKDIR}/${MACHINE}/driver_cmd.patch
+        patch -p1 < ${WORKDIR}/${BASEMACHINE}/driver_cmd.patch
     fi
 }
