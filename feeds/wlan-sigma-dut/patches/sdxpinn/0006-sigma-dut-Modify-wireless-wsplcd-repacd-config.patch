@@ -1,0 +1,237 @@
+From 624ff1b52b74872a1b76143f914f4db26db79b95 Mon Sep 17 00:00:00 2001
+From: Wu Gao <quic_wugao@quicinc.com>
+Date: Wed, 22 May 2024 20:02:34 -0700
+Subject: [PATCH 06/10] sigma-dut: Modify wireless/wsplcd/repacd config
+
+This change removes/adds some wireless/wsplcd/repacd config to support
+MAP with HMT.
+
+CRs-Fixed: 3893994
+Change-Id: I67850414e18c6ebb8133643805a7a40a8b71018f
+Signed-off-by: Chenming Huang <quic_chenhuan@quicinc.com>
+---
+ map.c       | 62 ++++++++++++++++++++++++++++++++++-------------------
+ sigma_dut.h |  5 +++++
+ 2 files changed, 45 insertions(+), 22 deletions(-)
+
+diff --git a/map.c b/map.c
+index a409ad0..d3ab2ad 100644
+--- a/map.c
++++ b/map.c
+@@ -305,12 +305,19 @@ static int map_set_wifi_macaddr(struct sigma_dut *dut,
+ const char *get_param2(struct sigma_cmd *cmd, const char *name, int *ndx)
+ {
+ 	int i;
++
++	printf("qcdbg, enter get_param2, name: %s\n", name);
++
+ 	for (i = 0; i < cmd->count; i++) {
++		printf("qcdbg, name:%s, cmd->params[%d]=%s, cmd->values[%d]=%s\n",
++			name, i, cmd->params[i], i, ((!cmd->values[i]) ? "NULL" : cmd->values[i]));
+ 		if (strcasecmp(name, cmd->params[i]) == 0) {
+ 			*ndx = i;
++			printf("qcdbg, exit get_param2, find name: %s, *ndx=%d\n", name, i);
+ 			return cmd->values[i];
+ 		}
+ 	}
++	printf("qcdbg, exit get_param2, failed to find name: %s\n", name);
+ 	*ndx = -1;
+ 	return NULL;
+ }
+@@ -4970,7 +4977,7 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 		run_system_wrapper(dut, "uci set ezmesh.config.Enable=0");
+ 		run_system_wrapper(dut, "uci set wsplcd.config.HyFiSecurity=0");
+ 		run_system_wrapper(dut,
+-				   "uci set wsplcd.config.DebugLevel=ERROR");
++				   "uci set wsplcd.config.DebugLevel=DUMP");
+ 		if (num_mac_addr > 0) {
+ 			if (map_set_wifi_macaddr(dut, sigma_wifi_macaddr, radio_id) < 0)
+ 					sigma_dut_print(dut, DUT_MSG_DEBUG, "MAP: mac addrval not set");
+@@ -4980,12 +4987,14 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 			/* Set up the defaults */
+ 			owrt_ap_set_radio(dut, radio_id[0], "disabled", "0");
+ 			owrt_ap_set_radio(dut, radio_id[1], "disabled", "0");
+-			owrt_ap_set_radio(dut, radio_id[0], "htmode", "HT20");
++			owrt_ap_set_radio(dut, radio_id[0], "hwmode", "11axa");
++			owrt_ap_set_radio(dut, radio_id[1], "hwmode", "11axg");
++			/*owrt_ap_set_radio(dut, radio_id[0], "htmode", "HT20");
+ 			owrt_ap_set_radio(dut, radio_id[1], "htmode", "HT20");
+ 			owrt_ap_set_radio(dut, radio_id[0], "txchainmask", "1");
+ 			owrt_ap_set_radio(dut, radio_id[1], "txchainmask", "1");
+ 			owrt_ap_set_radio(dut, radio_id[0], "rxchainmask", "1");
+-			owrt_ap_set_radio(dut, radio_id[1], "rxchainmask", "1");
++			owrt_ap_set_radio(dut, radio_id[1], "rxchainmask", "1");*/
+ 			if (num_radio == 3) {
+ 				owrt_ap_set_radio(dut, radio_id[2], "disabled", "0");
+ 				owrt_ap_set_radio(dut, radio_id[2], "htmode", "HT20");
+@@ -5003,20 +5012,22 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 				}
+ 									owrt_ap_set_vap(dut, radio_id[2], "MapBSSType", "32");
+ 			} else {
+-				owrt_ap_set_radio(dut, radio_id[0], "channel", "36");
++				owrt_ap_set_radio(dut, radio_id[0], "channel", "auto");
+ 				owrt_ap_set_radio(dut, radio_id[1], "channel", "6");
+ 			}
+ 
+-			owrt_ap_set_vap(dut, radio_id[0], "wds", "1");
+-			owrt_ap_set_vap(dut, radio_id[1], "wds", "1");
++			//owrt_ap_set_vap(dut, radio_id[0], "wds", "1");
++			//owrt_ap_set_vap(dut, radio_id[1], "wds", "1");
+ 			if (dut->program == PROGRAM_MAP || dut->program == PROGRAM_DE ) {
+ 				owrt_ap_set_vap(dut, radio_id[0], "map", "1");
+ 				owrt_ap_set_vap(dut, radio_id[1], "map", "1");
+ 			} else {
+-				owrt_ap_set_vap(dut, radio_id[0], "map", "2");
+-				owrt_ap_set_vap(dut, radio_id[1], "map", "2");
+-				owrt_ap_set_radio(dut, radio_id[0], "no_vlan", "1");
+-				owrt_ap_set_radio(dut, radio_id[1], "no_vlan", "1");
++				owrt_ap_set_vap(dut, radio_id[0], "map", "1");
++				owrt_ap_set_vap(dut, radio_id[1], "map", "1");
++				//owrt_ap_set_vap(dut, radio_id[0], "map", "2");
++				//owrt_ap_set_vap(dut, radio_id[1], "map", "2");
++				//owrt_ap_set_radio(dut, radio_id[0], "no_vlan", "1");
++				//owrt_ap_set_radio(dut, radio_id[1], "no_vlan", "1");
+ 			}
+ 
+ 			owrt_ap_set_vap(dut, radio_id[0], "MapBSSType", "32");
+@@ -5032,6 +5043,9 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 			run_system_wrapper(dut, "uci commit wireless");
+ 
+ 			/* Set ezmesh Parameters */
++			run_system_wrapper(dut, "uci set ezmesh.config.ezmeshlog=1");
++			run_system_wrapper(dut, "uci set ezmesh.config.LogFileSize=10240");
++
+ 			run_system_wrapper(dut, "uci set ezmesh.config.Enable=1");
+ 			run_system_wrapper(dut, "uci set ezmesh.config.Mode=HYROUTER");
+ 			run_system_wrapper(dut,
+@@ -5063,7 +5077,7 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 					"uci set ezmesh.MultiAP.VlanNetworkPrimary="DEFAULT_BRIDGE);
+ 			}
+ #endif
+-								run_system_wrapper(dut,
++			/*					run_system_wrapper(dut,
+ 										"uci set ezmesh.MAPQoSMSettings.EnableMSCS=0");
+ 								run_system_wrapper(dut,
+ 										"uci set ezmesh.MAPQoSMSettings.EnableSCS=0");
+@@ -5071,7 +5085,7 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 										"uci set ezmesh.MAPQoSMSettings.EnableQosMap=0");
+ 								run_system_wrapper(dut,
+ 										"uci set ezmesh.MAPQoSMSettings.EnableDscpPolicy=0");
+-
++				*/
+ 				run_system_wrapper(dut,
+ 					"uci set ezmesh.MultiAP.EnableBootOnlyScan=0");
+ 				run_system_wrapper(dut,
+@@ -5143,7 +5157,7 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 			run_system_wrapper(dut,"uci set repacd.MAPConfig.Enable=1");
+ 			run_system_wrapper(dut,"uci set repacd.MAPConfig.EnableLiteMode=1");
+ 			run_system_wrapper(dut,"uci set repacd.MAPConfig.MapDeviceMode=CAP");
+-			run_system_wrapper(dut,"uci set repacd.MAPConfig.MapDevResetDefault=1");
++			//run_system_wrapper(dut,"uci set repacd.MAPConfig.MapDevResetDefault=1");
+ 
+ 			if (dut->program == PROGRAM_MAP || dut->program == PROGRAM_DE)
+ 				run_system_wrapper(dut,
+@@ -5157,9 +5171,9 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 			else if (dut->program == PROGRAM_MAPR4)
+ 				run_system_wrapper(dut,
+ 					"uci set repacd.MAPConfig.MapVersionEnabled=4");
+-						else
+-								run_system_wrapper(dut,
+-										"uci set repacd.MAPConfig.MapVersionEnabled=5");
++			else
++				run_system_wrapper(dut,
++					"uci set repacd.MAPConfig.MapVersionEnabled=5");
+ 
+ 
+ #ifdef CONFIG_BUILD_YOCTO
+@@ -5183,6 +5197,10 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 			run_system_wrapper(dut,"uci set repacd.MAPConfig.OnboardingType=legacy");
+ 			run_system_wrapper(dut,"uci set repacd.repacd.Ezmesh=1");
+ 			run_system_wrapper(dut,"uci commit repacd");
++
++			//update network
++			run_system_wrapper(dut,"uci set network.lan.ifname='eth0 eth1 wlan0 wlan1 wlan2 wlan3'");
++			run_system_wrapper(dut,"uci commit network");
+ #ifndef CONFIG_BUILD_YOCTO
+ 			run_system_wrapper(dut, INIT_SCRIPT_PATH"repacd start");
+ #else
+@@ -5398,7 +5416,7 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 			run_system_wrapper(dut,"uci set repacd.MAPConfig.Enable=1");
+ 			run_system_wrapper(dut,"uci set repacd.MAPConfig.EnableLiteMode=1");
+ 
+-			run_system_wrapper(dut,"uci set repacd.MAPConfig.MapDevResetDefault=1");
++			//run_system_wrapper(dut,"uci set repacd.MAPConfig.MapDevResetDefault=1");
+ 
+ 			if (dut->program == PROGRAM_MAP || dut->program == PROGRAM_DE)
+ 				run_system_wrapper(dut,
+@@ -6434,7 +6452,7 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+ 
+ 			for (radio_count = 0; radio_count < MAX_RADIO;
+ 			     radio_count++) {
+-				snprintf(buf, sizeof(buf), "%s%d", "wifi",
++				snprintf(buf, sizeof(buf), "%s%d", RADIO_PREFIX,
+ 					 radio_count);
+ 				for (radio_no = 0; radio_no < MAX_RADIO;
+ 				     radio_no++) {
+@@ -6454,7 +6472,7 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+ 			int actual_radio_count = 0;
+ 			for (radio_count = 0; radio_count < MAX_RADIO; radio_count++) {
+ 				snprintf(buf, sizeof(buf), "uci get wireless.%s%d.macaddr",
+-						"wifi", radio_count);
++						RADIO_PREFIX, radio_count);
+ 				radio = popen(buf, "r");
+ 				if (radio) {
+ 					if (fgets(buf, sizeof(buf), radio) != NULL) {
+@@ -6533,7 +6551,7 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+ 				} else {
+ 					run_system_wrapper(dut,
+ 						"uci set repacd.MAPConfig."
+-						"MapSTARadio=wifi0");
++						"MapSTARadio="RADIO0_NAME);
+ 					if (strcasecmp(typeval, "dpp") == 0 )
+ 						run_system_wrapper(dut,
+ 							"uci set repacd.MAPConfig."
+@@ -6639,7 +6657,7 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+ 				} else {
+ 					run_system_wrapper(dut,
+ 						"uci set repacd.MAPConfig."
+-						"MapSTARadio=wifi1");
++						"MapSTARadio="RADIO1_NAME);
+ 					if (strcasecmp(typeval, "dpp") == 0 )
+ 							run_system_wrapper(dut,
+ 							"uci set repacd.MAPConfig."
+@@ -6760,7 +6778,7 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+ 					} else {
+ 						run_system_wrapper(dut,
+ 							"uci set repacd.MAPConfig."
+-							"MapSTARadio=wifi2");
++							"MapSTARadio="RADIO2_NAME);
+ 						 if (strcasecmp(typeval, "dpp") == 0 )
+ 							run_system_wrapper(dut,
+ 							     "uci set repacd.MAPConfig."
+diff --git a/sigma_dut.h b/sigma_dut.h
+index 771f37b..7e1b379 100644
+--- a/sigma_dut.h
++++ b/sigma_dut.h
+@@ -29,6 +29,7 @@
+ #include <sys/types.h>
+ #include <sys/socket.h>
+ #include <net/if.h>
++#include <linux/version.h>
+ #ifdef __QNXNTO__
+ #include <sys/select.h>
+ #include <net/if_ether.h>
+@@ -115,6 +116,10 @@ struct sigma_dut;
+ /* Set default operating channel width 80 MHz */
+ #define VHT_DEFAULT_OPER_CHWIDTH AP_80_VHT_OPER_CHWIDTH
+ 
++#if LINUX_VERSION_CODE > KERNEL_VERSION(5,4,24)
++#define WIFI_CFG_CMD 1
++#endif
++
+ #define RADIO_PREFIX "wifi"
+ #define RADIO0_NAME "wifi0"
+ #define RADIO1_NAME "wifi1"
+-- 
+2.17.1
+

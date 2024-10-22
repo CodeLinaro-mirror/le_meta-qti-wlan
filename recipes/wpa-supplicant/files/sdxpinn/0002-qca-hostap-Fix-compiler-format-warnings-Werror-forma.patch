@@ -1,0 +1,31 @@
+From 4a0f18695d9db958755e089c1b49967e632e2318 Mon Sep 17 00:00:00 2001
+From: Naresh Parati <quic_c_nparat@quicinc.qualcomm.com>
+Date: Mon, 21 Sep 2020 18:24:46 +0530
+Subject: [PATCH 02/41] qca-hostap: Fix compiler format warnings -Werror=format
+
+On kernel5.4 workspace with GCC v7 had format warnings.
+size_t type has different size on 32bit and 64bit.
+this change is to make code compile for 32bit and 64bit.
+
+Change-Id: I71f5ad0effac037ee0a50cec96e057a3f8cd6fd2
+Signed-off-by: Naresh Parati <quic_c_nparat@quicinc.qualcomm.com>
+---
+ src/drivers/eap1905_sta.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/drivers/eap1905_sta.c b/src/drivers/eap1905_sta.c
+index 521bfa09ed..eff069deeb 100644
+--- a/src/drivers/eap1905_sta.c
++++ b/src/drivers/eap1905_sta.c
+@@ -109,7 +109,7 @@ static int supp_ether_send(void *ctx, const u8 *dest, u16 proto, const u8 *buf,
+ 
+ 	u8 send_buffer[1024] = {0} ;
+ 	send_buffer[0] = EVENT_1905_EAPOL;
+-	wpa_printf(MSG_DEBUG, "TX EPAOL : data_len:%d ", len);
++	wpa_printf(MSG_DEBUG, "TX EPAOL : data_len:%lu ", (long unsigned int)len);
+ 
+ 	wpa_printf(MSG_DEBUG, "AUTH: TX EAPOL dest addr=" MACSTR,
+ 		   MAC2STR(dest));
+-- 
+2.17.1
+

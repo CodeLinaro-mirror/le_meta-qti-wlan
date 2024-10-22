@@ -1,0 +1,111 @@
+From 6f6ed495ea7f61e3fe0597bc291c2e2d40bf1552 Mon Sep 17 00:00:00 2001
+From: Wu Gao <quic_wugao@quicinc.com>
+Date: Mon, 27 May 2024 02:20:11 -0700
+Subject: [PATCH 07/10] sigma-dut: Add MAP support for parse_mac_address
+
+Add MAP support for parse_mac_address.
+
+CRs-Fixed: 3893994
+Change-Id: Idc9d05e0897f98ef88d3c674878c7b0276f8d477
+Signed-off-by: Chenming Huang <quic_chenhuan@quicinc.com>
+---
+ utils.c | 77 +++++++++++++++++++++++++++++++++++----------------------
+ 1 file changed, 48 insertions(+), 29 deletions(-)
+
+diff --git a/utils.c b/utils.c
+index 13bb7b7..2e88f03 100644
+--- a/utils.c
++++ b/utils.c
+@@ -313,41 +313,60 @@ int parse_hexstr(const char *hex, unsigned char *buf, size_t buflen)
+ 	return i;
+ }
+ 
+-
+ int parse_mac_address(struct sigma_dut *dut, const char *arg,
+-		      unsigned char *addr)
++                      unsigned char *addr)
+ {
+-	int i;
+-	const char *pos = arg;
+-
+-	if (strlen(arg) != 17)
+-		goto fail;
+-
+-	for (i = 0; i < ETH_ALEN; i++) {
+-		int val;
+-
+-		val = hex_byte(pos);
+-		if (val < 0)
+-			goto fail;
+-		addr[i] = val;
+-		if (i + 1 < ETH_ALEN) {
+-			pos += 2;
+-			if (*pos != ':')
+-				goto fail;
+-			pos++;
+-		}
+-	}
+-
+-	return 0;
++        int i;
++        const char *pos = arg;
++        bool without_colon; // change
++
++        // remove 0x if present
++        if ((*(pos + 1) == 'x') || (*(pos + 1) == 'X'))
++                pos += 2;
++
++        if (*(pos + 2) != ':')
++                without_colon = true;
++        else
++                without_colon = false;
++
++        if ((strlen(pos) != 17 && !without_colon) ||
++                        (strlen(pos) != 12 && without_colon))
++                goto fail;
++
++        for (i = 0; i < ETH_ALEN; i++) {
++                int val;
++
++                val = hex_byte(pos);
++                if (val < 0)
++                        goto fail;
++                addr[i] = val;
++                if (i + 1 < ETH_ALEN) {
++                        pos += 2;
++                        if (!without_colon) {
++                                if (*pos != ':')
++                                        goto fail;
++                                pos++;
++                        }
++                }
++        }
++
++        return 0;
+ 
+ fail:
+-	sigma_dut_print(dut, DUT_MSG_ERROR,
+-			"Invalid MAC address %s (expected format xx:xx:xx:xx:xx:xx)",
+-			arg);
+-	return -1;
++        if (!without_colon)
++                sigma_dut_print(dut, DUT_MSG_ERROR, "Invalid MAC address %s "
++                                "(expected format "
++                                "xx:xx:xx:xx:xx:xx)",
++                                arg);
++        else
++                sigma_dut_print(
++                                dut, DUT_MSG_ERROR,
++                                "Invalid MAC address %s (expected format xxyyzzwwyyqq)",
++                                arg);
++
++        return -1;
+ }
+ 
+-
+ int is_60g_sigma_dut(struct sigma_dut *dut)
+ {
+ 	return dut->program == PROGRAM_60GHZ ||
+-- 
+2.17.1
+

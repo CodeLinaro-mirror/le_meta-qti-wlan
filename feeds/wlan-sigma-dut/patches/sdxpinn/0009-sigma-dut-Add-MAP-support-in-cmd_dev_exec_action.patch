@@ -1,0 +1,237 @@
+From efcd03446caa9c087e2ef73308dcbb5e2b992fcc Mon Sep 17 00:00:00 2001
+From: Chenming Huang <quic_chenhuan@quicinc.com>
+Date: Thu, 1 Aug 2024 13:56:15 +0530
+Subject: [PATCH 09/10] sigma-dut: Add MAP support in cmd_dev_exec_action
+
+Add MAP support in cmd_dev_exec_action.
+
+CRs-Fixed: 3893701
+Change-Id: Ic11daea558f854fedd2da576582eaf67357e4a8c
+Signed-off-by: Chenming Huang <quic_chenhuan@quicinc.com>
+---
+ ap.c        |  2 +-
+ dev.c       |  5 ++++-
+ dpp.c       | 16 +++++++++++++---
+ map.c       | 44 ++++++++++++++++++++++----------------------
+ sigma_dut.c |  3 +++
+ sigma_dut.h |  6 ++++++
+ sta.c       | 31 ++++++++++++++++++++++++++++++-
+ 7 files changed, 79 insertions(+), 28 deletions(-)
+
+diff --git a/ap.c b/ap.c
+index 1d6f75a..0eb9721 100644
+--- a/ap.c
++++ b/ap.c
+@@ -612,7 +612,7 @@ static enum ap_mode get_mode(const char *str)
+ }
+ 
+ 
+-static int run_hostapd_cli(struct sigma_dut *dut, char *buf)
++int run_hostapd_cli(struct sigma_dut *dut, char *buf)
+ {
+ 	char command[1000];
+ 	const char *bin;
+diff --git a/dev.c b/dev.c
+index 984e9c6..b9859dc 100644
+--- a/dev.c
++++ b/dev.c
+@@ -360,7 +360,10 @@ static enum sigma_cmd_result cmd_dev_exec_action(struct sigma_dut *dut,
+ 	}
+ #endif /* MIRACAST */
+ 
+-	if (program && strcasecmp(program, "DPP") == 0)
++	if (program && (strcasecmp(program, "DPP") == 0 ||
++			strcasecmp(program,"MAP") == 0 ||
++			strcasecmp(program,"MAPR2") == 0 ||
++			strcasecmp(program,"MAPR3") == 0))
+ 		return dpp_dev_exec_action(dut, conn, cmd);
+ 
+ 	val = get_param(cmd, "ServerCertTrust");
+diff --git a/dpp.c b/dpp.c
+index 6ba88b0..d3c3985 100644
+--- a/dpp.c
++++ b/dpp.c
+@@ -646,11 +646,16 @@ dpp_get_local_bootstrap(struct sigma_dut *dut, struct sigma_conn *conn,
+ 		type = "qrcode";
+ 	} else if (strcasecmp(bs, "NFC") == 0) {
+ 		type ="nfc-uri";
+-	} else {
++	} else if (strcasecmp(bs, "QR") != 0 &&
++			strcasecmp(bs, "URI_String") != 0) {
+ 		send_resp(dut, conn, SIGMA_ERROR,
+-			  "errorCode,Unsupported DPPBS");
+-		return STATUS_SENT_ERROR;
++			"errorCode,Unsupported DPPBS");
++		return 0;
+ 	}
++	if (dut->program == PROGRAM_MAP ||
++	    dut->program == PROGRAM_MAPR2 ||
++	    dut->program == PROGRAM_MAPR3)
++		return map_dpp_get_local_bootstrap(dut, conn, send_result, success);
+ 
+ 	val = get_param(cmd, "DPPURICurves");
+ 	if (val) {
+@@ -986,6 +991,11 @@ static enum sigma_cmd_result dpp_set_peer_bootstrap(struct sigma_dut *dut,
+ 	free(dut->dpp_peer_uri);
+ 	dut->dpp_peer_uri = strdup(uri);
+ 
++        if (dut->program == PROGRAM_MAP ||
++            dut->program == PROGRAM_MAPR2 ||
++            dut->program == PROGRAM_MAPR3)
++		return map_dpp_set_peer_bootstrap(dut, conn);
++
+ 	return SUCCESS_SEND_STATUS;
+ }
+ 
+diff --git a/map.c b/map.c
+index 8d071f9..0ef27b6 100644
+--- a/map.c
++++ b/map.c
+@@ -4566,28 +4566,6 @@ static int map_parse_tlvvalue(struct sigma_dut *dut, char *mod, char *buf,
+ 
+ 		break;
+ 
+-	case IEEE1905_TLV_TYPE_SERVICE_PRIORITIZATION_RULE:
+-		if (map_parse_service_prioritization_rule_tlv(dut, mod, dut->map_pw, bufsize) < 1) {
+-			sigma_dut_print(dut, DUT_MSG_ERROR,
+-					"MAP: parsing 1905_tlv"
+-					" Service_Prioritization_Rule");
+-			goto map_parse_tlvvalue_error;
+-		}
+-
+-		dut->map_multi_tlv = true;
+-
+-		if (one_tlv == 1) {
+-			dut->map_multi_tlv = false;
+-			snprintf(ic, sizeof(ic), "%02x ",
+-				 (unsigned char)dut->map_tlvcnt);
+-			buf[0] = ic[0];
+-			buf[1] = ic[1];
+-			strlcpy(dut->map_tlvvalue, buf,
+-				sizeof(dut->map_tlvvalue));
+-		}
+-
+-		break;
+-
+ 	case IEEE1905_TLV_TYPE_DSCP_MAPPING_TABLE:
+ 		if (map_parse_dscp_mapping_table_tlv(dut, mod, dut->map_pw, bufsize) < 1) {
+ 			sigma_dut_print(dut, DUT_MSG_ERROR,
+@@ -4610,6 +4588,28 @@ static int map_parse_tlvvalue(struct sigma_dut *dut, char *mod, char *buf,
+ 
+ 		break;
+ 
++        case IEEE1905_TLV_TYPE_SERVICE_PRIORITIZATION_RULE:
++                if (map_parse_service_prioritization_rule_tlv(dut, mod, dut->map_pw, bufsize) < 1) {
++                        sigma_dut_print(dut, DUT_MSG_ERROR,
++                                        "MAP: parsing 1905_tlv"
++                                        " Service_Prioritization_Rule");
++                        goto map_parse_tlvvalue_error;
++                }
++
++                dut->map_multi_tlv = true;
++
++                if (one_tlv == 1) {
++                        dut->map_multi_tlv = false;
++                        snprintf(ic, sizeof(ic), "%02x ",
++                                 (unsigned char)dut->map_tlvcnt);
++                        buf[0] = ic[0];
++                        buf[1] = ic[1];
++                        strlcpy(dut->map_tlvvalue, buf,
++                                sizeof(dut->map_tlvvalue));
++                }
++
++                break;
++
+ 	case IEEE1905_TLV_TYPE_DEFAULT_802_1Q_SETTINGS:
+ 		if (map_parse_default_802_1q_settings_tlv(dut, mod, dut->map_pw,
+ 							  bufsize) < 1) {
+diff --git a/sigma_dut.c b/sigma_dut.c
+index 1299437..3209d01 100644
+--- a/sigma_dut.c
++++ b/sigma_dut.c
+@@ -886,6 +886,9 @@ static void set_defaults(struct sigma_dut *dut)
+ 	/* by default, enable writing of traffic stream stats */
+ 	dut->write_stats = 1;
+ 	dut->priv_cmd = "iwpriv";
++ 	sigma_dut.map_device_role = MAP_DEVROLE_UNKNOWN;
++ 	sigma_dut.map_hwaddr_set = false;
++	sigma_dut.map_repacd_enableDPP = false;
+ 	dut->sigma_tmpdir = SIGMA_TMPDIR;
+ 	dut->ap_ocvc = -1;
+ 	dut->user_config_ap_ocvc = -1;
+diff --git a/sigma_dut.h b/sigma_dut.h
+index 7e1b379..e12d179 100644
+--- a/sigma_dut.h
++++ b/sigma_dut.h
+@@ -1381,6 +1381,11 @@ void sniffer_close(struct sigma_dut *dut);
+ /* sigma_dut.c */
+ int wifi_hal_initialize(struct sigma_dut *dut);
+ 
++/* map.c */
++void map_register_cmds(void);
++int map_dpp_set_peer_bootstrap(struct sigma_dut *dut, struct sigma_conn *conn);
++int map_dpp_get_local_bootstrap(struct sigma_dut *dut, struct sigma_conn *conn,
++				int send_result, int *success);
+ /* ap.c */
+ void ap_register_cmds(void);
+ void ath_disable_txbf(struct sigma_dut *dut, const char *intf);
+@@ -1401,6 +1406,7 @@ void ath_set_assoc_disallow(struct sigma_dut *dut, const char *ifname,
+ 			    const char *val);
+ int ap_wps_registration(struct sigma_dut *dut, struct sigma_conn *conn,
+ 			struct sigma_cmd *cmd);
++int run_hostapd_cli(struct sigma_dut *dut, char *buf);
+ const char * get_hostapd_ifname(struct sigma_dut *dut);
+ void get_wiphy_capabilities(struct sigma_dut *dut);
+ void kill_hostapd_process_pid(struct sigma_dut *dut);
+diff --git a/sta.c b/sta.c
+index f9d55b5..b77802e 100644
+--- a/sta.c
++++ b/sta.c
+@@ -18758,7 +18758,7 @@ static enum sigma_cmd_result cmd_start_wps_registration(struct sigma_dut *dut,
+ 	const char *intf = get_param(cmd, "Interface");
+ 	const char *network_mode = get_param(cmd, "network_mode");
+ 	const char *config_method = get_param(cmd, "WPSConfigMethod");
+-	const char *role;
++	const char *role, *method;
+ 	int res;
+ 	char buf[256];
+ 	const char *events[] = {
+@@ -18769,6 +18769,35 @@ static enum sigma_cmd_result cmd_start_wps_registration(struct sigma_dut *dut,
+ 		NULL
+ 	};
+ 	int id = 0;
++	if (dut->program == PROGRAM_MAP || dut->program == PROGRAM_MAPR2 || dut->program == PROGRAM_MAPR3 ||
++		dut->program == PROGRAM_MAPR4 || dut->program == PROGRAM_MAPR5) {
++		method = get_param(cmd, "WpsConfigMethod");
++		if (method && (strcasecmp(method, "PBC") == 0)) {
++			run_system_wrapper(dut,
++				"env -i ACTION=pressed BUTTON=wps "
++				"/sbin/hotplug-call button");
++			send_resp(dut, conn, SIGMA_COMPLETE, "Successful");
++		} else {
++			send_resp(dut, conn, SIGMA_ERROR,
++				"ErrorCode,MAP:Unsupported"
++				" WpsConfigMethod value");
++			return INVALID_SEND_STATUS;
++		}
++		return SUCCESS_SEND_STATUS;
++	} else {
++		role = get_param(cmd, "WpsRole");
++		if (role)
++			ap_wps_registration(dut, conn, role);
++		method = get_param(cmd, "WpsConfigMethod");
++		if (method) {
++			if (run_hostapd_cli(dut, "wps_pbc") != 0) {
++				send_resp(dut, conn, SIGMA_ERROR,
++					"errorCode,Failed to push wpsconfig pbc");
++				return INVALID_SEND_STATUS;
++			}
++		}
++		return SUCCESS_SEND_STATUS;
++	}
+ 
+ 	/* 60G WPS tests do not pass Interface parameter */
+ 	if (!intf)
+-- 
+2.17.1
+

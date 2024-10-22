@@ -1,0 +1,57 @@
+From ce6ca140cdd6dabe56976f78ea4cc31d65e4900e Mon Sep 17 00:00:00 2001
+From: Wu Gao <quic_wugao@quicinc.com>
+Date: Tue, 18 Jun 2024 20:09:23 -0700
+Subject: [PATCH 08/10] sigma-dut: Restart wsplcd and ezmesh during reset
+
+Restart wsplcd and ezmesh during reset.
+
+CRs-Fixed: 3893994
+Change-Id: I0e893d1d1bd797670cd59b5a516e540780b26e26
+Signed-off-by: Chenming Huang <quic_chenhuan@quicinc.com>
+---
+ map.c | 13 +++++++++----
+ 1 file changed, 9 insertions(+), 4 deletions(-)
+
+diff --git a/map.c b/map.c
+index d3ab2ad..8d071f9 100644
+--- a/map.c
++++ b/map.c
+@@ -4691,6 +4691,9 @@ static int cmd_dev_send_1905(struct sigma_dut *dut, struct sigma_conn *conn,
+ 	dut->map_multi_tlv = false;
+ 	dut->map_tlvvalue[0] = '\0';
+ 
++	//sigma_dut_print(dut, DUT_MSG_DEBUG, "%s, MAP: start to sleep 3s", __func__);
++	//sleep(3);
++	//sigma_dut_print(dut, DUT_MSG_DEBUG, "%s, MAP: sleep 3s done", __func__);
+ 	val = get_param(cmd, "DestALid");
+ 	if (val) {
+ 		if (parse_mac_address(dut, val, map_addr) < 0) {
+@@ -5030,8 +5033,8 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 				//owrt_ap_set_radio(dut, radio_id[1], "no_vlan", "1");
+ 			}
+ 
+-			owrt_ap_set_vap(dut, radio_id[0], "MapBSSType", "32");
+-			owrt_ap_set_vap(dut, radio_id[1], "MapBSSType", "32");
++			//owrt_ap_set_vap(dut, radio_id[0], "MapBSSType", "32");
++			//owrt_ap_set_vap(dut, radio_id[1], "MapBSSType", "32");
+ #ifdef CONFIG_BUILD_YOCTO
+ 			owrt_ap_set_vap(dut, radio_id[0], "network", "DEFAULT_BRIDGE");
+ 			owrt_ap_set_vap(dut, radio_id[1], "network", "DEFAULT_BRIDGE");
+@@ -5199,10 +5202,12 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 			run_system_wrapper(dut,"uci commit repacd");
+ 
+ 			//update network
+-			run_system_wrapper(dut,"uci set network.lan.ifname='eth0 eth1 wlan0 wlan1 wlan2 wlan3'");
+-			run_system_wrapper(dut,"uci commit network");
++			//run_system_wrapper(dut,"uci set network.lan.ifname='eth0 eth1 wlan0 wlan1 wlan2 wlan3'");
++			//run_system_wrapper(dut,"uci commit network");
+ #ifndef CONFIG_BUILD_YOCTO
+ 			run_system_wrapper(dut, INIT_SCRIPT_PATH"repacd start");
++			run_system_wrapper(dut, INIT_SCRIPT_PATH"wsplcd start");
++			run_system_wrapper(dut, INIT_SCRIPT_PATH"ezmesh start");
+ #else
+ 			run_system_wrapper(dut,"uci set repacd.MAPConfig.EnableYoctoBuild=1");
+ 			run_system_wrapper(dut,"uci set repacd.repacd.ManagedNetwork="DEFAULT_BRIDGE);
+-- 
+2.17.1
+

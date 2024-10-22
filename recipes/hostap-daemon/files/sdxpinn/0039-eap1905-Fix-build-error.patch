@@ -1,0 +1,27 @@
+From 4a0692810be54cc9905e11b687d6b0e9024cbf93 Mon Sep 17 00:00:00 2001
+From: Xinyue Ling <quic_xinyling@quicinc.com>
+Date: Tue, 30 Apr 2024 16:37:58 +0800
+Subject: [PATCH 39/41] eap1905: Fix build error
+
+Change-Id: Idc0e318d6dfe683668b04e4c8cf2358fb0907c6f
+Signed-off-by: Chenming Huang <quic_chenhuan@quicinc.com>
+---
+ src/drivers/eap1905.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/drivers/eap1905.c b/src/drivers/eap1905.c
+index 8783b454ef..43bd5ef24a 100644
+--- a/src/drivers/eap1905.c
++++ b/src/drivers/eap1905.c
+@@ -180,7 +180,7 @@ static int assoc_init(struct wpa_1905 *wpa, int index)
+ 	int i = index;
+ 	wpa_printf(MSG_DEBUG, "ASSOC: i=%d ", i);
+ 	wpa->auth[i] = wpa_auth_sta_init(wpa->auth_group,
+-					 wpa->supp_addr[i], NULL);
++					 wpa->supp_addr[i], NULL, NULL);
+ 	if (!wpa->auth[i]) {
+ 		wpa_printf(MSG_DEBUG, "AUTH: wpa_auth_sta_init() failed");
+ 		return -1;
+-- 
+2.17.1
+

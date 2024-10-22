@@ -1,0 +1,87 @@
+From aae36f31d306a0c46b8a7c64bdfa9140d800f300 Mon Sep 17 00:00:00 2001
+From: Kani M <quic_kanisumi@quicinc.com>
+Date: Wed, 4 Nov 2020 10:13:20 +0530
+Subject: [PATCH 03/41] qca-hostap: eap1905- Fix NULL pointer dereferences and
+ return value
+
+Fixed return value of wpa_1905_send_eapol() and
+NULL pointer dereferences in supp_set_key(), sta_init() and
+eapol_1905_rx_receive().
+
+Signed-off-by: Kani M <quic_kanisumi@quicinc.com>
+Change-Id: I7adf4cc5135bb4ba2bd1231b734da59f05a57d47
+---
+ src/drivers/eap1905.c     |  1 +
+ src/drivers/eap1905_sta.c | 26 ++++++++++++++++++--------
+ 2 files changed, 19 insertions(+), 8 deletions(-)
+
+diff --git a/src/drivers/eap1905.c b/src/drivers/eap1905.c
+index d1bec04c23..f40502db10 100644
+--- a/src/drivers/eap1905.c
++++ b/src/drivers/eap1905.c
+@@ -164,6 +164,7 @@ static int wpa_1905_send_eapol(void *ctx, const u8 *addr, const u8 *data,
+ 	os_memcpy(send_buffer+3, addr, ETH_ALEN);
+ 	os_memcpy(send_buffer+9, data, data_len);
+ 	send(eapol_1905_sock_tx, send_buffer, 1024, 0);
++	return 0;
+ }
+ 
+ 
+diff --git a/src/drivers/eap1905_sta.c b/src/drivers/eap1905_sta.c
+index eff069deeb..9f81eae3f3 100644
+--- a/src/drivers/eap1905_sta.c
++++ b/src/drivers/eap1905_sta.c
+@@ -165,13 +165,16 @@ static int supp_set_key(void *ctx, enum wpa_alg alg,
+ 	struct key_params key_param;
+ 	os_memset(&key_param, 0, sizeof(key_param));
+ 
++	if (!addr) {
++		wpa_printf(MSG_ERROR, "SUPP: addr is NULL");
++		return 0;
++	}
++
+ 	wpa_printf(MSG_ERROR, "SUPP: %s(alg=%d addr=" MACSTR " key_idx=%d set_tx=%d)",
+-		   __func__, alg, MAC2STR(addr), key_idx, set_tx);
++			   __func__, alg, MAC2STR(addr), key_idx, set_tx);
+ 	wpa_hexdump(MSG_ERROR, "SUPP: set_key - seq", seq, seq_len);
+ 	wpa_hexdump(MSG_ERROR, "SUPP: set_key - key", key, key_len);
+ 
+-	if (addr)
+-		wpa_printf(MSG_DEBUG, "SUPP: addr=" MACSTR, MAC2STR(addr));
+ 	if (!key_len)
+ 		return 0;
+ 
+@@ -259,6 +262,12 @@ static int sta_init(struct wpa_1905 *wpa, struct sta_sec_config *sec_conf)
+ {
+ 
+ 	wpa->ctx = os_zalloc(sizeof(struct wpa_sm_ctx));
++
++	if (!wpa->ctx) {
++		wpa_printf(MSG_ERROR, "SUPP: malloc failed at sta_init");
++		return -1;
++	}
++
+ 	wpa->ctx->ctx = wpa;
+ 	wpa->ctx->msg_ctx = wpa;
+ 	wpa->ctx->set_state = supp_set_state;
+@@ -357,11 +366,12 @@ static void eapol_1905_rx_receive(int sock, void *eloop_ctx, void *sock_ctx)
+ 
+ 		len = WPA_GET_BE16(&buf[1]) - ETH_ALEN ;
+ 		msg = os_malloc(len);
+-		os_memcpy(msg, buf+9, len);
+-
+-		wpa_sm_rx_eapol(wpa->supp, wpa->auth_addr, msg, len);
+-		wpa_printf(MSG_ERROR, "wpa_sm_rx_eapol done ");
+-		os_free(msg);
++		if (msg) {
++			os_memcpy(msg, buf+9, len);
++			wpa_sm_rx_eapol(wpa->supp, wpa->auth_addr, msg, len);
++			wpa_printf(MSG_ERROR, "wpa_sm_rx_eapol done ");
++			os_free(msg);
++		}
+ 
+ 	} else if (buf[0] == EVENT_STA_SEC_CONFIG) {
+ 		if (wpa->supp)
+-- 
+2.17.1
+
