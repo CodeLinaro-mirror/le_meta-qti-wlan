@@ -39,6 +39,9 @@ do_install_append_sa410m(){
 do_install_append_sa525m(){
 	install -d ${D}/etc/misc/wifi
 	install -m 0644 ${S}/qcom/wlan/sdx_auto/*.conf ${D}/etc/misc/wifi
+	install -m 0644 ${S}/qcom/wlan/msm_auto/hostapd_mlo*.conf ${D}/etc/misc/wifi
+	install -m 0644 ${S}/qcom/wlan/msm_auto/hostapd_11be*.conf ${D}/etc/misc/wifi
+	install -m 0644 ${S}/qcom/wlan/msm_auto/udhcpd.conf ${D}/etc/misc/wifi
 	chown -R radio:radio ${D}/etc/misc/wifi
 	install -d ${FIRMWARE_PATH_HSP}
 	install -d ${FIRMWARE_PATH_ROME}
