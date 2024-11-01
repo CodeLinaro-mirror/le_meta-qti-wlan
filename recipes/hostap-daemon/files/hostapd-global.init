@@ -48,7 +48,7 @@ start_service() {
 	config_get log_level log log_level "info"
 	config_get log_folder_mode log log_folder_mode 0
 	[ "$log_level" = "debug" ] && procd_append_param command -dd
-	[ "$log_folder_mode" = "2" ] && procd_append_param command -f $WPAD_VARRUN/hostapd-global.log
+	[ "$log_folder_mode" = "1" ] && procd_append_param command -f $WPAD_VARRUN/hostapd-global.log
 	# Debug end
 
 	[ -x /sbin/ujail -a -e /etc/capabilities/hostapd-daemon.json ] && {
