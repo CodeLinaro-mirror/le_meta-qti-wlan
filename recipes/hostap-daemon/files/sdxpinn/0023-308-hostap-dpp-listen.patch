@@ -213,7 +213,7 @@ index 9604b30d2a..2e09fd1539 100644
  		return -1;
  
  #ifdef CONFIG_DPP
-+	hapd->max_remain_on_chan = 5000;
++	hapd->max_remain_on_chan = 2000;
  	hapd->gas = gas_query_ap_init(hapd, hapd->msg_ctx);
  	if (!hapd->gas)
  		return -1;
