@@ -6,9 +6,9 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5
 
 _MODNAME = "qca6595"
 FW_PATH_NAME = "qcn7605"
-FILES:${PN}     += "${base_libdir}/firmware/wlan/*"
-FILES:${PN}     += "${base_libdir}/firmware/*"
-FILES:${PN}     += "${base_libdir}/modules/${KERNEL_VERSION}/extra/${_MODNAME}.ko"
+FILES:${PN}     += "${nonarch_base_libdir}/firmware/wlan/*"
+FILES:${PN}     += "${nonarch_base_libdir}/firmware/*"
+FILES:${PN}     += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/${_MODNAME}.ko"
 PROVIDES_NAME   = "kernel-module-${_MODNAME}"
 RPROVIDES:${PN} += "${PROVIDES_NAME}-${KERNEL_VERSION}"
 

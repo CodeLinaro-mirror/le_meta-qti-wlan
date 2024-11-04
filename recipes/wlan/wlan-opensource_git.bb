@@ -23,7 +23,7 @@ PACKAGES += "kernel-module-wlan"
 
 do_compile () {
     unset CFLAGS CPPFLAGS CXXFLAGS LDFLAGS CC CPP LD
-    oe_runmake 'MODPATH="${base_libdir}/modules/wlan/prima"' \
+    oe_runmake 'MODPATH="${nonarch_base_libdir}/modules/wlan/prima"' \
         'KERNEL_SOURCE="${STAGING_KERNEL_DIR}"' \
         'KDIR="${STAGING_KERNEL_DIR}"' \
         'CC="${KERNEL_CC}"' \
