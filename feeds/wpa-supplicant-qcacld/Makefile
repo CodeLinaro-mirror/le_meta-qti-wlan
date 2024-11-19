@@ -30,7 +30,16 @@ else ifeq ($(TARGET_MACHINE),sdx75)
 		echo -e "\nCONFIG_WEP=y" >> $(SUPPLICANT_CONFIG_FILE)
 
 else ifeq ($(TARGET_MACHINE),sxrneo)
-	TARGET_LOCAL_NAME :=sxrneo
+	TARGET_LOCAL_NAME :=neo
+	TARGET_CFLAGS += -DCONFIG_ANDROID_LOG
+	TARGET_LDFLAGS += -L$(STAGING_DIR)/usr/lib/ -llog
+	TARGET_LDFLAGS += -W1 --no-as-needed
+	TARGET_ADD_CONFIG := rm -rf $(STAGING_DIR)/usr/lib/libwpa_supplicant_8_lib.so* && \
+		echo -e "\nLIBS +=\"-llog\"" >> $(SUPPLICANT_CONFIG_FILE) && \
+		echo -e "\nEXTRALIBS +=\"-llog\"" >> $(SUPPLICANT_CONFIG_FILE)
+
+else ifeq ($(TARGET_MACHINE),sxrneo-ar-sg1)
+	TARGET_LOCAL_NAME :=neo
 	TARGET_CFLAGS += -DCONFIG_ANDROID_LOG
 	TARGET_LDFLAGS += -L$(STAGING_DIR)/usr/lib/ -llog
 	TARGET_LDFLAGS += -W1 --no-as-needed

@@ -12,19 +12,19 @@ SRC_URI = "file://mdm-init/"
 SRC_URI += "file://wlan_daemon.service"
 SRC_URI += "file://cnss.service"
 SRC_URI += "file://device/qcom/wlan/${BASEMACHINE}/"
-SRC_URI:append:sxrneo+= "file://sxrneo/dhcpcd.service"
-SRC_URI:append:sxrneo+= "file://sxrneo/wlan_daemon.service"
-SRC_URI:append:sxrneo+= "file://sxrneo/wpa_supplicant.service"
-SRC_URI:append:sxrneo+= "file://sxrneo/wlan-conf_systemd_tmpfiles.conf"
-SRC_URI:append:sxrneo+= "file://sxrneo/fi.w1.wpa_supplicant1.service"
-SRC_URI:append:sxrneo+= "file://sxrneo/dbus-wpa_supplicant.conf"
-SRC_URI:append:sxrneo+= "file://sxrneo/dbus-wpa_supplicant_testing.conf"
-SRC_URI:append:kalama+= "file://sxrneo/wlan_daemon.service"
-SRC_URI:append:kalama+= "file://sxrneo/wlan-conf_systemd_tmpfiles.conf"
-SRC_URI:append:qrb5165+= "file://sxrneo/wlan_daemon.service"
-SRC_URI:append:qrb5165+= "file://sxrneo/wlan-conf_systemd_tmpfiles.conf"
-SRC_URI:append:qcs40x+= "file://sxrneo/wlan_daemon.service"
-SRC_URI:append:qcs40x+= "file://sxrneo/wlan-conf_systemd_tmpfiles.conf"
+SRC_URI:append:neo+= "file://neo/dhcpcd.service"
+SRC_URI:append:neo+= "file://neo/wlan_daemon.service"
+SRC_URI:append:neo+= "file://neo/wpa_supplicant.service"
+SRC_URI:append:neo+= "file://neo/wlan-conf_systemd_tmpfiles.conf"
+SRC_URI:append:neo+= "file://neo/fi.w1.wpa_supplicant1.service"
+SRC_URI:append:neo+= "file://neo/dbus-wpa_supplicant.conf"
+SRC_URI:append:neo+= "file://neo/dbus-wpa_supplicant_testing.conf"
+SRC_URI:append:kalama+= "file://neo/wlan_daemon.service"
+SRC_URI:append:kalama+= "file://neo/wlan-conf_systemd_tmpfiles.conf"
+SRC_URI:append:qrb5165+= "file://neo/wlan_daemon.service"
+SRC_URI:append:qrb5165+= "file://neo/wlan-conf_systemd_tmpfiles.conf"
+SRC_URI:append:qcs40x+= "file://neo/wlan_daemon.service"
+SRC_URI:append:qcs40x+= "file://neo/wlan-conf_systemd_tmpfiles.conf"
 
 # Update for each machine
 S = "${WORKDIR}/mdm-init/"
@@ -90,21 +90,21 @@ do_install:append:neo(){
 		then
 			#systemd-tmpfiles service for wlan-conf
 			install -d ${D}${sysconfdir}/tmpfiles.d
-			install -m 0644 ${WORKDIR}/sxrneo/wlan-conf_systemd_tmpfiles.conf \
+			install -m 0644 ${WORKDIR}/neo/wlan-conf_systemd_tmpfiles.conf \
 				-D ${D}${sysconfdir}/tmpfiles.d/wlan-conf_systemd_tmpfiles.conf
 			install -d ${D}/etc/initscripts
 			cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
 			install -d ${D}/etc/systemd/system/
 			install -d ${D}/etc/systemd/system/multi-user.target.wants/
-			install -m 0644 ${WORKDIR}/sxrneo/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
+			install -m 0644 ${WORKDIR}/neo/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
 			ln -sf /etc/systemd/system/wlan_daemon.service ${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
-			install -m 0644 ${WORKDIR}/sxrneo/dhcpcd.service -D ${D}/etc/systemd/system/dhcpcd.service
+			install -m 0644 ${WORKDIR}/neo/dhcpcd.service -D ${D}/etc/systemd/system/dhcpcd.service
 			ln -sf /etc/systemd/system/dhcpcd.service ${D}/etc/systemd/system/multi-user.target.wants/dhcpcd.service
-			install -m 0644 ${WORKDIR}/sxrneo/wpa_supplicant.service -D ${D}/etc/systemd/system/wpa_supplicant.service
+			install -m 0644 ${WORKDIR}/neo/wpa_supplicant.service -D ${D}/etc/systemd/system/wpa_supplicant.service
 			ln -sf /etc/systemd/system/wpa_supplicant.service ${D}/etc/systemd/system/multi-user.target.wants/wpa_supplicant.service
-			install -m 0644 ${WORKDIR}/sxrneo/fi.w1.wpa_supplicant1.service -D ${D}/usr/share/dbus-1/system-services/fi.w1.wpa_supplicant1.service
-			install -m 0644 ${WORKDIR}/sxrneo/dbus-wpa_supplicant.conf -D ${D}/usr/share/dbus-1/system.d/dbus-wpa_supplicant.conf
-			install -m 0644 ${WORKDIR}/sxrneo/dbus-wpa_supplicant_testing.conf -D ${D}/etc/dbus-1/system.d/dbus-wpa_supplicant_testing.conf
+			install -m 0644 ${WORKDIR}/neo/fi.w1.wpa_supplicant1.service -D ${D}/usr/share/dbus-1/system-services/fi.w1.wpa_supplicant1.service
+			install -m 0644 ${WORKDIR}/neo/dbus-wpa_supplicant.conf -D ${D}/usr/share/dbus-1/system.d/dbus-wpa_supplicant.conf
+			install -m 0644 ${WORKDIR}/neo/dbus-wpa_supplicant_testing.conf -D ${D}/etc/dbus-1/system.d/dbus-wpa_supplicant_testing.conf
 
 		fi
 
@@ -120,12 +120,12 @@ do_install:append:kalama(){
 	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
 		#systemd-tmpfiles service for wlan-conf
 		install -d ${D}${sysconfdir}/tmpfiles.d
-		install -m 0644 ${WORKDIR}/sxrneo/wlan-conf_systemd_tmpfiles.conf \
+		install -m 0644 ${WORKDIR}/neo/wlan-conf_systemd_tmpfiles.conf \
 				-D ${D}${sysconfdir}/tmpfiles.d/wlan-conf_systemd_tmpfiles.conf
 		install -d ${D}/etc/initscripts
 		cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
 		install -d ${D}/etc/systemd/system/
-		install -m 0644 ${WORKDIR}/sxrneo/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
+		install -m 0644 ${WORKDIR}/neo/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
 		install -d ${D}/etc/systemd/system/multi-user.target.wants/
 		ln -sf /etc/systemd/system/wlan_daemon.service \
 			${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
@@ -139,12 +139,12 @@ do_install:append:kalama(){
 do_install:append:qrb5165(){
 	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
 		install -d ${D}${sysconfdir}/tmpfiles.d
-		install -m 0644 ${WORKDIR}/sxrneo/wlan-conf_systemd_tmpfiles.conf \
+		install -m 0644 ${WORKDIR}/neo/wlan-conf_systemd_tmpfiles.conf \
 				-D ${D}${sysconfdir}/tmpfiles.d/wlan-conf_systemd_tmpfiles.conf
 		install -d ${D}/etc/initscripts
 		cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
 		install -d ${D}/etc/systemd/system/
-		install -m 0644 ${WORKDIR}/sxrneo/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
+		install -m 0644 ${WORKDIR}/neo/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
 		install -d ${D}/etc/systemd/system/multi-user.target.wants/
 		ln -sf /etc/systemd/system/wlan_daemon.service \
 			${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
@@ -157,10 +157,10 @@ do_install:append:qcs40x(){
 	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
 		#systemd-tmpfiles service for wlan-conf
 		install -d ${D}${sysconfdir}/tmpfiles.d
-		install -m 0644 ${WORKDIR}/sxrneo/wlan-conf_systemd_tmpfiles.conf \
+		install -m 0644 ${WORKDIR}/neo/wlan-conf_systemd_tmpfiles.conf \
 				-D ${D}${sysconfdir}/tmpfiles.d/wlan-conf_systemd_tmpfiles.conf
 		install -d ${D}/etc/systemd/system/
-		install -m 0644 ${WORKDIR}/sxrneo/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
+		install -m 0644 ${WORKDIR}/neo/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
 		install -d ${D}/etc/systemd/system/multi-user.target.wants/
 		ln -sf /etc/systemd/system/wlan_daemon.service \
 			${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
@@ -172,9 +172,9 @@ do_install:append:qcs40x(){
 FILES:${PN} += "${userfsdatadir}/misc/wifi/*"
 FILES:${PN} += "${base_libdir}/firmware/wlan/qca_cld/*"
 FILES:${PN} += "/lib/firmware/wlan/qca_cld/* ${sysconfdir}/init.d/* "
-FILES:${PN}:append:sxrneo += "/usr/share/dbus-1/system-services/*"
-FILES:${PN}:append:sxrneo += "/usr/share/dbus-1/system.d/*"
-FILES:${PN}:append:sxrneo += "/etc/dbus-1/system.d/*"
+FILES:${PN}:append:neo += "/usr/share/dbus-1/system-services/*"
+FILES:${PN}:append:neo += "/usr/share/dbus-1/system.d/*"
+FILES:${PN}:append:neo += "/etc/dbus-1/system.d/*"
 
 BASEPRODUCT = "${@d.getVar('PRODUCT', False)}"
 
@@ -193,7 +193,7 @@ EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'qcs605', '--enable-target-
 
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'apq8053', '--enable-pronto-wlan=yes', '', d)}"
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'apq8017', '--enable-pronto-wlan=yes', '', d)}"
-EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'neo', '--enable-target-sxrneo=yes', '', d)}"
+EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'neo', '--enable-target-neo', '', d)}"
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'kalama', '--enable-target-kalama=yes', '', d)}"
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'qrb5165', '--enable-target-qrb5165=yes', '', d)}"
 
