@@ -18,6 +18,14 @@ EXTRA_ADDR :=lib/modules/$(LINUX_VERSION)-${COMPILE_MODE}/extra
 
 include $(INCLUDE_DIR)/package.mk
 
+#Default Module dir
+BUILD_DIR_CLD := $(PKG_BUILD_DIR)/qcacld-3.0
+BUILD_DIR_UPPER := $(PKG_BUILD_DIR)
+LOCAL_CLD_FOLDER := $(LOCAL_SRC)/qcacld-3.0
+LN_CMD := ln -sf $(PKG_BUILD_DIR)/qcacld-3.0 $(PKG_BUILD_DIR)/../qcacld-3.0
+#Default BAZEL DISABLED
+ENABLE_BAZEL := n
+
 ifeq ($(BOARD),sdx75)
 
 TARGET_MAKEOPTS := CONFIG_ARCH_SDXPINN=y \
@@ -52,6 +60,18 @@ TARGET_MAKEOPTS := CONFIG_ARCH_SDXKOVA=y \
 
 WLAN_PLATFORM_SYMBOLS = $(PKG_BUILD_DIR)/../wlan-cnss2/Module.symvers
 TARGET_MAKEOPTS += KBUILD_EXTRA_SYMBOLS=$(WLAN_PLATFORM_SYMBOLS)
+
+#ENABLE_BAZEL need to be synced with *.bzl file
+#When set to 'n', remove sdxkova support from wlan_qcacld3_modules.bzl as well
+ENABLE_BAZEL = y
+ifeq ($(ENABLE_BAZEL), y)
+  #Module dir for sdx85 with Bazel enabled
+  BUILD_DIR_CLD := $(PKG_BUILD_DIR)
+  BUILD_DIR_UPPER = $(PKG_BUILD_DIR)/..
+  LOCAL_CLD_FOLDER = $(LOCAL_SRC)/qcacld-3.0/*
+  LN_CMD =
+endif
+
 else ifeq ($(BOARD),sdx35)
 TARGET_MAKEOPTS := CONFIG_CNSS_QCA6490=y \
 		   CONFIG_WLAN_MEMORY_OPT=y \
@@ -78,7 +98,7 @@ define KernelPackage/$(PKG_NAME)
   DEPENDS := +kmod-wlan-cnss2
 endef
 
-QCACLD32_LL_MAKEOPTS=  M="$(PKG_BUILD_DIR)/qcacld-3.0" \
+QCACLD32_LL_MAKEOPTS=  M="$(BUILD_DIR_CLD)" \
 			${TARGET_MAKEOPTS} \
 			CONFIG_CNSS_SDIO=n \
 			CONFIG_CLD_HL_SDIO_CORE=n
@@ -89,11 +109,11 @@ endef
 
 define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)/
-	$(CP) $(LOCAL_SRC)/qcacld-3.0 $(PKG_BUILD_DIR)/
-	$(CP) $(LOCAL_SRC)/qca-wifi-host-cmn $(PKG_BUILD_DIR)/
-	$(CP) $(LOCAL_SRC)/fw-api $(PKG_BUILD_DIR)/
-	$(CP) $(LOCAL_SRC)/platform $(PKG_BUILD_DIR)/
-	ln -sf $(PKG_BUILD_DIR)/qcacld-3.0 $(PKG_BUILD_DIR)/../qcacld-3.0
+	$(CP) $(LOCAL_CLD_FOLDER) $(PKG_BUILD_DIR)/
+	$(CP) $(LOCAL_SRC)/qca-wifi-host-cmn $(BUILD_DIR_UPPER)/
+	$(CP) $(LOCAL_SRC)/fw-api $(BUILD_DIR_UPPER)/
+	$(CP) $(LOCAL_SRC)/platform $(BUILD_DIR_UPPER)/
+	$(LN_CMD)
 endef
 
 define Build/Compile
@@ -105,7 +125,7 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(STAGING_DIR)
 	mkdir -p $(1)/$(EXTRA_ADDR)
 	mkdir -p $(1)/usr/include/qcacld
-	$(CP) $(PKG_BUILD_DIR)/qca-wifi-host-cmn/utils/nlink/inc/wlan_nlink_common.h $(1)/usr/include/qcacld/
+	$(CP) $(BUILD_DIR_UPPER)/qca-wifi-host-cmn/utils/nlink/inc/wlan_nlink_common.h $(1)/usr/include/qcacld/
 
 ifeq ($(BOARD),sdx75)
 # For EasyMesh packages
@@ -137,9 +157,9 @@ endef
 
 define  KernelPackage/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/$(EXTRA_ADDR)/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/qcacld-3.0/wlan.ko $(1)/$(EXTRA_ADDR)/
+	$(INSTALL_BIN) $(BUILD_DIR_CLD)/wlan.ko $(1)/$(EXTRA_ADDR)/
 	$(INSTALL_DIR) $(TOPDIR)/bin/targets/$(TARGET_VARIANT)/modules
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/qcacld-3.0/wlan.ko $(TOPDIR)/bin/targets/$(TARGET_VARIANT)/modules/
+	$(INSTALL_BIN) $(BUILD_DIR_CLD)/wlan.ko $(TOPDIR)/bin/targets/$(TARGET_VARIANT)/modules/
 endef
 
 $(eval $(call KernelPackage,$(PKG_NAME)))
