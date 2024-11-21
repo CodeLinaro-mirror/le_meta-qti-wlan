@@ -14,7 +14,7 @@ ALLOW_EMPTY:${PN} = "1"
 
 DRIVERS ?= 'qcacld32-ll-rome qcacld32-ll-hasting qcacld32-ll-genoa qcacld32-ll-hsp'
 DRIVERS:sa410m = 'qcacld32-ll-rome'
-DRIVERS:sa525m = 'qcacld32-ll-rome qcacld32-ll-hsp qcacld32-ll-hmt'
+DRIVERS:sa525m = 'qcacld32-ll-rome qcacld32-ll-hsp'
 
 RDEPENDS:${PN} += "\
     rfkill \
