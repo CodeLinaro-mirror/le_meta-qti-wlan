@@ -5,10 +5,12 @@ include hostap-daemon.inc
 PR = "${INC_PR}.2"
 PV = "6.0"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
+MACHINE_CONFIG = "${BASEMACHINE}"
+MACHINE_CONFIG:pineapple = "kalama"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://external/wpa_supplicant_8/"
-SRC_URI += "file://${BASEMACHINE}/"
+SRC_URI += "file://${MACHINE_CONFIG}/"
 SRC_URI += "file://misc/"
 DEPENDS = "pkgconfig libnl openssl wpa-supplicant-8-lib liblog"
 
@@ -19,12 +21,12 @@ S = "${WORKDIR}/external/wpa_supplicant_8/hostapd/"
 PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"
 
 do_configure() {
-    if [ "$(ls -A "${WORKDIR}/${BASEMACHINE}")" ]
+    if [ "$(ls -A "${WORKDIR}/${MACHINE_CONFIG}")" ]
     then
         bbwarn "============================================================"
-        bbwarn "picking ${WORKDIR}/${BASEMACHINE}"
+        bbwarn "picking ${WORKDIR}/${MACHINE_CONFIG}"
         bbwarn "============================================================"
-        install -m 0644 ${WORKDIR}/${BASEMACHINE}/defconfig-qcacld .config
+        install -m 0644 ${WORKDIR}/${MACHINE_CONFIG}/defconfig-qcacld .config
         echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
     else
         bbwarn "============================================================"
@@ -47,12 +49,12 @@ do_configure:append:neo() {
 do_patch() {
     cd ${PATCH_DIR}
 
-    if [ "$(ls -A "${WORKDIR}/${BASEMACHINE}")" ]
+    if [ "$(ls -A "${WORKDIR}/${MACHINE_CONFIG}")" ]
     then
         bbwarn "============================================================"
-        bbwarn "picking ${WORKDIR}/${BASEMACHINE}"
+        bbwarn "picking ${WORKDIR}/${MACHINE_CONFIG}"
         bbwarn "============================================================"
-        patch -p1 < ${WORKDIR}/${BASEMACHINE}/hostapd_driver_cmd.patch
+        patch -p1 < ${WORKDIR}/${MACHINE_CONFIG}/hostapd_driver_cmd.patch
     else
         bbwarn "============================================================"
         bbwarn "picking ${WORKDIR}/misc"
