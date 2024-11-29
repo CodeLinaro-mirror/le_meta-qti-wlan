@@ -1,4 +1,4 @@
-inherit module qperf
+include qcacld32-ll.inc
 
 DESCRIPTION = "Qualcomm Atheros WLAN Host Driver Module"
 SECTION = "kernel/modules"
