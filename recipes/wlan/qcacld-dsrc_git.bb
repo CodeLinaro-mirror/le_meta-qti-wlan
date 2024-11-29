@@ -1,4 +1,4 @@
-inherit module qperf
+include qcacld32-ll.inc
 
 DESCRIPTION = "Qualcomm Atheros WLAN CLD high latency driver"
 LICENSE = "ISC"

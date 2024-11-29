@@ -1,4 +1,4 @@
-inherit autotools-brokensep module qperf
+include qcacld32-ll.inc
 
 SUMMARY = "Qualcomm Technologies, Inc. WLAN Driver"
 DESCRIPTION = "Qualcomm Technologies, Inc. WLAN CLD3.0 low latency driver for the first WLAN chip.\
