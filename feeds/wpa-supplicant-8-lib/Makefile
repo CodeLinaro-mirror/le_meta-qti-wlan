@@ -32,6 +32,12 @@ ifeq ($(BOARD),sdx75)
 	TARGET_LOCAL_NAME :=sdxpinn
 endif
 
+ifeq ($(BOARD),sdx85)
+	# Reuse sdxpinn for now.
+	# To be revised if hostapd branch out later or divergency.
+	TARGET_LOCAL_NAME :=sdxpinn
+endif
+
 TARGET_PATCH_EXIST := $(shell if [ -n "$(TARGET_LOCAL_NAME)" ]; then \
 	echo "yes"; else echo "no"; fi)
 ifeq ($(TARGET_PATCH_EXIST), yes)
