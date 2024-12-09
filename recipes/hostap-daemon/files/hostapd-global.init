@@ -69,6 +69,7 @@ stop_service() {
 	echo "$PKG_NAME: stop" > /dev/kmsg
 	if  [ -e $WPAD_VARRUN/hostapd-global.pid ]
 	then
+		chmod 666 $WPAD_VARRUN/hostapd-global.pid
 		kill $(cat $WPAD_VARRUN/hostapd-global.pid) &> /dev/null
 		rm $WPAD_VARRUN/hostapd-global.pid &> /dev/null
 	fi
