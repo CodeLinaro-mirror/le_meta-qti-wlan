@@ -4,33 +4,36 @@ include wpa-supplicant.inc
 PR = "${INC_PR}.2"
 PV = "6.0"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
+MACHINE_CONFIG = "${BASEMACHINE}"
+MACHINE_CONFIG:pineapple = "kalama"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://external/wpa_supplicant_8/"
-SRC_URI += "file://${BASEMACHINE}/"
+SRC_URI += "file://${MACHINE_CONFIG}/"
 SRC_URI += "file://misc/"
-SRC_URI:append:sxrneo += "file://${MACHINE}/"
+SRC_URI:append:neo += "file://${BASEMACHINE}/"
 
 DEPENDS += "glib-2.0 wpa-supplicant-8-lib dbus liblog"
 DEPENDS:append:kalama = " qmi-framework "
 DEPENDS:append:sdxlemur = " qmi qmi-framework"
 DEPENDS:append:qrb5165 = " qmi-framework "
+DEPENDS:append:pineapple = " qmi-framework "
 
 FILES:${PN} += "/usr/include/*"
 
 S = "${WORKDIR}/external/wpa_supplicant_8/wpa_supplicant"
 PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"
 
-LDFLAGS:append:sxrneo = " -Wl,--no-as-needed -L${RECIPE_SYSROOT}/usr/lib -llog"
-CFLAGS:append:sxrneo =" -DCONFIG_ANDROID_LOG"
+LDFLAGS:append:neo = " -Wl,--no-as-needed -L${RECIPE_SYSROOT}/usr/lib -llog"
+CFLAGS:append:neo =" -DCONFIG_ANDROID_LOG"
 
 do_configure() {
-    if [ "$(ls -A "${WORKDIR}/${BASEMACHINE}")" ]
+    if [ "$(ls -A "${WORKDIR}/${MACHINE_CONFIG}")" ]
     then
         bbwarn "============================================================"
-        bbwarn "picking ${WORKDIR}/${BASEMACHINE}"
+        bbwarn "picking ${WORKDIR}/${MACHINE_CONFIG}"
         bbwarn "============================================================"
-        install -m 0644 ${WORKDIR}/${BASEMACHINE}/defconfig-qcacld .config
+        install -m 0644 ${WORKDIR}/${MACHINE_CONFIG}/defconfig-qcacld .config
         echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
     else
         bbwarn "============================================================"
@@ -41,11 +44,11 @@ do_configure() {
     fi
 }
 
-do_configure:sxrneo() {
+do_configure:neo() {
     bbwarn "============================================================"
-    bbwarn "picking ${WORKDIR}/${MACHINE}"
+    bbwarn "picking ${WORKDIR}/${BASEMACHINE}"
     bbwarn "============================================================"
-    install -m 0644 ${WORKDIR}/${MACHINE}/defconfig-qcacld .config
+    install -m 0644 ${WORKDIR}/${BASEMACHINE}/defconfig-qcacld .config
     echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
     rm -rf ${STAGING_LIBDIR}/libwpa_supplicant_8_lib.so*
     echo "EXTRALIBS +=\"-llog\"" >> .config
@@ -61,13 +64,13 @@ do_configure:append:sdxlemur() {
 
 do_patch() {
     cd ${PATCH_DIR}
-    if [ "$(ls -A "${WORKDIR}/${BASEMACHINE}")" ]
+    if [ "$(ls -A "${WORKDIR}/${MACHINE_CONFIG}")" ]
     then
         bbwarn "============================================================"
-        bbwarn "picking ${WORKDIR}/${BASEMACHINE}"
+        bbwarn "picking ${WORKDIR}/${MACHINE_CONFIG}"
         bbwarn "============================================================"
-        patch -p1 < ${WORKDIR}/${BASEMACHINE}/p2p_tmp_config.patch
-        patch -p1 < ${WORKDIR}/${BASEMACHINE}/driver_cmd.patch
+        patch -p1 < ${WORKDIR}/${MACHINE_CONFIG}/p2p_tmp_config.patch
+        patch -p1 < ${WORKDIR}/${MACHINE_CONFIG}/driver_cmd.patch
     else
         bbwarn "============================================================"
         bbwarn "picking ${WORKDIR}/misc"
@@ -77,13 +80,13 @@ do_patch() {
     fi
 }
 
-do_patch:sxrneo() {
+do_patch:neo() {
     cd ${PATCH_DIR}
-    if [ "$(ls -A "${WORKDIR}/${MACHINE}")" ]
+    if [ "$(ls -A "${WORKDIR}/${BASEMACHINE}")" ]
     then
         bbwarn "============================================================"
-        bbwarn "picking ${WORKDIR}/${MACHINE}"
+        bbwarn "picking ${WORKDIR}/${BASEMACHINE}"
         bbwarn "============================================================"
-        patch -p1 < ${WORKDIR}/${MACHINE}/driver_cmd.patch
+        patch -p1 < ${WORKDIR}/${BASEMACHINE}/driver_cmd.patch
     fi
 }

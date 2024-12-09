@@ -39,8 +39,9 @@ SYMVERS = "KBUILD_EXTRA_SYMBOLS=${STAGING_DIR_HOST}/lib/modules/${KERNEL_VERSION
 SYMVERS:append:kalama:ubuntu = " KBUILD_EXTRA_SYMBOLS+=${STAGING_DIR_HOST}/lib/modules/${KERNEL_VERSION}/cfg80211w/cfg80211w.symvers"
 ADDITIONAL_CONFIGS = ""
 ADDITIONAL_CONFIGS:append:kalama:ubuntu = " CONFIG_CFG80211_PROP_MULTI_LINK_SUPPORT=y CONFIG_NL80211_TESTMODE=y "
+ADDITIONAL_CONFIGS:append:pineapple = " CONFIG_IPA_OFFLOAD=n "
 
-do_configure:append:sxrneo() {
+do_configure:append:neo() {
     sed -i '1i DYNAMIC_SINGLE_CHIP=${TARGET_WLAN_CHIP}' ${WORKDIR}/wlan/qcacld-3.0/configs/${TARGET_WLAN_CHIP}_defconfig
     sed -i 's/CONFIG_WLAN_FEATURE_COAP := y/#CONFIG_WLAN_FEATURE_COAP := y/g' ${WORKDIR}/wlan/qcacld-3.0/configs/${TARGET_WLAN_CHIP}_defconfig
 }

@@ -30,7 +30,7 @@ SRC_URI += "file://wlan/fw-api/"
 SRC_URI += "file://kernel-5.10/kernel_platform"
 SRC_URI += "file://kernel-5.10/out/${KERNEL_DEFCONFIG}"
 SRC_URI += "file://device/qcom/wlan/${BASEMACHINE}/"
-SRC_URI += "file://${MACHINE}/wlan_load.conf"
+SRC_URI += "file://${BASEMACHINE}/wlan_load.conf"
 
 CLANG_BIN = "${WORKDIR}/recipe-sysroot-native/usr/bin/clang/bin"
 S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn/"
@@ -39,7 +39,7 @@ FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld/${TARGET_WLAN_CHIP}"
 
 BUILD_FLAGS = "CONFIG_QCA_CLD_WLAN_PROFILE=${TARGET_WLAN_CHIP} MODNAME=${WLAN_CHIP}_${TARGET_WLAN_CHIP}"
 
-do_configure:append:sxrneo() {
+do_configure:append:neo() {
     sed -i '1i DYNAMIC_SINGLE_CHIP=${TARGET_WLAN_CHIP}' ${WORKDIR}/wlan/qcacld-3.0/configs/${TARGET_WLAN_CHIP}_defconfig
     sed -i 's/CONFIG_WLAN_FEATURE_COAP := y/#CONFIG_WLAN_FEATURE_COAP := y/g' ${WORKDIR}/wlan/qcacld-3.0/configs/${TARGET_WLAN_CHIP}_defconfig
     echo "CONFIG_WLAN_SUPPORT_SERVICE_CLASS := y" >> ${WORKDIR}/wlan/qcacld-3.0/configs/${TARGET_WLAN_CHIP}_defconfig
@@ -69,7 +69,7 @@ do_install() {
     ${CLANG_BIN}/llvm-strip --strip-unneeded ${S}/${WLAN_CHIP}_${TARGET_WLAN_CHIP}.ko
     install -m 0755 ${S}/${WLAN_CHIP}_${TARGET_WLAN_CHIP}.ko -D ${D}/${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_CHIP}_${TARGET_WLAN_CHIP}.ko
     install -d ${D}${sysconfdir}/modules-load.d
-    install -m 0755 ${WORKDIR}/${MACHINE}/wlan_load.conf -D ${D}/${sysconfdir}/modules-load.d/wlan_load.conf
+    install -m 0755 ${WORKDIR}/${BASEMACHINE}/wlan_load.conf -D ${D}/${sysconfdir}/modules-load.d/wlan_load.conf
     install -d ${FIRMWARE_PATH}
     install -m 0644 ${WORKDIR}/device/qcom/wlan/${BASEMACHINE}/WCNSS_qcom_cfg_${TARGET_WLAN_CHIP}_LE.ini ${D}/lib/firmware/wlan/qca_cld/${TARGET_WLAN_CHIP}/WCNSS_qcom_cfg.ini
 }

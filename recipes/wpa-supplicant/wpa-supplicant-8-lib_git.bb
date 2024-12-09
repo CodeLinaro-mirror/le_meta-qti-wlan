@@ -29,7 +29,7 @@ CFLAGS:append= " -fcommon  -lcutils "
 do_patch() {
     cd ${PATCH_DIR}
 
-    if [ "${MACHINE}" == "sxrneo" ]
+    if [[ ${MACHINE} == "sxrneo" || ${MACHINE} == "sxrneo-ar-sg1" ]]
     then
         bbwarn "============================================================"
         bbwarn "picking ${WORKDIR}/misc"
