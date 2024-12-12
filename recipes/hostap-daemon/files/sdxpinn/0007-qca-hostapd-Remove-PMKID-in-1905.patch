@@ -1,0 +1,43 @@
+From b88d4f11bd856e36739fd8ed5edcf112e2d0fcfb Mon Sep 17 00:00:00 2001
+From: Gurumoorthi Gnanasambandhan <quic_gguru@quicinc.com>
+Date: Thu, 29 Apr 2021 17:31:51 +0530
+Subject: [PATCH 07/41] qca-hostapd: Remove PMKID in 1905
+
+Initialize remove_pmkid function pointer to avoid assert
+
+Signed-off-by: Gurumoorthi Gnanasambandhan <quic_gguru@quicinc.com>
+Change-Id: I00ce46b00f31e3de358c6684a670f564212b7a03
+---
+ src/drivers/eap1905_sta.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/src/drivers/eap1905_sta.c b/src/drivers/eap1905_sta.c
+index ddb519d407..345d6cc12f 100644
+--- a/src/drivers/eap1905_sta.c
++++ b/src/drivers/eap1905_sta.c
+@@ -245,6 +245,14 @@ static int supp_add_pmkid(void *wpa_s, void *network_ctx,
+ 	return 0;
+ }
+ 
++static int supp_remove_pmkid(void *_wpa_s, void *network_ctx,
++				       const u8 *bssid, const u8 *pmkid,
++				       const u8 *fils_cache_id)
++{
++	wpa_printf(MSG_ERROR, "SUPP: remove PMKID ");
++	return 0;
++}
++
+ void wpa_sm_inits(struct wpa_sm_ctx *ctx)
+ {
+ 	printf("%p\n", ctx->set_rekey_offload);
+@@ -283,6 +291,7 @@ static int sta_init(struct wpa_1905 *wpa, struct sta_sec_config *sec_conf)
+ 	wpa->ctx->get_state = supp_get_state;
+ 	wpa->ctx->set_rekey_offload = NULL;
+ 	wpa->ctx->add_pmkid = supp_add_pmkid;
++	wpa->ctx->remove_pmkid = supp_remove_pmkid;
+ 
+ 	wpa->no_callback = 1 ;
+ 
+-- 
+2.17.1
+

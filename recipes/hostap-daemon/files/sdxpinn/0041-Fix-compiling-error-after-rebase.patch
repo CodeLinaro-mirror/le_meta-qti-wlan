@@ -1,0 +1,112 @@
+From 52818adfb9ca556d90b1e886384ac61a5b923b3f Mon Sep 17 00:00:00 2001
+From: Chenming Huang <quic_chenhuan@quicinc.com>
+Date: Thu, 23 May 2024 14:38:53 +0530
+Subject: [PATCH 41/41] Fix compiling error after rebase
+
+Change-Id: Ic84d732fc2f2d96ea9f68a97ceba53893d34d3b4
+Signed-off-by: Chenming Huang <quic_chenhuan@quicinc.com>
+---
+ src/ap/gas_serv.c     | 13 +++++++------
+ src/common/dpp.c      |  4 ++--
+ src/drivers/eap1905.c |  6 +++---
+ src/rsn_supp/wpa.c    |  1 +
+ 4 files changed, 13 insertions(+), 11 deletions(-)
+
+diff --git a/src/ap/gas_serv.c b/src/ap/gas_serv.c
+index 6dc8904b1b..d3106f1b41 100644
+--- a/src/ap/gas_serv.c
++++ b/src/ap/gas_serv.c
+@@ -1546,7 +1546,6 @@ void gas_serv_req_dpp_processing(struct hostapd_data *hapd,
+ 				 int prot, struct wpabuf *buf, int freq)
+ {
+ 	struct wpabuf *tx_buf;
+-	unsigned int freq;
+ 
+ 	if (wpabuf_len(buf) > hapd->conf->gas_frag_limit ||
+ 	    hapd->conf->gas_comeback_delay) {
+@@ -1608,11 +1607,13 @@ void gas_serv_req_dpp_processing(struct hostapd_data *hapd,
+ 	if (prot)
+ 		convert_to_protected_dual(tx_buf);
+ 
+-        if(hapd->dpp_auth) {
+-                freq = hapd->dpp_auth->curr_freq;
+-        } else {
+-                freq =  hapd->iface->freq;
+-        }
++	if (!freq) {
++		if(hapd->dpp_auth) {
++			freq = hapd->dpp_auth->curr_freq;
++		} else {
++			freq =  hapd->iface->freq;
++		}
++	}
+ 	wpa_printf(MSG_INFO, "DPP-TX: dst=" MACSTR " freq=%u type:%d", MAC2STR(sa), freq, WLAN_PA_GAS_INITIAL_RESP);
+ 	hostapd_drv_send_action(hapd, freq, 1500, sa,
+ 				wpabuf_head(tx_buf),
+diff --git a/src/common/dpp.c b/src/common/dpp.c
+index 22fe03c257..ac1976229c 100644
+--- a/src/common/dpp.c
++++ b/src/common/dpp.c
+@@ -4689,7 +4689,7 @@ struct wpabuf * dpp_rx_peer_disc_req(struct dpp_authentication *auth,
+ 			     wpabuf_len(auth->net_access_key),
+ 			     wpabuf_head(auth->conf_obj->c_sign_key),
+ 			     wpabuf_len(auth->conf_obj->c_sign_key),
+-			     connector, connector_len, &expire);
++			     connector, connector_len, &expire, NULL);
+ 	if (res == 255) {
+ 		wpa_printf(MSG_INFO,
+ 			   "DPP: Network Introduction protocol resulted in internal failure (peer "
+@@ -4786,7 +4786,7 @@ void dpp_rx_peer_disc_resp(struct dpp_authentication *auth, const u8 *src,
+ 			     wpabuf_len(auth->net_access_key),
+ 			     wpabuf_head(auth->conf_obj->c_sign_key),
+ 			     wpabuf_len(auth->conf_obj->c_sign_key),
+-			     connector, connector_len, &expiry);
++			     connector, connector_len, &expiry, NULL);
+ 	if (res != DPP_STATUS_OK) {
+ 		wpa_printf(MSG_INFO,
+ 			   "DPP: Network Introduction protocol resulted in failure");
+diff --git a/src/drivers/eap1905.c b/src/drivers/eap1905.c
+index 43bd5ef24a..ca1e3b3be1 100644
+--- a/src/drivers/eap1905.c
++++ b/src/drivers/eap1905.c
+@@ -180,7 +180,7 @@ static int assoc_init(struct wpa_1905 *wpa, int index)
+ 	int i = index;
+ 	wpa_printf(MSG_DEBUG, "ASSOC: i=%d ", i);
+ 	wpa->auth[i] = wpa_auth_sta_init(wpa->auth_group,
+-					 wpa->supp_addr[i], NULL, NULL);
++					 wpa->supp_addr[i], NULL);
+ 	if (!wpa->auth[i]) {
+ 		wpa_printf(MSG_DEBUG, "AUTH: wpa_auth_sta_init() failed");
+ 		return -1;
+@@ -188,14 +188,14 @@ static int assoc_init(struct wpa_1905 *wpa, int index)
+ 
+ 	if (wpa_auth_pmksa_add2(wpa->auth_group, wpa->supp_addr[i], wpa->psk,
+ 				PMK_LEN, wpa->pmkid, 0,
+-				conf.wpa_key_mgmt) < 0) {
++				conf.wpa_key_mgmt, NULL) < 0) {
+ 		wpa_printf(MSG_ERROR, "DPP: Failed to add PMKSA cache entry");
+ 		return -1;
+ 	}
+ 
+ 	if (wpa_validate_wpa_ie(wpa->auth_group, wpa->auth[i], 2412,
+ 				wpa->supp_ie, wpa->supp_ie_len, NULL, 0,
+-				NULL, 0, NULL, 0) != WPA_IE_OK) {
++				NULL, 0, NULL, 0, NULL) != WPA_IE_OK) {
+ 		wpa_printf(MSG_DEBUG, "AUTH: wpa_validate_wpa_ie() failed");
+ 		wpa_auth_sta_deinit(wpa->auth[i]);
+ 		wpa->sta_count--;
+diff --git a/src/rsn_supp/wpa.c b/src/rsn_supp/wpa.c
+index 1bd1e33b99..4446a8c69a 100644
+--- a/src/rsn_supp/wpa.c
++++ b/src/rsn_supp/wpa.c
+@@ -32,6 +32,7 @@
+ #include "pmksa_cache.h"
+ #include "wpa_i.h"
+ #include "wpa_ie.h"
++#include "../../wpa_supplicant/wpa_supplicant_i.h"
+ 
+ 
+ static const u8 null_rsc[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+-- 
+2.17.1
+

@@ -1,0 +1,379 @@
+From a8aff17b5f78a54f5a572acca43492528d7996ce Mon Sep 17 00:00:00 2001
+From: Wu Gao <quic_wugao@quicinc.com>
+Date: Fri, 10 May 2024 02:39:37 -0700
+Subject: [PATCH 05/10] sigma-dut: Use radio name macro to replace "wifi"
+
+This change registers map functions, and uses radio name macro to
+replace "wifi".
+
+CRs-Fixed: 3893994
+Change-Id: I754c88f1065b12bcdf54bdff6884a1dec1a052db
+Signed-off-by: Chenming Huang <quic_chenhuan@quicinc.com>
+---
+ ap.c        | 54 ++++++++++++++++++++++++++---------------------------
+ cmds_reg.c  |  1 +
+ map.c       | 46 ++++++++++++++++++++++-----------------------
+ sigma_dut.h |  5 +++++
+ sta.c       | 12 ++++++------
+ 5 files changed, 62 insertions(+), 56 deletions(-)
+
+diff --git a/ap.c b/ap.c
+index a379778..1d6f75a 100644
+--- a/ap.c
++++ b/ap.c
+@@ -631,10 +631,10 @@ static int run_hostapd_cli(struct sigma_dut *dut, char *buf)
+ 		sigma_hapd_file = "/var/run/hostapd-wifi0";
+ 
+ 		if (sigma_radio_ifname[0] &&
+-		    strcmp(sigma_radio_ifname[0], "wifi1") == 0)
++		    strcmp(sigma_radio_ifname[0], RADIO1_NAME) == 0)
+ 			sigma_hapd_file = "/var/run/hostapd-wifi1";
+ 		else if (sigma_radio_ifname[0] &&
+-			 strcmp(sigma_radio_ifname[0], "wifi2") == 0)
++			 strcmp(sigma_radio_ifname[0], RADIO2_NAME) == 0)
+ 			sigma_hapd_file = "/var/run/hostapd-wifi2";
+ 	}
+ 
+@@ -3353,12 +3353,12 @@ void owrt_ap_set_radio(struct sigma_dut *dut, int id,
+ 
+ 	if (val == NULL) {
+ 		snprintf(buf, sizeof(buf),
+-			 "uci delete wireless.wifi%d.%s", id, key);
++			 "uci delete wireless."RADIO_PREFIX"%d.%s", id, key);
+ 		run_system(dut, buf);
+ 		return;
+ 	}
+ 
+-	snprintf(buf, sizeof(buf), "uci set wireless.wifi%d.%s=%s",
++	snprintf(buf, sizeof(buf), "uci set wireless."RADIO_PREFIX"%d.%s=%s",
+ 		 id, key, val);
+ 	run_system(dut, buf);
+ }
+@@ -3371,12 +3371,12 @@ static void owrt_ap_set_list_radio(struct sigma_dut *dut, int id,
+ 
+ 	if (val == NULL) {
+ 		snprintf(buf, sizeof(buf),
+-			 "uci del_list wireless.wifi%d.%s", id, key);
++			 "uci del_list wireless."RADIO_PREFIX"%d.%s", id, key);
+ 		run_system(dut, buf);
+ 		return;
+ 	}
+ 
+-	snprintf(buf, sizeof(buf), "uci add_list wireless.wifi%d.%s=%s",
++	snprintf(buf, sizeof(buf), "uci add_list wireless."RADIO_PREFIX"%d.%s=%s",
+ 		 id, key, val);
+ 	run_system(dut, buf);
+ }
+@@ -4094,10 +4094,10 @@ const char * get_hostapd_ifname(struct sigma_dut *dut)
+ 
+ 	if (drv == DRIVER_OPENWRT) {
+ 		if (sigma_radio_ifname[0] &&
+-		    strcmp(sigma_radio_ifname[0], "wifi2") == 0)
++		    strcmp(sigma_radio_ifname[0], RADIO2_NAME) == 0)
+ 			return "ath2";
+ 		if (sigma_radio_ifname[0] &&
+-		    strcmp(sigma_radio_ifname[0], "wifi1") == 0)
++		    strcmp(sigma_radio_ifname[0], RADIO1_NAME) == 0)
+ 			return "ath1";
+ 		return "ath0";
+ 	}
+@@ -4147,10 +4147,10 @@ static int owrt_ap_config_vap(struct sigma_dut *dut)
+ 	char ifname2[50];
+ 
+ 	if (sigma_radio_ifname[0] &&
+-	    strcmp(sigma_radio_ifname[0], "wifi2") == 0)
++	    strcmp(sigma_radio_ifname[0], RADIO2_NAME) == 0)
+ 		ifname = "ath2";
+ 	else if (sigma_radio_ifname[0] &&
+-		 strcmp(sigma_radio_ifname[0], "wifi1") == 0)
++		 strcmp(sigma_radio_ifname[0], RADIO1_NAME) == 0)
+ 		ifname = "ath1";
+ 	else
+ 		ifname = "ath0";
+@@ -5238,18 +5238,18 @@ static void cmd_owrt_ap_hs2_reset(struct sigma_dut *dut)
+ 	int vap_id = 0;
+ 
+ 	if (sigma_radio_ifname[0] &&
+-	    strcmp(sigma_radio_ifname[0], "wifi2") == 0) {
++	    strcmp(sigma_radio_ifname[0], RADIO2_NAME) == 0) {
+ 		ifname = "ath2";
+-		radio_name = "wifi2";
++		radio_name = RADIO2_NAME;
+ 		vap_id = 2;
+ 	} else if (sigma_radio_ifname[0] &&
+-		   strcmp(sigma_radio_ifname[0], "wifi1") == 0) {
++		   strcmp(sigma_radio_ifname[0], RADIO1_NAME) == 0) {
+ 		ifname = "ath1";
+-		radio_name = "wifi1";
++		radio_name = RADIO1_NAME;
+ 		vap_id = 1;
+ 	} else {
+ 		ifname = "ath0";
+-		radio_name = "wifi0";
++		radio_name = RADIO0_NAME;
+ 		vap_id = 0;
+ 	}
+ 
+@@ -5271,23 +5271,23 @@ static void cmd_owrt_ap_hs2_reset(struct sigma_dut *dut)
+ 		} else {
+ 			/* Select & enable/disable radios */
+ 			if (sigma_radio_ifname[0] &&
+-			    strcmp(sigma_radio_ifname[0], "wifi2") == 0) {
++			    strcmp(sigma_radio_ifname[0], RADIO2_NAME) == 0) {
+ 				/* We want to use wifi2 */
+ 				owrt_ap_set_radio(dut, 0, "disabled", "1");
+ 				owrt_ap_set_radio(dut, 1, "disabled", "1");
+ 				owrt_ap_set_radio(dut, 2, "disabled", "0");
+-				owrt_ap_set_vap(dut, vap_id, "device", "wifi2");
++				owrt_ap_set_vap(dut, vap_id, "device", RADIO2_NAME);
+ 			} else if (sigma_radio_ifname[0] &&
+-				   strcmp(sigma_radio_ifname[0], "wifi1") == 0) {
++				   strcmp(sigma_radio_ifname[0], RADIO1_NAME) == 0) {
+ 				/* We want to use wifi1 */
+ 				owrt_ap_set_radio(dut, 0, "disabled", "1");
+ 				owrt_ap_set_radio(dut, 1, "disabled", "0");
+-				owrt_ap_set_vap(dut, vap_id, "device", "wifi1");
++				owrt_ap_set_vap(dut, vap_id, "device", RADIO1_NAME);
+ 			} else {
+ 				/* We want to use wifi0 */
+ 				owrt_ap_set_radio(dut, 0, "disabled", "0");
+ 				owrt_ap_set_radio(dut, 1, "disabled", "1");
+-				owrt_ap_set_vap(dut, vap_id, "device", "wifi0");
++				owrt_ap_set_vap(dut, vap_id, "device", RADIO0_NAME);
+ 			}
+ 
+ 			run_system(dut, "uci commit");
+@@ -6431,7 +6431,7 @@ static void cmd_ath_ap_radio_config(struct sigma_dut *dut)
+ 	run_system(dut, "cfg -a AP_STARTMODE=standard");
+ 
+ 	if (sigma_radio_ifname[0] &&
+-	    strcmp(sigma_radio_ifname[0], "wifi1") == 0) {
++	    strcmp(sigma_radio_ifname[0], RADIO1_NAME) == 0) {
+ 		run_system(dut, "cfg -a AP_RADIO_ID=1");
+ 		switch (dut->ap_mode) {
+ 		case AP_11g:
+@@ -6692,8 +6692,8 @@ static void mubrp_commands(struct sigma_dut *dut, const char *ifname)
+ 
+ static void ath_ap_set_params(struct sigma_dut *dut)
+ {
+-	const char *basedev = "wifi0";
+-	const char *basedev_radio = "wifi1";
++	const char *basedev = RADIO0_NAME;
++	const char *basedev_radio = RADIO1_NAME;
+ 	const char *ifname = get_main_ifname(dut);
+ 	char *ifname_dual = NULL;
+ 	int i;
+@@ -6707,7 +6707,7 @@ static void ath_ap_set_params(struct sigma_dut *dut)
+ 		basedev = sigma_radio_ifname[0];
+ 		basedev_radio = sigma_radio_ifname[1];
+ 		if (sigma_radio_ifname[0] &&
+-		    strcmp(sigma_radio_ifname[0], "wifi0") == 0) {
++		    strcmp(sigma_radio_ifname[0], RADIO0_NAME) == 0) {
+ 			ifname = "ath0";
+ 			ifname_dual = "ath1";
+ 		} else {
+@@ -10433,7 +10433,7 @@ static void cmd_ath_ap_hs2_reset(struct sigma_dut *dut)
+ 			bssid[0], bssid[1], bssid[2], bssid[3],
+ 			bssid[4], bssid[5]);
+ 	} else {
+-		if (!get_hwaddr("wifi0", bssid)) {
++		if (!get_hwaddr(RADIO0_NAME, bssid)) {
+ 			snprintf(buf, sizeof(buf), "cfg -a AP_HOTSPOT_HESSID="
+ 				"%02x:%02x:%02x:%02x:%02x:%02x",
+ 				bssid[0], bssid[1], bssid[2], bssid[3],
+@@ -10447,7 +10447,7 @@ static void cmd_ath_ap_hs2_reset(struct sigma_dut *dut)
+ 			/* load the driver and try again */
+ 			run_system(dut, "/etc/rc.d/rc.wlan up");
+ 
+-			if (!get_hwaddr("wifi0", bssid)) {
++			if (!get_hwaddr(RADIO0_NAME, bssid)) {
+ 				snprintf(buf, sizeof(buf),
+ 					 "cfg -a AP_HOTSPOT_HESSID="
+ 					 "%02x:%02x:%02x:%02x:%02x:%02x",
+@@ -13943,7 +13943,7 @@ static enum sigma_cmd_result ath_ap_set_rfeature(struct sigma_dut *dut,
+ 	const char *val;
+ 	const char *ifname;
+ 	enum sigma_cmd_result res;
+-	const char *basedev = "wifi0";
++	const char *basedev = RADIO0_NAME;
+ 	int trigtype;
+ 	int he_ackpolicymac = 0;
+ 	char *num_ss = NULL;
+diff --git a/cmds_reg.c b/cmds_reg.c
+index ae81934..5919cc4 100644
+--- a/cmds_reg.c
++++ b/cmds_reg.c
+@@ -34,4 +34,5 @@ void sigma_dut_register_cmds(void)
+ #ifdef MIRACAST
+ 	miracast_register_cmds();
+ #endif /* MIRACAST */
++	map_register_cmds();
+ }
+diff --git a/map.c b/map.c
+index 377325a..a409ad0 100644
+--- a/map.c
++++ b/map.c
+@@ -645,11 +645,11 @@ static bool map_is_ifname(struct sigma_dut *dut, const char *mac,
+ 		return rc;
+ 
+ 	if (strcmp(ifname, WLANIF"0") == 0)
+-		ifname_temp = "wifi0";
++		ifname_temp = RADIO0_NAME;
+ 	else if (strcmp(ifname, WLANIF"1") == 0)
+-		ifname_temp = "wifi1";
++		ifname_temp = RADIO1_NAME;
+ 	else
+-		ifname_temp = "wifi2";
++		ifname_temp = RADIO2_NAME;
+ 
+ 	memset(&ifr, 0, sizeof(ifr));
+ 	strlcpy(ifr.ifr_name, ifname_temp, sizeof(ifr.ifr_name)); // check
+@@ -1361,11 +1361,11 @@ static int map_dpp_deauth(struct sigma_dut *dut, const char *macAddr)
+ 		if (strstr(ifa->ifa_name, WLANIF)) {
+ 			sigma_dut_print(dut, DUT_MSG_DEBUG,"%-8s\n", ifa->ifa_name);
+ 			if (strstr(ifa->ifa_name, WLANIF"2"))
+-				hw_name = "wifi2";
++				hw_name = RADIO2_NAME;
+ 			else if (strstr(ifa->ifa_name, WLANIF"1"))
+-				hw_name = "wifi1";
++				hw_name = RADIO1_NAME;
+ 			else
+-				hw_name = "wifi0";
++				hw_name = RADIO0_NAME;
+ 
+ 			snprintf(buf, sizeof(buf),
+ 			      "hostapd_cli -i %s -p /var/run/hostapd-%s/ deauth %s",
+@@ -4895,7 +4895,7 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 	char buf[64];
+ 
+ 	for (radio_count = 0; radio_count < MAX_RADIO; radio_count++) {
+-		snprintf(buf, sizeof(buf), "%s%d", "wifi", radio_count);
++		snprintf(buf, sizeof(buf), "RADIO_PREFIX%d", radio_count);
+ 		for (radio_no = 0; radio_no < MAX_RADIO; radio_no++) {
+ 			if (!sigma_radio_ifname[radio_no] ||
+ 			    strcmp(sigma_radio_ifname[radio_no], buf) != 0)
+@@ -5225,9 +5225,9 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 			dut->ap_preset_chn = 1;
+ 			dut->ap_channel = 149;
+ 			sigma_dut_print(dut, DUT_MSG_DEBUG, "ctlr: after rpacd,%d", radio_id[0]);
+-						if (sigma_radio_ifname[radio_id[0]] && strcmp(sigma_radio_ifname[radio_id[0]], "wifi2") == 0)
++			if (sigma_radio_ifname[radio_id[0]] && strcmp(sigma_radio_ifname[radio_id[0]], RADIO2_NAME) == 0)
+ 				dut->hostapd_ifname = WLANIF"2";
+-			else if (sigma_radio_ifname[radio_id[0]] && strcmp(sigma_radio_ifname[radio_id[0]], "wifi1") == 0)
++			else if (sigma_radio_ifname[radio_id[0]] && strcmp(sigma_radio_ifname[radio_id[0]], RADIO1_NAME) == 0)
+ 				dut->hostapd_ifname = WLANIF"1";
+ 			else
+ 				dut->hostapd_ifname = WLANIF"0";
+@@ -5481,32 +5481,32 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 			dut->ap_preset_chn = 1;
+ 			dut->ap_channel = 6;
+ 
+-			if (sigma_radio_ifname[radio_id[0]] && strcmp(sigma_radio_ifname[radio_id[0]], "wifi2") == 0)
++			if (sigma_radio_ifname[radio_id[0]] && strcmp(sigma_radio_ifname[radio_id[0]], RADIO2_NAME) == 0)
+ 				dut->hostapd_ifname = WLANIF"2";
+-			else if (sigma_radio_ifname[radio_id[0]] && strcmp(sigma_radio_ifname[radio_id[0]], "wifi1") == 0)
++			else if (sigma_radio_ifname[radio_id[0]] && strcmp(sigma_radio_ifname[radio_id[0]], RADIO1_NAME) == 0)
+ 				dut->hostapd_ifname = WLANIF"1";
+ 			else
+ 				dut->hostapd_ifname = WLANIF"0";
+ 
+-			if (sigma_radio_ifname[radio_id[0]] && strcmp(sigma_radio_ifname[radio_id[0]], "wifi0") == 0)
++			if (sigma_radio_ifname[radio_id[0]] && strcmp(sigma_radio_ifname[radio_id[0]], RADIO0_NAME) == 0)
+ 				map_set_assoc_disallow(dut, WLANIF"0", "Disable");
+-			if (sigma_radio_ifname[radio_id[0]] && strcmp(sigma_radio_ifname[radio_id[0]], "wifi1") == 0)
++			if (sigma_radio_ifname[radio_id[0]] && strcmp(sigma_radio_ifname[radio_id[0]], RADIO1_NAME) == 0)
+ 				map_set_assoc_disallow(dut, WLANIF"1", "Disable");
+-			if (sigma_radio_ifname[radio_id[0]] && strcmp(sigma_radio_ifname[radio_id[0]], "wifi2") == 0)
++			if (sigma_radio_ifname[radio_id[0]] && strcmp(sigma_radio_ifname[radio_id[0]], RADIO2_NAME) == 0)
+ 				map_set_assoc_disallow(dut, WLANIF"2", "Disable");
+ 
+-			if (sigma_radio_ifname[radio_id[1]] && strcmp(sigma_radio_ifname[radio_id[1]], "wifi0") == 0)
++			if (sigma_radio_ifname[radio_id[1]] && strcmp(sigma_radio_ifname[radio_id[1]], RADIO0_NAME) == 0)
+ 				map_set_assoc_disallow(dut, WLANIF"0", "Disable");
+-			if (sigma_radio_ifname[radio_id[1]] && strcmp(sigma_radio_ifname[radio_id[1]], "wifi1") == 0)
++			if (sigma_radio_ifname[radio_id[1]] && strcmp(sigma_radio_ifname[radio_id[1]], RADIO1_NAME) == 0)
+ 				map_set_assoc_disallow(dut, WLANIF"1", "Disable");
+-			if (sigma_radio_ifname[radio_id[1]] && strcmp(sigma_radio_ifname[radio_id[1]], "wifi2") == 0)
++			if (sigma_radio_ifname[radio_id[1]] && strcmp(sigma_radio_ifname[radio_id[1]], RADIO2_NAME) == 0)
+ 				map_set_assoc_disallow(dut, WLANIF"2", "Disable");
+ 
+-			if (sigma_radio_ifname[radio_id[2]] && strcmp(sigma_radio_ifname[radio_id[2]], "wifi0") == 0)
++			if (sigma_radio_ifname[radio_id[2]] && strcmp(sigma_radio_ifname[radio_id[2]], RADIO0_NAME) == 0)
+ 				map_set_assoc_disallow(dut, WLANIF"0", "Disable");
+-			if (sigma_radio_ifname[radio_id[2]] && strcmp(sigma_radio_ifname[radio_id[2]], "wifi1") == 0)
++			if (sigma_radio_ifname[radio_id[2]] && strcmp(sigma_radio_ifname[radio_id[2]], RADIO1_NAME) == 0)
+ 				map_set_assoc_disallow(dut, WLANIF"1", "Disable");
+-			if (sigma_radio_ifname[radio_id[2]] && strcmp(sigma_radio_ifname[radio_id[2]], "wifi2") == 0)
++			if (sigma_radio_ifname[radio_id[2]] && strcmp(sigma_radio_ifname[radio_id[2]], RADIO2_NAME) == 0)
+ 				map_set_assoc_disallow(dut, WLANIF"2", "Disable");
+ 
+ 			map_disable_lan(dut);
+@@ -6508,7 +6508,7 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+ 
+ 				if(!typeval) {
+ 				owrt_ap_set_radio(dut, 0, "enable_macreq", "1");
+-				owrt_ap_add_vap(dut, ndx, "device", "wifi0");
++				owrt_ap_add_vap(dut, ndx, "device", RADIO0_NAME);
+ 				owrt_ap_set_vap(dut, ndx, "ssid", ruid);
+ 				owrt_ap_set_vap(dut, ndx, "mode", "sta");
+ 				owrt_ap_set_vap(dut, ndx, "wds", "1");
+@@ -6612,7 +6612,7 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+ 
+ 				if (!typeval) {
+ 				owrt_ap_set_radio(dut, 1, "enable_macreq", "1");
+-				owrt_ap_add_vap(dut, ndx, "device", "wifi1");
++				owrt_ap_add_vap(dut, ndx, "device", RADIO1_NAME);
+ 				owrt_ap_set_vap(dut, ndx, "ssid", ruid);
+ 				owrt_ap_set_vap(dut, ndx, "mode", "sta");
+ 				owrt_ap_set_vap(dut, ndx, "wds", "1");
+@@ -6723,7 +6723,7 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+ 					owrt_ap_set_radio(dut, 2,
+ 							  "enable_macreq", "1");
+ 					owrt_ap_add_vap(dut, ndx, "device",
+-							"wifi2");
++							RADIO2_NAME);
+ 					owrt_ap_set_vap(dut, ndx, "ssid", ruid);
+ 					owrt_ap_set_vap(dut, ndx, "mode",
+ 							"sta");
+diff --git a/sigma_dut.h b/sigma_dut.h
+index d384b6f..002c824 100644
+--- a/sigma_dut.h
++++ b/sigma_dut.h
+@@ -115,6 +115,11 @@ struct sigma_dut;
+ /* Set default operating channel width 80 MHz */
+ #define VHT_DEFAULT_OPER_CHWIDTH AP_80_VHT_OPER_CHWIDTH
+ 
++#define RADIO_PREFIX "wifi"
++#define RADIO0_NAME "wifi0"
++#define RADIO1_NAME "wifi1"
++#define RADIO2_NAME "wifi2"
++
+ typedef unsigned int u32;
+ typedef uint16_t u16;
+ typedef unsigned char u8;
+diff --git a/sta.c b/sta.c
+index 022308c..76364ed 100644
+--- a/sta.c
++++ b/sta.c
+@@ -7650,12 +7650,12 @@ cmd_sta_preset_testparameters(struct sigma_dut *dut, struct sigma_conn *conn,
+ static const char * ath_get_radio_name(const char *radio_name)
+ {
+ 	if (radio_name == NULL)
+-		return "wifi0";
+-	if (strcmp(radio_name, "wifi1") == 0)
+-		return "wifi1";
+-	if (strcmp(radio_name, "wifi2") == 0)
+-		return "wifi2";
+-	return "wifi0";
++		return RADIO0_NAME;
++	if (strcmp(radio_name, RADIO1_NAME) == 0)
++		return RADIO1_NAME;
++	if (strcmp(radio_name, RADIO2_NAME) == 0)
++		return RADIO2_NAME;
++	return RADIO0_NAME;
+ }
+ 
+ 
+-- 
+2.17.1
+

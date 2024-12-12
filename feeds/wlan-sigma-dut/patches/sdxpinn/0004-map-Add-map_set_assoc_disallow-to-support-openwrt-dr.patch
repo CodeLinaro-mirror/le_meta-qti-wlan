@@ -1,0 +1,192 @@
+From 8acb4c0dc05c2f13c015e54ed4bc145da2700368 Mon Sep 17 00:00:00 2001
+From: Hu Wang <quic_huw@quicinc.com>
+Date: Thu, 9 May 2024 01:38:25 -0700
+Subject: [PATCH 04/10] map: Add map_set_assoc_disallow to support openwrt
+ driver type
+
+map_set_assoc_disallow is called for openwrt driver type including
+- OPENWRT_DRIVER_ATHEROS
+- OPENWRT_DRIVER_LINUX_WCN
+
+Specially add wcn_set_assoc_disallow for wcn driver type which
+uses vendor NL80211 to talk to CLD driver.
+
+CRs-Fixed: 3893994
+Change-Id: Iaa0826793713722b2a982984518f43272e43de1d
+Signed-off-by: Chenming Huang <quic_chenhuan@quicinc.com>
+---
+ ap.c        | 63 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ map.c       | 45 +++++++++++++++++++++++++++++---------
+ sigma_dut.h |  2 ++
+ 3 files changed, 100 insertions(+), 10 deletions(-)
+
+diff --git a/ap.c b/ap.c
+index 20bfed4..a379778 100644
+--- a/ap.c
++++ b/ap.c
+@@ -14908,6 +14908,69 @@ static int wcn_ap_set_he_gi(struct sigma_dut *dut, const char *intf, u8 gi_val)
+ }
+ 
+ 
++int wcn_set_assoc_disallow(struct sigma_dut *dut, const char *ifname,
++			   const char *val)
++{
++#ifdef NL80211_SUPPORT
++	struct nl_msg *msg;
++	int ret;
++	struct nlattr *params;
++	int ifindex = 0;
++	int assoc_disallow = 0;
++
++	if (ifname)
++		ifindex = if_nametoindex(ifname);
++	if (!ifindex) {
++		sigma_dut_print(dut, DUT_MSG_ERROR,
++			"%s: ifname %s not exist", ifname, __func__);
++		return -1;
++	}
++
++	if (strcasecmp(val, "enable") == 0) {
++		assoc_disallow = 1;
++	} else if (strcasecmp(val, "disable") == 0) {
++		assoc_disallow = 0;
++	} else {
++		sigma_dut_print(dut, DUT_MSG_ERROR,
++				"%s: Unsupported assoc_disallow", __func__);
++		return -1;
++	}
++
++	sigma_dut_print(dut, DUT_MSG_DEBUG, "%s: ifname=%s enable=%d", __func__, ifname, assoc_disallow);
++
++	if (!(msg = nl80211_drv_msg(dut, dut->nl_ctx, ifindex, 0,
++				    NL80211_CMD_VENDOR)) ||
++	    nla_put_u32(msg, NL80211_ATTR_IFINDEX, ifindex) ||
++	    nla_put_u32(msg, NL80211_ATTR_VENDOR_ID, OUI_QCA) ||
++	    nla_put_u32(msg, NL80211_ATTR_VENDOR_SUBCMD,
++			QCA_NL80211_VENDOR_SUBCMD_SET_WIFI_CONFIGURATION) ||
++	    !(params = nla_nest_start(msg, NL80211_ATTR_VENDOR_DATA)) ||
++	    nla_put_u8(msg, QCA_WLAN_VENDOR_ATTR_CONFIG_IGNORE_ASSOC_DISALLOWED, !assoc_disallow)) {
++		sigma_dut_print(dut, DUT_MSG_ERROR,
++				"%s: err in adding vendor_cmd and vendor_data",
++				__func__);
++		nlmsg_free(msg);
++		return -1;
++	}
++	nla_nest_end(msg, params);
++
++	ret = send_and_recv_msgs(dut, dut->nl_ctx, msg, NULL, NULL);
++	if (ret) {
++		sigma_dut_print(dut, DUT_MSG_ERROR,
++				"%s: err in send_and_recv_msgs, ret=%d",
++				__func__, ret);
++		return ret;
++	}
++
++	return 0;
++#else
++	sigma_dut_print(dut, DUT_MSG_ERROR,
++		"MBO assoc disallow configuration can't be set without NL80211_SUPPORT defined");
++	return -1;
++#endif /* NL80211_SUPPORT */
++}
++
++
+ static enum sigma_cmd_result wcn_ap_set_rfeature(struct sigma_dut *dut,
+ 						 struct sigma_conn *conn,
+ 						 struct sigma_cmd *cmd)
+diff --git a/map.c b/map.c
+index af8eb02..377325a 100644
+--- a/map.c
++++ b/map.c
+@@ -1035,6 +1035,31 @@ map_socket_out:
+ }
+ 
+ 
++static int map_set_assoc_disallow(struct sigma_dut *dut, const char *ifname, const char *val)
++{
++	switch (get_driver_type(dut)) {
++	case DRIVER_OPENWRT:
++		switch (get_openwrt_driver_type()) {
++		case OPENWRT_DRIVER_ATHEROS:
++			ath_set_assoc_disallow(dut, ifname, val);
++			return 0;
++		case OPENWRT_DRIVER_LINUX_WCN:
++			return wcn_set_assoc_disallow(dut, ifname, val);
++		default:
++			sigma_dut_print(dut, DUT_MSG_ERROR,
++				  "Unsupported Assoc disallow with OpenWrt driver");
++		}
++		break;
++	default:
++		sigma_dut_print(dut, DUT_MSG_ERROR,
++				"Unsupported Assoc disallow with the current driver");
++		break;
++	}
++
++	return -1;
++}
++
++
+ static int map_parse_dpp_frame_info_file(struct sigma_dut *dut, struct sigma_conn * conn,
+ 				const char *message, const char *tlv, const char *mid, const char *filter,
+ 				const char *returncontent, char *resp, size_t resp_size)
+@@ -5464,25 +5489,25 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 				dut->hostapd_ifname = WLANIF"0";
+ 
+ 			if (sigma_radio_ifname[radio_id[0]] && strcmp(sigma_radio_ifname[radio_id[0]], "wifi0") == 0)
+-				ath_set_assoc_disallow(dut, WLANIF"0", "Disable");
++				map_set_assoc_disallow(dut, WLANIF"0", "Disable");
+ 			if (sigma_radio_ifname[radio_id[0]] && strcmp(sigma_radio_ifname[radio_id[0]], "wifi1") == 0)
+-				ath_set_assoc_disallow(dut, WLANIF"1", "Disable");
++				map_set_assoc_disallow(dut, WLANIF"1", "Disable");
+ 			if (sigma_radio_ifname[radio_id[0]] && strcmp(sigma_radio_ifname[radio_id[0]], "wifi2") == 0)
+-				ath_set_assoc_disallow(dut, WLANIF"2", "Disable");
++				map_set_assoc_disallow(dut, WLANIF"2", "Disable");
+ 
+ 			if (sigma_radio_ifname[radio_id[1]] && strcmp(sigma_radio_ifname[radio_id[1]], "wifi0") == 0)
+-				ath_set_assoc_disallow(dut, WLANIF"0", "Disable");
++				map_set_assoc_disallow(dut, WLANIF"0", "Disable");
+ 			if (sigma_radio_ifname[radio_id[1]] && strcmp(sigma_radio_ifname[radio_id[1]], "wifi1") == 0)
+-				ath_set_assoc_disallow(dut, WLANIF"1", "Disable");
++				map_set_assoc_disallow(dut, WLANIF"1", "Disable");
+ 			if (sigma_radio_ifname[radio_id[1]] && strcmp(sigma_radio_ifname[radio_id[1]], "wifi2") == 0)
+-				ath_set_assoc_disallow(dut, WLANIF"2", "Disable");
++				map_set_assoc_disallow(dut, WLANIF"2", "Disable");
+ 
+ 			if (sigma_radio_ifname[radio_id[2]] && strcmp(sigma_radio_ifname[radio_id[2]], "wifi0") == 0)
+-				ath_set_assoc_disallow(dut, WLANIF"0", "Disable");
++				map_set_assoc_disallow(dut, WLANIF"0", "Disable");
+ 			if (sigma_radio_ifname[radio_id[2]] && strcmp(sigma_radio_ifname[radio_id[2]], "wifi1") == 0)
+-				ath_set_assoc_disallow(dut, WLANIF"1", "Disable");
++				map_set_assoc_disallow(dut, WLANIF"1", "Disable");
+ 			if (sigma_radio_ifname[radio_id[2]] && strcmp(sigma_radio_ifname[radio_id[2]], "wifi2") == 0)
+-				ath_set_assoc_disallow(dut, WLANIF"2", "Disable");
++				map_set_assoc_disallow(dut, WLANIF"2", "Disable");
+ 
+ 			map_disable_lan(dut);
+ 			// run_system_wrapper(dut, "ifconfig eth1 down");
+@@ -5753,7 +5778,7 @@ static int cmd_dev_set_rfeature(struct sigma_dut *dut, struct sigma_conn *conn,
+ 
+ 	val = get_param(cmd, "Assoc_Disallow");
+ 	if (val) {
+-		ath_set_assoc_disallow(dut, ifname, val);
++		map_set_assoc_disallow(dut, ifname, val);
+ 		goto map_set_rfeature_ok;
+ 	}
+ 
+diff --git a/sigma_dut.h b/sigma_dut.h
+index 758e125..75ecff6 100644
+--- a/sigma_dut.h
++++ b/sigma_dut.h
+@@ -1394,6 +1394,8 @@ int ap_wps_registration(struct sigma_dut *dut, struct sigma_conn *conn,
+ const char * get_hostapd_ifname(struct sigma_dut *dut);
+ void get_wiphy_capabilities(struct sigma_dut *dut);
+ void kill_hostapd_process_pid(struct sigma_dut *dut);
++int wcn_set_assoc_disallow(struct sigma_dut *dut, const char *ifname,
++			   const char *val);
+ 
+ /* sta.c */
+ void sta_register_cmds(void);
+-- 
+2.17.1
+

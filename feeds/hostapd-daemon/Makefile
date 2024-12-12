@@ -16,6 +16,12 @@ HOSTAPD_CONFIG_FILE := $(PKG_BUILD_DIR)/hostapd/.config
 ifeq ($(BOARD),sdx65)
 	TARGET_ADD_CONFIG += echo -e "\nCONFIG_WEP=y" >> $(HOSTAPD_CONFIG_FILE)
 	TARGET_LOCAL_NAME :=sdxlemur
+else ifeq ($(BOARD),sdx85)
+	TARGET_ADD_CONFIG += echo -e "\nCONFIG_WEP=y" >> $(HOSTAPD_CONFIG_FILE)
+	TARGET_CFLAGS += -DCONFIG_CTRL_IFACE_DIR=\\\"/data/vendor/wifi/hostapd\\\"
+	# Reuse sdxpinn for now.
+	# To be revised if hostapd branch out later or divergency.
+	TARGET_LOCAL_NAME :=sdxpinn
 else ifeq ($(BOARD),sdx75)
 	TARGET_ADD_CONFIG += echo -e "\nCONFIG_WEP=y" >> $(HOSTAPD_CONFIG_FILE)
 	TARGET_CFLAGS += -DCONFIG_CTRL_IFACE_DIR=\\\"/data/vendor/wifi/hostapd\\\"
@@ -96,6 +102,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hostapd/hostapd $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hostapd/hostapd_cli $(1)/usr/sbin/
+	$(INSTALL_BIN) ./files/hostapd-global.init $(1)/etc/init.d/
 	$(INSTALL_BIN) ./files/hostapd-daemon.init $(1)/etc/init.d/
 	$(INSTALL_DATA) ./files/hostapd-daemon_acl.json $(1)/usr/share/acl.d/
 	$(INSTALL_DATA) ./files/hostapd-daemon.json $(1)/etc/capabilities/
