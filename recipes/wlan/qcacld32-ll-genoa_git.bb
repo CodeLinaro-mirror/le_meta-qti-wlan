@@ -1,4 +1,4 @@
-inherit autotools-brokensep module qperf
+include qcacld32-ll.inc
 
 DESCRIPTION = "Qualcomm Atheros WLAN CLD3.0 low latency driver"
 LICENSE = "ISC"
@@ -59,6 +59,7 @@ _WLAN_CFG_OVERRIDE_515 = "\
 						CONFIG_FW_THERMAL_THROTTLE=y\
 						CONFIG_SMMU_S1_UNMAP=y \
 						CONFIG_WLAN_CE4_SZ_QCN7605=2048 \
+						CONFIG_AUTO_PLATFORM=y \
 						"
 _WLAN_CFG_OVERRIDE_415 = "\
 						CONFIG_WLAN_NAPI=n \
@@ -69,6 +70,7 @@ _WLAN_CFG_OVERRIDE_415 = "\
 						CONFIG_QCOM_LTE_COEX=y \
 						CONFIG_SMMU_S1_UNMAP=y \
 						CONFIG_WLAN_CE4_SZ_QCN7605=2048 \
+						CONFIG_AUTO_PLATFORM=y \
                         "
 EXTRA_OEMAKE:append:sa515m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_515}"
 EXTRA_OEMAKE:append:sdxprairie = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_515}"

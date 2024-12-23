@@ -1,4 +1,4 @@
-inherit autotools-brokensep module qperf
+include qcacld32-ll.inc
 
 SUMMARY = "Qualcomm Technologies, Inc. WLAN Driver"
 DESCRIPTION = "Qualcomm Technologies, Inc. WLAN CLD3.0 low latency driver for the first WLAN chip.\
@@ -121,6 +121,7 @@ _WLAN_CFG_OVERRIDE_515 = "\
 						CONFIG_WLAN_DEBUG_LINK_VOTE=n \
 						CONFIG_ENABLE_VALLOC_REPLACE_MALLOC=y \
 						CONFIG_WLAN_NAPI=n \
+						CONFIG_AUTO_PLATFORM=y \
 						"
 
 _WLAN_CFG_OVERRIDE_525 = "\
@@ -204,6 +205,7 @@ _WLAN_CFG_OVERRIDE_525 = "\
 						CONFIG_ENABLE_VALLOC_REPLACE_MALLOC=y \
 						CONFIG_MDM_PLATFORM=y \
 						CONFIG_SHUTDOWN_WLAN_IN_SYSTEM_SUSPEND=y \
+						CONFIG_AUTO_PLATFORM=y \
 						"
 
 EXTRA_OEMAKE:append:sa515m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_515}"

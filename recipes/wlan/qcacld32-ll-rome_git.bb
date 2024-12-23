@@ -1,5 +1,4 @@
-
-inherit autotools-brokensep module qperf
+include qcacld32-ll.inc
 
 DESCRIPTION = "Qualcomm Atheros WLAN CLD3.0 low latency driver"
 LICENSE = "ISC"
@@ -53,6 +52,7 @@ _WLAN_CFG_OVERRIDE_515 = "\
 						CONFIG_WLAN_NAPI=n \
 						CONFIG_SMMU_S1_UNMAP=y \
 						CONFIG_FEATURE_DENYLIST_MGR=y \
+						CONFIG_AUTO_PLATFORM=y \
 						"
 _WLAN_CFG_OVERRIDE_415 = "\
 						CONFIG_MDM_PLATFORM=y \
@@ -62,6 +62,7 @@ _WLAN_CFG_OVERRIDE_415 = "\
 						CONFIG_WDI_EVENT_ENABLE=n \
 						CONFIG_WLAN_NAPI=n \
 						CONFIG_SMMU_S1_UNMAP=y \
+						CONFIG_AUTO_PLATFORM=y \
                         "
 
 _WLAN_CFG_OVERRIDE_410 = "\
@@ -73,6 +74,7 @@ _WLAN_CFG_OVERRIDE_410 = "\
 						CONFIG_CNSS_GENL=n \
 						CONFIG_CNSS_UTILS=m \
 						CONFIG_WLAN_CONV_SPECTRAL_ENABLE=n \
+						CONFIG_AUTO_PLATFORM=y \
                         "
 
 _WLAN_CFG_OVERRIDE_525 = "\
@@ -96,6 +98,7 @@ _WLAN_CFG_OVERRIDE_525 = "\
 						CONFIG_INTRA_BSS_FWD_OFFLOAD=y \
 						CONFIG_SMMU_S1_UNMAP=y \
 						CONFIG_SHUTDOWN_WLAN_IN_SYSTEM_SUSPEND=y \
+						CONFIG_AUTO_PLATFORM=y \
                         "
 
 EXTRA_OEMAKE:append:sdxpoorwills = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_415}"
