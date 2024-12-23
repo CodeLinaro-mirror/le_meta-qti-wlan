@@ -1,0 +1,24 @@
+load("//build/kernel/kleaf:kernel.bzl", "ddk_headers")
+load(":hyfi_bridge_modules.bzl", "define_modules")
+
+_emesh_sp_hdrs = [
+    "emesh-sp/*.h",
+]
+
+_emesh_sp_includes = [
+    "emesh-sp",
+]
+
+package(
+    default_visibility = [
+        "//visibility:public",
+    ],
+)
+
+ddk_headers(
+    name = "emesh-sp-headers",
+    hdrs = glob(_emesh_sp_hdrs),
+    includes = _emesh_sp_includes,
+)
+
+define_modules()

@@ -19,6 +19,14 @@ endif
 include $(INCLUDE_DIR)/package.mk
 
 EXTRA_ADDR :=lib/modules/$(LINUX_VERSION)-${COMPILE_MODE}/extra
+LOCAL_SRC:=$(TOPDIR)/src/ipq/emesh-sp/*
+BAZEL_FILES:=
+
+ENABLE_BAZEL:=n
+ifeq ($(BOARD),sdx85)
+	ENABLE_BAZEL=y
+	BAZEL_FILES=$(TOPDIR)/owrt-qti-wlan/feeds/emesh-sp-mcc/files/*.b*z*l
+endif
 
 define KernelPackage/$(PKG_NAME)
   SECTION:=kernel
@@ -38,6 +46,14 @@ endef
 
 EMESH_SP_HEADERS= \
             $(PKG_BUILD_DIR)/sp_api.h
+
+define Build/Prepare
+	mkdir -p $(PKG_BUILD_DIR)/
+	$(CP) $(LOCAL_SRC) $(PKG_BUILD_DIR)/
+ifeq ($(ENABLE_BAZEL),y)
+	$(CP) $(BAZEL_FILES) $(PKG_BUILD_DIR)/
+endif
+endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/emesh-sp
