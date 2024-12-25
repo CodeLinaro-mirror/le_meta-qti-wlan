@@ -137,29 +137,29 @@ define Build/InstallDev
 
 ifeq ($(COPY_HEADERS_FOR_EASYMESH),y)
 # For EasyMesh packages
-	$(CP) $(BUILD_DIR_UPPER)/qcacld-3.0/os_if/son/inc/cfg80211_ven_cmd.h $(1)/usr/include/
-	$(CP) $(BUILD_DIR_UPPER)/qcacld-3.0/os_if/son/inc/ext_ioctl_drv_if.h $(1)/usr/include/
-	$(CP) $(BUILD_DIR_UPPER)/qcacld-3.0/os_if/son/inc/ieee80211_defines.h $(1)/usr/include/
-	$(CP) $(BUILD_DIR_UPPER)/qcacld-3.0/os_if/son/inc/ieee80211_external.h $(1)/usr/include/
-	$(CP) $(BUILD_DIR_UPPER)/qcacld-3.0/os_if/son/inc/_ieee80211.h $(1)/usr/include/
-	$(CP) $(BUILD_DIR_UPPER)/qcacld-3.0/os_if/son/inc/ieee80211.h $(1)/usr/include/
-	$(CP) $(BUILD_DIR_UPPER)/qcacld-3.0/os_if/son/inc/ieee80211_ioctl.h $(1)/usr/include/
-	$(CP) $(BUILD_DIR_UPPER)/qcacld-3.0/os_if/son/inc/ieee80211_rrm.h $(1)/usr/include/
-	$(CP) $(BUILD_DIR_UPPER)/qcacld-3.0/os_if/son/inc/ieee80211_wnm_proto.h $(1)/usr/include/
-	$(CP) $(BUILD_DIR_UPPER)/qcacld-3.0/os_if/son/inc/ieee80211_external_config.h $(1)/usr/include/
-	$(CP) $(BUILD_DIR_UPPER)/qcacld-3.0/os_if/son/inc/if_athioctl.h $(1)/usr/include/
-	$(CP) $(BUILD_DIR_UPPER)/qcacld-3.0/os_if/son/inc/ol_ath_ucfg.h $(1)/usr/include/
-	$(CP) $(BUILD_DIR_UPPER)/qcacld-3.0/uapi/linux/a_types.h $(1)/usr/include/
-	$(CP) $(BUILD_DIR_UPPER)/qcacld-3.0/api/fw/athdefs.h $(1)/usr/include/
+	$(CP) $(LOCAL_SRC)/qcacld-3.0/os_if/son/inc/cfg80211_ven_cmd.h $(1)/usr/include/
+	$(CP) $(LOCAL_SRC)/qcacld-3.0/os_if/son/inc/ext_ioctl_drv_if.h $(1)/usr/include/
+	$(CP) $(LOCAL_SRC)/qcacld-3.0/os_if/son/inc/ieee80211_defines.h $(1)/usr/include/
+	$(CP) $(LOCAL_SRC)/qcacld-3.0/os_if/son/inc/ieee80211_external.h $(1)/usr/include/
+	$(CP) $(LOCAL_SRC)/qcacld-3.0/os_if/son/inc/_ieee80211.h $(1)/usr/include/
+	$(CP) $(LOCAL_SRC)/qcacld-3.0/os_if/son/inc/ieee80211.h $(1)/usr/include/
+	$(CP) $(LOCAL_SRC)/qcacld-3.0/os_if/son/inc/ieee80211_ioctl.h $(1)/usr/include/
+	$(CP) $(LOCAL_SRC)/qcacld-3.0/os_if/son/inc/ieee80211_rrm.h $(1)/usr/include/
+	$(CP) $(LOCAL_SRC)/qcacld-3.0/os_if/son/inc/ieee80211_wnm_proto.h $(1)/usr/include/
+	$(CP) $(LOCAL_SRC)/qcacld-3.0/os_if/son/inc/ieee80211_external_config.h $(1)/usr/include/
+	$(CP) $(LOCAL_SRC)/qcacld-3.0/os_if/son/inc/if_athioctl.h $(1)/usr/include/
+	$(CP) $(LOCAL_SRC)/qcacld-3.0/os_if/son/inc/ol_ath_ucfg.h $(1)/usr/include/
+	$(CP) $(LOCAL_SRC)/qcacld-3.0/uapi/linux/a_types.h $(1)/usr/include/
+	$(CP) $(LOCAL_SRC)/qcacld-3.0/api/fw/athdefs.h $(1)/usr/include/
 
-	$(CP) $(BUILD_DIR_UPPER)/qca-wifi-host-cmn/qdf/inc/qdf_types.h $(1)/usr/include/
-	$(CP) $(BUILD_DIR_UPPER)/qca-wifi-host-cmn/qdf/inc/qdf_status.h $(1)/usr/include/
-	$(CP) $(BUILD_DIR_UPPER)/qca-wifi-host-cmn/qdf/linux/src/i_qdf_types.h $(1)/usr/include/
-	$(CP) $(BUILD_DIR_UPPER)/qca-wifi-host-cmn/os_if/linux/qca_vendor.h $(1)/usr/include/
-	$(CP) $(BUILD_DIR_UPPER)/qca-wifi-host-cmn/dp/inc/cdp_txrx_stats_struct.h $(1)/usr/include/
-	$(CP) $(BUILD_DIR_UPPER)/qca-wifi-host-cmn/dp/inc/cdp_txrx_hist_struct.h $(1)/usr/include/
-	$(CP) $(BUILD_DIR_UPPER)/qca-wifi-host-cmn/umac/dfs/dispatcher/inc/wlan_dfs_ioctl.h $(1)/usr/include/
-	$(CP) $(BUILD_DIR_UPPER)/qca-wifi-host-cmn/utils/sys/queue.h $(1)/usr/include/
+	$(CP) $(LOCAL_SRC)/qca-wifi-host-cmn/qdf/inc/qdf_types.h $(1)/usr/include/
+	$(CP) $(LOCAL_SRC)/qca-wifi-host-cmn/qdf/inc/qdf_status.h $(1)/usr/include/
+	$(CP) $(LOCAL_SRC)/qca-wifi-host-cmn/qdf/linux/src/i_qdf_types.h $(1)/usr/include/
+	$(CP) $(LOCAL_SRC)/qca-wifi-host-cmn/os_if/linux/qca_vendor.h $(1)/usr/include/
+	$(CP) $(LOCAL_SRC)/qca-wifi-host-cmn/dp/inc/cdp_txrx_stats_struct.h $(1)/usr/include/
+	$(CP) $(LOCAL_SRC)/qca-wifi-host-cmn/dp/inc/cdp_txrx_hist_struct.h $(1)/usr/include/
+	$(CP) $(LOCAL_SRC)/qca-wifi-host-cmn/umac/dfs/dispatcher/inc/wlan_dfs_ioctl.h $(1)/usr/include/
+	$(CP) $(LOCAL_SRC)/qca-wifi-host-cmn/utils/sys/queue.h $(1)/usr/include/
 endif
 endef
 
