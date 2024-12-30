@@ -21,8 +21,11 @@ MODULE_NAME = "wlan-platform"
 MODULE_ICNSS = "cnss_prealloc.ko cnss_utils.ko cnss_nl.ko cnss_plat_ipc_qmi_svc.ko wlan_firmware_service.ko icnss2.ko"
 MODULE_CNSS = "cnss_prealloc.ko cnss_utils.ko cnss_nl.ko cnss_plat_ipc_qmi_svc.ko wlan_firmware_service.ko cnss2.ko"
 MODULE_LIST = "${@bb.utils.contains('BASEMACHINE', 'qcs40x', '${MODULE_ICNSS}', '${MODULE_CNSS}', d)}"
+MODULE_LIST = "${@bb.utils.contains('BASEMACHINE', 'qcm2290-mtp', '${MODULE_ICNSS}', '${MODULE_CNSS}', d)}"
 
-QCS405_VAR = "${@bb.utils.contains('BASEMACHINE', 'qcs40x', 'qcs40x', '', d)}"
+WLAN_VAR = " "
+WLAN_VAR:qcs40x = "${@bb.utils.contains('BASEMACHINE', 'qcs40x', 'qcs40x', '', d)}"
+WLAN_VAR:qcm2290-mtp = "${@bb.utils.contains('BASEMACHINE', 'qcm2290-mtp', 'qcm2290-mtp', '', d)}"
 
 KERNEL_VERSION = "${@get_kernelversion_file("${STAGING_KERNEL_BUILDDIR}")}"
 EXT_MODULES = "${@os.path.relpath("${S}", "${KERNEL_PLATFORM_PATH}")}"
@@ -31,6 +34,7 @@ EXT_COMPILE_CONFIG = " "
 EXT_COMPILE_CONFIG:append:kalama = " CONFIG_PCIE_SWITCH_NTN3=y "
 EXT_COMPILE_CONFIG:append:qrb5165 = " CONFIG_PCI_MSM=m "
 EXT_COMPILE_CONFIG:append:qcs40x = " CONFIG_PCI_MSM=m "
+EXT_COMPILE_CONFIG:append:qcm2290-mtp = " CONFIG_PCI_MSM=m "
 
 do_compile[depends] += "virtual/kernel:do_shared_workdir"
 do_compile[cleandirs] += "${WORKDIR}/out/${KERNEL_DEFCONFIG}"
@@ -45,7 +49,7 @@ do_compile() {
     KERNEL_UAPI_HEADERS_DIR=${STAGING_KERNEL_BUILDDIR} \
     ./build/build_module.sh \
     ${EXT_COMPILE_CONFIG} \
-    WLAN_BASEMACHINE=${QCS405_VAR}
+    WLAN_BASEMACHINE=${WLAN_VAR}
 }
 
 do_install() {
