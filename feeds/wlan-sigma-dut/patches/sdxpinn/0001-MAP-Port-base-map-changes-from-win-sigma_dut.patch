@@ -1,4 +1,4 @@
-From f09fba86e43716f957dc57a4d455281ce5958e3a Mon Sep 17 00:00:00 2001
+From f7f04da55165aec2248a6efd0a9cf7c6f138d777 Mon Sep 17 00:00:00 2001
 From: Hu Wang <quic_huw@quicinc.com>
 Date: Tue, 9 Apr 2024 22:44:56 -0700
 Subject: [PATCH 01/10] MAP: Port base map changes from win sigma_dut
@@ -45,7 +45,7 @@ index f2a9918..17cfc36 100644
  ifndef NO_TRAFFIC_AGENT
  CFLAGS += -DCONFIG_TRAFFIC_AGENT -DCONFIG_WFA_WMM_AC
 diff --git a/ap.c b/ap.c
-index ac1f3ab..7922a70 100644
+index 885fb74..dda0e81 100644
 --- a/ap.c
 +++ b/ap.c
 @@ -3338,7 +3338,7 @@ static void owrt_ap_set_qcawifi(struct sigma_dut *dut, const char *key,
@@ -85,7 +85,7 @@ index ac1f3ab..7922a70 100644
  {
  	if (strcasecmp(val, "enable") == 0) {
 diff --git a/dev.c b/dev.c
-index c86c9b8..984e9c6 100644
+index 7b1fedf..bb09c9a 100644
 --- a/dev.c
 +++ b/dev.c
 @@ -73,6 +73,26 @@ static enum sigma_cmd_result cmd_dev_set_parameter(struct sigma_dut *dut,
@@ -115,7 +115,7 @@ index c86c9b8..984e9c6 100644
  static enum sigma_cmd_result sta_server_cert_trust(struct sigma_dut *dut,
  						   struct sigma_conn *conn,
  						   const char *val)
-@@ -990,6 +1010,7 @@ void dev_register_cmds(void)
+@@ -998,6 +1018,7 @@ void dev_register_cmds(void)
  	sigma_dut_reg_cmd("dev_send_frame", req_prog, cmd_dev_send_frame);
  	sigma_dut_reg_cmd("dev_set_parameter", req_intf_prog,
  			  cmd_dev_set_parameter);
@@ -6979,10 +6979,10 @@ index e6caf42..38d08cd 100644
  #include <android/log.h>
  
 diff --git a/sigma_dut.h b/sigma_dut.h
-index 00cb04a..e526c8b 100644
+index 9833d98..135790c 100644
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
-@@ -888,6 +888,7 @@ struct sigma_dut {
+@@ -917,6 +917,7 @@ struct sigma_dut {
  	u8 ap_transition_disable;
  	int ap_80plus80;
  	int ap_oper_chn;
@@ -6990,7 +6990,7 @@ index 00cb04a..e526c8b 100644
  
  	struct mbo_pref_ap mbo_pref_aps[MBO_MAX_PREF_BSSIDS];
  	struct mbo_pref_ap mbo_self_ap_tuple;
-@@ -988,6 +989,43 @@ struct sigma_dut {
+@@ -1017,6 +1018,43 @@ struct sigma_dut {
  	int ap_channel_1;
  	char ap_countrycode[3];
  
@@ -7034,10 +7034,10 @@ index 00cb04a..e526c8b 100644
  	int ap_wpsnfc;
  
  	enum ap_wme {
-@@ -1050,6 +1088,12 @@ struct sigma_dut {
- 		PROGRAM_HS2_2022,
+@@ -1080,6 +1118,12 @@ struct sigma_dut {
  		PROGRAM_LOCR2,
  		PROGRAM_EHT,
+ 		PROGRAM_PR,
 +		PROGRAM_DE,
 +		PROGRAM_MAP,
 +		PROGRAM_MAPR2,
@@ -7047,7 +7047,7 @@ index 00cb04a..e526c8b 100644
  	} program;
  
  	enum device_type {
-@@ -1264,6 +1308,8 @@ int cmd_sta_set_parameter(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -1306,6 +1350,8 @@ int cmd_sta_set_parameter(struct sigma_dut *dut, struct sigma_conn *conn,
  enum sigma_cmd_result cmd_ap_send_frame(struct sigma_dut *dut,
  					struct sigma_conn *conn,
  					struct sigma_cmd *cmd);
@@ -7056,7 +7056,7 @@ index 00cb04a..e526c8b 100644
  enum sigma_cmd_result cmd_wlantest_send_frame(struct sigma_dut *dut,
  					      struct sigma_conn *conn,
  					      struct sigma_cmd *cmd);
-@@ -1333,6 +1379,14 @@ int get_hwaddr(const char *ifname, unsigned char *hwaddr);
+@@ -1375,6 +1421,14 @@ int get_hwaddr(const char *ifname, unsigned char *hwaddr);
  enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
  					   struct sigma_conn *conn,
  					   struct sigma_cmd *cmd);
@@ -7071,7 +7071,7 @@ index 00cb04a..e526c8b 100644
  int ap_wps_registration(struct sigma_dut *dut, struct sigma_conn *conn,
  			struct sigma_cmd *cmd);
  const char * get_hostapd_ifname(struct sigma_dut *dut);
-@@ -1426,6 +1480,9 @@ int random_get_bytes(char *buf, size_t len);
+@@ -1470,6 +1524,9 @@ int random_get_bytes(char *buf, size_t len);
  int random_mac_addr(u8 *addr);
  int get_enable_disable(const char *val);
  int wcn_driver_cmd(const char *ifname, char *buf);
@@ -7082,11 +7082,11 @@ index 00cb04a..e526c8b 100644
  /* uapsd_stream.c */
  void receive_uapsd(struct sigma_stream *s);
 diff --git a/utils.c b/utils.c
-index e464994..6af6eb7 100644
+index de813fa..a6a67d1 100644
 --- a/utils.c
 +++ b/utils.c
-@@ -197,6 +197,18 @@ enum sigma_program sigma_program_to_enum(const char *prog)
- 		return PROGRAM_LOCR2;
+@@ -199,6 +199,18 @@ enum sigma_program sigma_program_to_enum(const char *prog)
+ 		return PROGRAM_PR;
  	if (strcasecmp(prog, "EHT") == 0)
  		return PROGRAM_EHT;
 +	if (strcasecmp(prog, "DE") == 0)
@@ -7104,7 +7104,7 @@ index e464994..6af6eb7 100644
  
  	return PROGRAM_UNKNOWN;
  }
-@@ -244,6 +256,40 @@ int hex_byte(const char *str)
+@@ -246,6 +258,40 @@ int hex_byte(const char *str)
  }
  
  
