@@ -1,0 +1,64 @@
+From c7a142affe8f4ef989e58fb8ef93a6e7a6244fca Mon Sep 17 00:00:00 2001
+From: Roy Marples <roy@marples.name>
+Date: Mon, 18 Dec 2023 12:15:10 +0000
+Subject: [PATCH] DHCP6: Improve logging when changing IA type
+
+Changing from PD to IA or IA to PD can result in a diagnostic
+when there is no address to confirm AND we haven't loaded
+a lease.
+This improves the check and no more Success errors should
+be reported.
+
+Upstream-Status: Backport [c7a142affe8f4ef989e58fb8ef93a6e7a6244fca]
+---
+ src/dhcp6.c | 22 ++++++++++------------
+ 1 file changed, 10 insertions(+), 12 deletions(-)
+
+diff --git a/src/dhcp6.c b/src/dhcp6.c
+index 63fe2dc6..6703f5cf 100644
+--- a/src/dhcp6.c
++++ b/src/dhcp6.c
+@@ -2589,21 +2589,17 @@ dhcp6_validatelease(struct interface *ifp,
+ 	}
+ 	state->has_no_binding = false;
+ 	nia = dhcp6_findia(ifp, m, len, sfrom, acquired);
+-	if (nia == 0) {
+-		if (state->state != DH6S_CONFIRM && ok_errno != 0) {
+-			logerrx("%s: no useable IA found in lease", ifp->name);
+-			return -1;
+-		}
+-
+-		/* We are confirming and have an OK,
+-		 * so look for ia's in our old lease.
+-		 * IA's must have existed here otherwise we would
+-		 * have rejected it earlier. */
+-		assert(state->new != NULL && state->new_len != 0);
++	if (nia == 0 && state->state == DH6S_CONFIRM && ok_errno == 0 &&
++	    state->new && state->new_len)
++	{
+ 		state->has_no_binding = false;
+ 		nia = dhcp6_findia(ifp, state->new, state->new_len,
+ 		    sfrom, acquired);
+ 	}
++	if (nia == 0) {
++		logerrx("%s: no useable IA found in lease", ifp->name);
++		return -1;
++	}
+ 	return nia;
+ }
+ 
+@@ -2657,8 +2653,10 @@ dhcp6_readlease(struct interface *ifp, int validate)
+ 	/* Check to see if the lease is still valid */
+ 	fd = dhcp6_validatelease(ifp, &buf.dhcp6, (size_t)bytes, NULL,
+ 	    &state->acquired);
+-	if (fd == -1)
++	if (fd == -1) {
++		bytes = 0; /* We have already reported the error */
+ 		goto ex;
++	}
+ 
+ 	if (state->expire != ND6_INFINITE_LIFETIME &&
+ 	    (time_t)state->expire < now - mtime &&
+-- 
+2.17.1
+
