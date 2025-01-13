@@ -59,6 +59,7 @@ _WLAN_CFG_OVERRIDE_515 = "\
 						CONFIG_FW_THERMAL_THROTTLE=y\
 						CONFIG_SMMU_S1_UNMAP=y \
 						CONFIG_WLAN_CE4_SZ_QCN7605=2048 \
+						CONFIG_AUTO_PLATFORM=y \
 						"
 _WLAN_CFG_OVERRIDE_415 = "\
 						CONFIG_WLAN_NAPI=n \
@@ -69,6 +70,7 @@ _WLAN_CFG_OVERRIDE_415 = "\
 						CONFIG_QCOM_LTE_COEX=y \
 						CONFIG_SMMU_S1_UNMAP=y \
 						CONFIG_WLAN_CE4_SZ_QCN7605=2048 \
+						CONFIG_AUTO_PLATFORM=y \
                         "
 EXTRA_OEMAKE:append:sa515m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_515}"
 EXTRA_OEMAKE:append:sdxprairie = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_515}"
@@ -147,4 +149,4 @@ do_module_signing() {
     fi
 }
 
-addtask module_signing after do_package before do_package_write_ipk
+addtask module_signing after do_package before do_package_qa do_package_write_ipk

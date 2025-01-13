@@ -69,4 +69,4 @@ do_module_signing() {
 FILES:${PN}     += "lib/firmware/wlan/*"
 FILES:${PN}     += "${base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko"
 
-addtask module_signing after do_package before do_package_write_ipk
+addtask module_signing after do_package before do_package_qa do_package_write_ipk

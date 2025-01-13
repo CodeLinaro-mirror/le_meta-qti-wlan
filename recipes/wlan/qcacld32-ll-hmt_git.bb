@@ -12,8 +12,8 @@ LICENSE = "ISC"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=f3b90e78ea0cffb20bf5cca7947a896d"
 
 PR = "r8"
-_MODNAME = "qca6490"
-FW_PATH_NAME = "qca6490"
+_MODNAME = "qca6797"
+FW_PATH_NAME = "kiwi"
 FILES:${PN}     += "${nonarch_base_libdir}/firmware/wlan/*"
 FILES:${PN}     += "${nonarch_base_libdir}/firmware/*"
 FILES:${PN}     += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/${_MODNAME}.ko"
@@ -39,7 +39,7 @@ FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld/${_MODNAME}"
 # simultaneous support of HL and LL.
 EXTRA_OEMAKE:append = " CONFIG_CLD_HL_SDIO_CORE=n \
                        CONFIG_CNSS_SDIO=n \
-                       CONFIG_QCA_CLD_WLAN_PROFILE=qca6490 \
+                       CONFIG_QCA_CLD_WLAN_PROFILE=kiwi_v2 \
                        DYNAMIC_SINGLE_CHIP=${_MODNAME} \
                        MODNAME=${_MODNAME} \
                        "
@@ -51,83 +51,9 @@ KERNEL_CC += "-Wno-packed-bitfield-compat"
 #Enable/Disable IPA by MACHINE name
 EXTRA_OEMAKE:append:sa515m = " CONFIG_ENABLE_IPA=n"
 
-_WLAN_CFG_OVERRIDE_515 = "\
-						CONFIG_FEATURE_FORCE_WAKE=y \
-						CONFIG_FEATURE_HAL_DELAYED_REG_WRITE=y \
-						CONFIG_FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE=n \
-						CONFIG_SUPPORT_P2P_BY_ONE_INTF_WLAN=y \
-						CONFIG_DCS=n \
-						CONFIG_WLAN_FEATURE_MIB_STATS=n \
-						CONFIG_WLAN_CONV_SPECTRAL_ENABLE=n \
-						CONFIG_FEATURE_MEMDUMP_ENABLE=n \
-						CONFIG_FEATURE_UNIT_TEST_SUSPEND=n \
-						CONFIG_WLAN_WBUFF=n \
-						CONFIG_TSO_DEBUG_LOG_ENABLE=n \
-						CONFIG_WLAN_FEATURE_P2P_DEBUG=n \
-						CONFIG_DESC_DUP_DETECT_DEBUG=n \
-						CONFIG_DEBUG_RX_RING_BUFFER=n \
-						CONFIG_FOURTH_CONNECTION=n \
-						CONFIG_FOURTH_CONNECTION_AUTO=n \
-						CONFIG_FIFTH_CONNECTION=n \
-						CONFIG_REMOVE_PKT_LOG=y \
-						CONFIG_WDI_EVENT_ENABLE=n \
-						CONFIG_SMMU_S1_UNMAP=y \
-						CONFIG_REO_DESC_DEFER_FREE=y \
-						CONFIG_FEATURE_COEX=y \
-						CONFIG_QCACLD_FEATURE_BTC_CHAIN_MODE=y \
-						CONFIG_QCACLD_FEATURE_COEX_CONFIG=y \
-						CONFIG_DIRECT_BUF_RX_ENABLE=y \
-						CONFIG_WMI_DBR_SUPPORT=y \
-						CONFIG_QCOM_ESE=y \
-						CONFIG_RX_FISA=n \
-						CONFIG_WLAN_BCN_RECV_FEATURE=n \
-						CONFIG_SAP_AVOID_ACS_FREQ_LIST=n \
-						CONFIG_SAR_SAFETY_FEATURE=n \
-						CONFIG_FEATURE_INTEROP_ISSUES_AP=n \
-						CONFIG_FEATURE_CLUB_LL_STATS_AND_GET_STATION=n \
-						CONFIG_INTERFACE_MGR=n \
-						CONFIG_FEATURE_MSCS=n \
-						CONFIG_ADAPTIVE_11R=n \
-						CONFIG_CM_ROAM_OFFLOAD=n \
-						CONFIG_ANI_LEVEL_REQUEST=n \
-						CONFIG_WLAN_HANG_EVENT=n \
-						CONFIG_FEATURE_VDEV_OPS_WAKELOCK=n \
-						CONFIG_QCACLD_RX_DESC_MULTI_PAGE_ALLOC=n \
-						CONFIG_RX_HASH_DEBUG=n \
-						CONFIG_DP_MEM_PRE_ALLOC=n \
-						CONFIG_MAX_ALLOC_PAGE_SIZE=n \
-						CONFIG_UNIT_TEST=n \
-						CONFIG_DSC_DEBUG=n \
-						CONFIG_LEAK_DETECTION=n \
-						CONFIG_TALLOC_DEBUG=n \
-						CONFIG_HAL_DEBUG=n \
-						CONFIG_HIF_DEBUG=n \
-						CONFIG_QDF_TEST=n \
-						CONFIG_HIF_REG_WINDOW_SUPPORT=y \
-						CONFIG_DEVICE_FORCE_WAKE_ENABLE=y \
-						CONFIG_HIF_CE_DEBUG_DATA_BUF=n  \
-						CONFIG_BAND_6GHZ=y \
-						CONFIG_IPA_WDI3_TX_TWO_PIPES=n \
-						CONFIG_HANDLE_RX_REROUTE_ERR=n \
-						CONFIG_WLAN_FEATURE_P2P_P2P_STA=n \
-						CONFIG_WLAN_FEATURE_DP_RX_RING_HISTORY=n \
-						CONFIG_WLAN_FEATURE_DP_TX_DESC_HISTORY=n \
-						CONFIG_REO_QDESC_HISTORY=n \
-						CONFIG_DP_TX_HW_DESC_HISTORY=n \
-						CONFIG_WLAN_FEATURE_DP_EVENT_HISTORY=n \
-						CONFIG_RX_DESC_DEBUG_CHECK=n \
-						CONFIG_QCACLD_WLAN_CONNECTIVITY_LOGGING=n \
-						CONFIG_DP_TX_TRACKING=n \
-						CONFIG_WLAN_DEBUG_LINK_VOTE=n \
-						CONFIG_ENABLE_VALLOC_REPLACE_MALLOC=y \
-						CONFIG_WLAN_NAPI=n \
-						CONFIG_AUTO_PLATFORM=y \
-						"
-
 _WLAN_CFG_OVERRIDE_525 = "\
 						CONFIG_FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE=n \
 						CONFIG_SUPPORT_P2P_BY_ONE_INTF_WLAN=y \
-						CONFIG_WLAN_IPA_TX_FLOW_CONTROL=y \
 						CONFIG_DCS=n \
 						CONFIG_WLAN_FEATURE_MIB_STATS=n \
 						CONFIG_WLAN_CONV_SPECTRAL_ENABLE=n \
@@ -140,7 +66,6 @@ _WLAN_CFG_OVERRIDE_525 = "\
 						CONFIG_DEBUG_RX_RING_BUFFER=n \
 						CONFIG_FOURTH_CONNECTION=n \
 						CONFIG_FOURTH_CONNECTION_AUTO=n \
-						CONFIG_FIFTH_CONNECTION=n \
 						CONFIG_REMOVE_PKT_LOG=y \
 						CONFIG_WDI_EVENT_ENABLE=n \
 						CONFIG_SMMU_S1_UNMAP=y \
@@ -148,8 +73,8 @@ _WLAN_CFG_OVERRIDE_525 = "\
 						CONFIG_FEATURE_COEX=y \
 						CONFIG_QCACLD_FEATURE_BTC_CHAIN_MODE=y \
 						CONFIG_QCACLD_FEATURE_COEX_CONFIG=y \
-						CONFIG_DIRECT_BUF_RX_ENABLE=y \
-						CONFIG_WMI_DBR_SUPPORT=y \
+						CONFIG_DIRECT_BUF_RX_ENABLE=n \
+						CONFIG_WMI_DBR_SUPPORT=n \
 						CONFIG_QCOM_ESE=y \
 						CONFIG_RX_FISA=n \
 						CONFIG_WLAN_BCN_RECV_FEATURE=n \
@@ -186,7 +111,7 @@ _WLAN_CFG_OVERRIDE_525 = "\
 						CONFIG_WLAN_FEATURE_DP_TX_DESC_HISTORY=n \
 						CONFIG_REO_QDESC_HISTORY=n \
 						CONFIG_DP_TX_HW_DESC_HISTORY=n \
-						CONFIG_WLAN_FEATURE_DP_EVENT_HISTORY=n \
+						CONFIG_WLAN_FEATURE_DP_EVENT_HISTORY=y \
 						CONFIG_RX_DESC_DEBUG_CHECK=n \
 						CONFIG_QCACLD_WLAN_CONNECTIVITY_LOGGING=n \
 						CONFIG_DP_TX_TRACKING=n \
@@ -195,17 +120,21 @@ _WLAN_CFG_OVERRIDE_525 = "\
 						CONFIG_CNSS_OUT_OF_TREE=y \
 						CONFIG_CNSS2=m \
 						CONFIG_QMI=y \
-						CONFIG_IPA3=y \
-						CONFIG_IPA_OFFLOAD=y \
-						CONFIG_ENABLE_SMMU_S1_TRANSLATION=y \
-						CONFIG_IPA_WDI_UNIFIED_API=y  \
+						CONFIG_IPA3=n \
+						CONFIG_IPA_OFFLOAD=n \
 						CONFIG_WLAN_CONV_SPECTRAL_ENABLE=n \
 						CONFIG_WLAN_CFR_ENABLE=n \
 						CONFIG_WLAN_CFR_ADRASTEA=n \
 						CONFIG_ENABLE_VALLOC_REPLACE_MALLOC=y \
-						CONFIG_MDM_PLATFORM=y \
-						CONFIG_SHUTDOWN_WLAN_IN_SYSTEM_SUSPEND=y \
-						CONFIG_AUTO_PLATFORM=y \
+						CONFIG_WLAN_FEATURE_SR=n \
+						CONFIG_QCACLD_WLAN_LFR3=y \
+						CONFIG_WLAN_FEATURE_11BE=y \
+						CONFIG_DP_MULTIPASS_SUPPORT=n \
+						CONFIG_FOURTH_CONNECTION=n \
+						CONFIG_FIFTH_CONNECTION=n \
+						CONFIG_WLAN_DP_DYNAMIC_RESOURCE_MGMT=y \
+						CONFIG_WLAN_FEATURE_11BE_MLO=y \
+						CONFIG_WLAN_FEATURE_MULTI_LINK_SAP=y \
 						"
 
 EXTRA_OEMAKE:append:sa515m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_515}"
@@ -236,7 +165,9 @@ FILES:${PN}     += "${bindir}/init.qti.wlan_off.sh"
 
 do_compile:prepend() {
     if ${@bb.utils.contains('PREFERRED_VERSION_linux-msm', '5.15', 'true', 'false', d)}; then
-        CFG80211_FLAG="ccflags-y += -DCFG80211_SINGLE_NETDEV_MULTI_LINK_SUPPORT -D__ANDROID_COMMON_KERNEL__"
+        CFG80211_FLAG="ccflags-y += -DCFG80211_SINGLE_NETDEV_MULTI_LINK_SUPPORT \
+			-DCFG80211_11BE_BASIC \
+		        -DCFG80211_EXTERNAL_AUTH_MLO_SUPPORT"
         sed -i -e "/$(CONFIG_QCA_CLD_WLAN_PROFILE)_defconfig$/i${CFG80211_FLAG}" ${S}/Kbuild
     fi
 }
@@ -256,16 +187,14 @@ do_install () {
 
 do_install:append() {
     install -d ${D}/lib/firmware/${FW_PATH_NAME}/
-    ln -sf /firmware/image/${FW_PATH_NAME}/amss.bin ${D}/lib/firmware/${FW_PATH_NAME}/
     ln -sf /firmware/image/${FW_PATH_NAME}/amss20.bin ${D}/lib/firmware/${FW_PATH_NAME}/
     ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan02.e01 ${D}/lib/firmware/${FW_PATH_NAME}/
     ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan02.e02 ${D}/lib/firmware/${FW_PATH_NAME}/
     ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan02.e03 ${D}/lib/firmware/${FW_PATH_NAME}/
     ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan.elf ${D}/lib/firmware/${FW_PATH_NAME}/
-    ln -sf /firmware/image/${FW_PATH_NAME}/m3.bin ${D}/lib/firmware/${FW_PATH_NAME}/
     install -d ${D}${bindir}
-    install -D -m 0555 ${WORKDIR}/init.qti.wlan_on.sh ${D}${bindir}/init.qti.wlan_on.sh
-    install -D -m 0555 ${WORKDIR}/init.qti.wlan_off.sh ${D}${bindir}/init.qti.wlan_off.sh
+    install -D -m 0755 ${WORKDIR}/init.qti.wlan_on.sh ${D}${bindir}/init.qti.wlan_on.sh
+    install -D -m 0755 ${WORKDIR}/init.qti.wlan_off.sh ${D}${bindir}/init.qti.wlan_off.sh
     # Install systemd service file
     if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}; then
         install -m 0644 ${WORKDIR}/init_qti_wlan_auto.service -D ${D}${systemd_unitdir}/system/init_qti_wlan_auto.service
@@ -277,7 +206,6 @@ do_module_signing() {
         bbnote "Signing ${PN} module"
         ${STAGING_KERNEL_DIR}/scripts/sign-file sha512 ${STAGING_KERNEL_BUILDDIR}/signing_key.priv ${STAGING_KERNEL_BUILDDIR}/signing_key.x509 ${PKGDEST}/${PROVIDES_NAME}/lib/modules/${KERNEL_VERSION}/extra/${_MODNAME}.ko
     elif [ -f ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.pem ]; then
-        bbnote "Signing ${PN} module with pem"
         ${STAGING_KERNEL_BUILDDIR}/scripts/sign-file sha512 ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.pem ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.x509 ${PKGDEST}/${PN}/lib/modules/${KERNEL_VERSION}/extra/${_MODNAME}.ko
     else
         bbnote "${PN} module is not being signed"
