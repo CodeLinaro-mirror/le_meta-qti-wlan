@@ -60,6 +60,8 @@ SYSTEMD_AUTO_ENABLE:${PN} = "disable"
 SRC_URI:append = " file://init.qti.cnss2_on.sh"
 SRC_URI:append = " file://init.qti.cnss2_off.sh"
 
+KERNEL_CC:append:sa525m = " ${SECURITY_CFLAGS} "
+
 do_install() {
     module_do_install
     install -d ${D}${includedir}
