@@ -25,6 +25,7 @@ LOCAL_CLD_FOLDER := $(LOCAL_SRC)/qcacld-3.0
 LN_CMD := ln -sf $(PKG_BUILD_DIR)/qcacld-3.0 $(PKG_BUILD_DIR)/../qcacld-3.0
 #Default BAZEL DISABLED
 ENABLE_BAZEL := n
+CLD_DEPENDS := +kmod-wlan-cnss2
 
 ifeq ($(BOARD),sdx75)
 
@@ -71,6 +72,7 @@ ifeq ($(ENABLE_BAZEL), y)
   LOCAL_CLD_FOLDER = $(LOCAL_SRC)/qcacld-3.0/*
   LN_CMD =
 endif
+CLD_DEPENDS += +kmod-dataipa
 
 else ifeq ($(BOARD),sdx35)
 TARGET_MAKEOPTS := CONFIG_CNSS_QCA6490=y \
@@ -95,7 +97,7 @@ define KernelPackage/$(PKG_NAME)
   SECTION:=Kernel Modules
   CATEGORY:=External Kernel Modules
   TITLE:=WLAN HOST DRIVER
-  DEPENDS := +kmod-wlan-cnss2
+  DEPENDS := $(CLD_DEPENDS)
 endef
 
 QCACLD32_LL_MAKEOPTS=  M="$(BUILD_DIR_CLD)" \

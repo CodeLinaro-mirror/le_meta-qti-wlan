@@ -3,6 +3,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=emesh-sp-mcc
 PKG_RELEASE:=1
+PKG_LICENSE:=ISC
 
 ifeq ($(TARGET_VARIANT),perf)
   COMPILE_MODE :=perf
