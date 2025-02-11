@@ -1,0 +1,33 @@
+# This patch file is from Qualcomm Innovation Center, Inc. and is provided under the following license:
+# Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+From 413b569ee1dad3aeed056435b393aa3baf1df09e Mon Sep 17 00:00:00 2001
+From: Xinyue Ling <quic_xinyling@quicinc.com>
+Date: Tue, 11 Feb 2025 09:30:28 +0800
+Subject: [PATCH] emesh-sp: Fix SP_DEBUG_LEVEL undef error
+
+Change-Id: I35d8693357e11735d0f6f8bbba3202e42d39741a
+Signed-off-by: Xinyue Ling <quic_xinyling@quicinc.com>
+---
+ sp_types.h | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/sp_types.h b/sp_types.h
+index 960b1d9..34d00b5 100644
+--- a/sp_types.h
++++ b/sp_types.h
+@@ -19,6 +19,10 @@
+ 
+ #include <linux/printk.h>
+ 
++#ifndef SP_DEBUG_LEVEL
++#define SP_DEBUG_LEVEL 0
++#endif
++
+ #define DEBUG_ERROR(s, ...) pr_err("%s[%d]:" s, __FUNCTION__, __LINE__, ##__VA_ARGS__)
+ 
+ #ifndef CONFIG_DYNAMIC_DEBUG
+-- 
+2.17.1
+

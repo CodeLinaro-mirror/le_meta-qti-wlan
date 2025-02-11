@@ -14,7 +14,7 @@ _srcs = [
 def define_modules():
     for (t, v) in get_all_variants():
         tv = "{}_{}".format(t, v)
-        name = "emesh_sp_{}".format(tv)
+        name = "{}_emesh_sp".format(tv)
 
         ddk_module(
             name = name,

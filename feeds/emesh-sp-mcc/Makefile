@@ -52,6 +52,7 @@ define Build/Prepare
 	$(CP) $(LOCAL_SRC) $(PKG_BUILD_DIR)/
 ifeq ($(ENABLE_BAZEL),y)
 	$(CP) $(BAZEL_FILES) $(PKG_BUILD_DIR)/
+	$(Build/Patch)
 endif
 endef
 
