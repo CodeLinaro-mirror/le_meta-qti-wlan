@@ -30,7 +30,10 @@ WLAN_PLATFORM_CFG = " CONFIG_CNSS_OUT_OF_TREE=y \
 	CONFIG_CNSS_GENL=m \
 	CONFIG_CNSS_UTILS=m \
 	CONFIG_CNSS2_ENUM_WITH_LOW_SPEED=y \
-	CONFIG_CNSS2_CONDITIONAL_POWEROFF=y"
+	CONFIG_CNSS2_CONDITIONAL_POWEROFF=y \
+	CONFIG_MHI_BUF_LEN=8192 \
+	"
+
 EXTRA_OEMAKE:append = "${@bb.utils.contains('PREFERRED_VERSION_linux-msm', '5.15', '${WLAN_PLATFORM_CFG}', '', d)}"
 
 do_unpack[deptask] = "do_populate_sysroot"
@@ -59,6 +62,8 @@ SYSTEMD_AUTO_ENABLE:${PN} = "disable"
 
 SRC_URI:append = " file://init.qti.cnss2_on.sh"
 SRC_URI:append = " file://init.qti.cnss2_off.sh"
+
+KERNEL_CC:append:sa525m = " ${SECURITY_CFLAGS} "
 
 do_install() {
     module_do_install
