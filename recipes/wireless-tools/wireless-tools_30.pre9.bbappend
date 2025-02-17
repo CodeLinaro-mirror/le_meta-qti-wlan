@@ -1,3 +1,7 @@
+DESCRIPTION = "Wireless Tools Customerized by Qualcomm"
+LICENSE = "BSD-3-Clause"
+LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=550794465ba0ec5312d6919e203a55f9"
+
 SRC_URI = "https://hewlettpackard.github.io/wireless-tools/wireless_tools.${PV}.tar.gz;md5sum=ca91ba7c7eff9bfff6926b1a34a4697d;sha256sum=abd9c5c98abf1fdd11892ac2f8a56737544fe101e1be27c6241a564948f34c63 \
 		https://git.codelinaro.org/clo/ype/external/yoctoproject.org/poky/-/raw/yocto/rocko/meta/recipes-connectivity/wireless-tools/wireless-tools/remove.ldconfig.call.patch;md5sum=20a2b6450076da2207ab128b2f52295e;sha256sum=00e8fa61e84813bf22eb85ecc50d5a5d5048e405bdd28600986b04088f6087e3 \
 		https://git.codelinaro.org/clo/ype/external/yoctoproject.org/poky/-/raw/yocto/rocko/meta/recipes-connectivity/wireless-tools/wireless-tools/man.patch;md5sum=7baff4ff73c9b1608561a4d0cb52800d;sha256sum=26f6ec100566a1ff46accc70dc3473dbf316706554c12fdc2447651456110ed0 \
