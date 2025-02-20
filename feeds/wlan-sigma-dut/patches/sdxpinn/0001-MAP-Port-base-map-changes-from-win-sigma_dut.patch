@@ -1,4 +1,4 @@
-From f09fba86e43716f957dc57a4d455281ce5958e3a Mon Sep 17 00:00:00 2001
+From 9a6ba21d4cd628d3d7299b9f5f6fd530b59c88bd Mon Sep 17 00:00:00 2001
 From: Hu Wang <quic_huw@quicinc.com>
 Date: Tue, 9 Apr 2024 22:44:56 -0700
 Subject: [PATCH 01/10] MAP: Port base map changes from win sigma_dut
@@ -21,34 +21,34 @@ Signed-off-by: Chenming Huang <quic_chenhuan@quicinc.com>
  create mode 100644 map.c
 
 diff --git a/Android.mk b/Android.mk
-index 2ea1ed5..6270f41 100644
+index ccc70c7..904f0e2 100644
 --- a/Android.mk
 +++ b/Android.mk
-@@ -15,6 +15,7 @@ OBJS += atheros.c
- OBJS += ftm.c
- OBJS += dpp.c
- OBJS += dhcp.c
+@@ -10,6 +10,7 @@ OBJS += traffic.c
+ OBJS += p2p.c
+ OBJS += dev.c
+ OBJS += ap.c
 +OBJS += map.c
- 
- # Initialize CFLAGS to limit to local module
- CFLAGS =
+ OBJS += powerswitch.c
+ OBJS += atheros.c
+ OBJS += ftm.c
 diff --git a/Makefile b/Makefile
-index f2a9918..17cfc36 100644
+index b44d03b..cf35401 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -54,6 +54,7 @@ OBJS += powerswitch.o
+@@ -50,6 +50,7 @@ OBJS += traffic.o
+ OBJS += p2p.o
+ OBJS += dev.o
+ OBJS += ap.o
++OBJS += map.o
+ OBJS += powerswitch.o
  OBJS += atheros.o
  OBJS += ftm.o
- OBJS += dpp.o
-+OBJS += map.o
- 
- ifndef NO_TRAFFIC_AGENT
- CFLAGS += -DCONFIG_TRAFFIC_AGENT -DCONFIG_WFA_WMM_AC
 diff --git a/ap.c b/ap.c
-index ac1f3ab..7922a70 100644
+index 3c43fbc..49ebd2a 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -3338,7 +3338,7 @@ static void owrt_ap_set_qcawifi(struct sigma_dut *dut, const char *key,
+@@ -3394,7 +3394,7 @@ static void owrt_ap_set_qcawifi(struct sigma_dut *dut, const char *key,
  }
  
  
@@ -57,7 +57,7 @@ index ac1f3ab..7922a70 100644
  			      const char *key, const char *val)
  {
  	char buf[100];
-@@ -3374,7 +3374,7 @@ static void owrt_ap_set_list_radio(struct sigma_dut *dut, int id,
+@@ -3430,7 +3430,7 @@ static void owrt_ap_set_list_radio(struct sigma_dut *dut, int id,
  }
  
  
@@ -66,7 +66,7 @@ index ac1f3ab..7922a70 100644
  			    const char *val)
  {
  	char buf[256];
-@@ -3411,7 +3411,7 @@ static void owrt_ap_set_list_vap(struct sigma_dut *dut, int id,
+@@ -3480,7 +3480,7 @@ static void owrt_ap_set_list_vap(struct sigma_dut *dut, int id,
  }
  
  
@@ -75,7 +75,7 @@ index ac1f3ab..7922a70 100644
  			    const char *val)
  {
  	char buf[256];
-@@ -6577,7 +6577,7 @@ void ath_disable_txbf(struct sigma_dut *dut, const char *intf)
+@@ -6646,7 +6646,7 @@ void ath_disable_txbf(struct sigma_dut *dut, const char *intf)
  }
  
  
@@ -85,7 +85,7 @@ index ac1f3ab..7922a70 100644
  {
  	if (strcasecmp(val, "enable") == 0) {
 diff --git a/dev.c b/dev.c
-index c86c9b8..984e9c6 100644
+index 7b1fedf..bb09c9a 100644
 --- a/dev.c
 +++ b/dev.c
 @@ -73,6 +73,26 @@ static enum sigma_cmd_result cmd_dev_set_parameter(struct sigma_dut *dut,
@@ -115,7 +115,7 @@ index c86c9b8..984e9c6 100644
  static enum sigma_cmd_result sta_server_cert_trust(struct sigma_dut *dut,
  						   struct sigma_conn *conn,
  						   const char *val)
-@@ -990,6 +1010,7 @@ void dev_register_cmds(void)
+@@ -998,6 +1018,7 @@ void dev_register_cmds(void)
  	sigma_dut_reg_cmd("dev_send_frame", req_prog, cmd_dev_send_frame);
  	sigma_dut_reg_cmd("dev_set_parameter", req_intf_prog,
  			  cmd_dev_set_parameter);
@@ -6961,7 +6961,7 @@ index 0000000..e248b90
 +}
 +
 diff --git a/sigma_dut.c b/sigma_dut.c
-index e6caf42..38d08cd 100644
+index 6fed7e8..e47c143 100644
 --- a/sigma_dut.c
 +++ b/sigma_dut.c
 @@ -43,6 +43,13 @@ int sigma_wmm_ac = 0;
@@ -6979,10 +6979,10 @@ index e6caf42..38d08cd 100644
  #include <android/log.h>
  
 diff --git a/sigma_dut.h b/sigma_dut.h
-index 00cb04a..e526c8b 100644
+index faaa91a..2b2ff5a 100644
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
-@@ -888,6 +888,7 @@ struct sigma_dut {
+@@ -934,6 +934,7 @@ struct sigma_dut {
  	u8 ap_transition_disable;
  	int ap_80plus80;
  	int ap_oper_chn;
@@ -6990,7 +6990,7 @@ index 00cb04a..e526c8b 100644
  
  	struct mbo_pref_ap mbo_pref_aps[MBO_MAX_PREF_BSSIDS];
  	struct mbo_pref_ap mbo_self_ap_tuple;
-@@ -988,6 +989,43 @@ struct sigma_dut {
+@@ -1035,6 +1036,43 @@ struct sigma_dut {
  	int ap_channel_1;
  	char ap_countrycode[3];
  
@@ -7034,20 +7034,20 @@ index 00cb04a..e526c8b 100644
  	int ap_wpsnfc;
  
  	enum ap_wme {
-@@ -1050,6 +1088,12 @@ struct sigma_dut {
- 		PROGRAM_HS2_2022,
- 		PROGRAM_LOCR2,
- 		PROGRAM_EHT,
+@@ -1088,6 +1126,12 @@ struct sigma_dut {
+ 		PROGRAM_MBO,
+ 		PROGRAM_IOTLP,
+ 		PROGRAM_DPP,
 +		PROGRAM_DE,
 +		PROGRAM_MAP,
 +		PROGRAM_MAPR2,
 +		PROGRAM_MAPR3,
 +		PROGRAM_MAPR4,
 +		PROGRAM_MAPR5,
- 	} program;
- 
- 	enum device_type {
-@@ -1264,6 +1308,8 @@ int cmd_sta_set_parameter(struct sigma_dut *dut, struct sigma_conn *conn,
+ 		PROGRAM_OCE,
+ 		PROGRAM_WPA3,
+ 		PROGRAM_HE,
+@@ -1328,6 +1372,8 @@ int cmd_sta_set_parameter(struct sigma_dut *dut, struct sigma_conn *conn,
  enum sigma_cmd_result cmd_ap_send_frame(struct sigma_dut *dut,
  					struct sigma_conn *conn,
  					struct sigma_cmd *cmd);
@@ -7056,7 +7056,7 @@ index 00cb04a..e526c8b 100644
  enum sigma_cmd_result cmd_wlantest_send_frame(struct sigma_dut *dut,
  					      struct sigma_conn *conn,
  					      struct sigma_cmd *cmd);
-@@ -1333,6 +1379,14 @@ int get_hwaddr(const char *ifname, unsigned char *hwaddr);
+@@ -1397,6 +1443,14 @@ int get_hwaddr(const char *ifname, unsigned char *hwaddr);
  enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
  					   struct sigma_conn *conn,
  					   struct sigma_cmd *cmd);
@@ -7071,7 +7071,7 @@ index 00cb04a..e526c8b 100644
  int ap_wps_registration(struct sigma_dut *dut, struct sigma_conn *conn,
  			struct sigma_cmd *cmd);
  const char * get_hostapd_ifname(struct sigma_dut *dut);
-@@ -1426,6 +1480,9 @@ int random_get_bytes(char *buf, size_t len);
+@@ -1493,6 +1547,9 @@ int random_get_bytes(char *buf, size_t len);
  int random_mac_addr(u8 *addr);
  int get_enable_disable(const char *val);
  int wcn_driver_cmd(const char *ifname, char *buf);
@@ -7082,13 +7082,13 @@ index 00cb04a..e526c8b 100644
  /* uapsd_stream.c */
  void receive_uapsd(struct sigma_stream *s);
 diff --git a/utils.c b/utils.c
-index e464994..6af6eb7 100644
+index 92aec29..a5cb14c 100644
 --- a/utils.c
 +++ b/utils.c
-@@ -197,6 +197,18 @@ enum sigma_program sigma_program_to_enum(const char *prog)
- 		return PROGRAM_LOCR2;
- 	if (strcasecmp(prog, "EHT") == 0)
- 		return PROGRAM_EHT;
+@@ -185,6 +185,18 @@ enum sigma_program sigma_program_to_enum(const char *prog)
+ 		return PROGRAM_IOTLP;
+ 	if (strcasecmp(prog, "DPP") == 0)
+ 		return PROGRAM_DPP;
 +	if (strcasecmp(prog, "DE") == 0)
 +		return PROGRAM_DE;
 +	if (strcasecmp(prog, "MAP") == 0)
@@ -7101,10 +7101,10 @@ index e464994..6af6eb7 100644
 +		return PROGRAM_MAPR4;
 +	if (strcasecmp(prog, "MAPR5") == 0)
 +		return PROGRAM_MAPR5;
- 
- 	return PROGRAM_UNKNOWN;
- }
-@@ -244,6 +256,40 @@ int hex_byte(const char *str)
+ 	if (strcasecmp(prog, "OCE") == 0)
+ 		return PROGRAM_OCE;
+ 	if (strcasecmp(prog, "WPA3") == 0)
+@@ -248,6 +260,40 @@ int hex_byte(const char *str)
  }
  
  
