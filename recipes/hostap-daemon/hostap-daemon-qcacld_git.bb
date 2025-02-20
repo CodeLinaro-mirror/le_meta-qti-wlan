@@ -12,6 +12,7 @@ MACHINE_CONFIG:qcm2290-mtp = "kalama"
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://external/wpa_supplicant_8/"
 SRC_URI += "file://${MACHINE_CONFIG}/"
+SRC_URI:append:ar-sg1 += "file://${MACHINE}/"
 SRC_URI += "file://misc/"
 DEPENDS = "pkgconfig libnl openssl wpa-supplicant-8-lib liblog"
 
@@ -38,6 +39,14 @@ do_configure() {
     fi
 }
 
+do_configure:ar-sg1() {
+    bbwarn "============================================================"
+    bbwarn "picking ${WORKDIR}/${MACHINE}"
+    bbwarn "============================================================"
+    install -m 0644 ${WORKDIR}/${MACHINE}/defconfig-qcacld .config
+    echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
+}
+
 do_configure:append:sdxlemur() {
     echo "CONFIG_WEP=y" >> .config
 }
@@ -62,4 +71,13 @@ do_patch() {
         bbwarn "============================================================"
         patch -p1 < ${WORKDIR}/misc/hostapd_driver_cmd.patch
     fi
+}
+
+do_patch:ar-sg1() {
+    cd ${PATCH_DIR}
+
+    bbwarn "============================================================"
+    bbwarn "picking ${WORKDIR}/${MACHINE}"
+    bbwarn "============================================================"
+    patch -p1 < ${WORKDIR}/${MACHINE}/hostapd_driver_cmd.patch
 }
