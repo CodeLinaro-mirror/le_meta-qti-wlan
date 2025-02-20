@@ -111,8 +111,6 @@ do_install:append:neo(){
 			install -m 0644 ${WORKDIR}/neo/dbus-wpa_supplicant_testing.conf -D ${D}/etc/dbus-1/system.d/dbus-wpa_supplicant_testing.conf
 
 		fi
-
-		rm ${D}/etc/init.d/wlan
 	fi
 
 	if [ -e "${WORKDIR}/device/qcom/wlan/${BASEMACHINE}/WCNSS_qcom_cfg_qca6750.ini" ];then
@@ -210,6 +208,28 @@ do_install:append:qcm2290-mtp(){
 		install -d ${D}/etc/systemd/network/
 		ln -sf /dev/null ${D}/etc/systemd/network/99-default.link
 		install -d ${D}/etc/misc/wifi/
+	fi
+}
+
+do_install:append:ar-sg1(){
+	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
+		#systemd-tmpfiles service for wlan-conf
+		install -d ${D}${sysconfdir}/tmpfiles.d
+		install -m 0644 ${WORKDIR}/neo/wlan-conf_systemd_tmpfiles.conf \
+			-D ${D}${sysconfdir}/tmpfiles.d/wlan-conf_systemd_tmpfiles.conf
+		install -d ${D}/etc/initscripts
+		cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
+		install -d ${D}/etc/systemd/system/
+		install -d ${D}/etc/systemd/system/multi-user.target.wants/
+		install -m 0644 ${WORKDIR}/neo/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
+		ln -sf /etc/systemd/system/wlan_daemon.service ${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
+		install -m 0644 ${WORKDIR}/neo/dhcpcd.service -D ${D}/etc/systemd/system/dhcpcd.service
+		ln -sf /etc/systemd/system/dhcpcd.service ${D}/etc/systemd/system/multi-user.target.wants/dhcpcd.service
+		install -m 0644 ${WORKDIR}/neo/wpa_supplicant.service -D ${D}/etc/systemd/system/wpa_supplicant.service
+		ln -sf /etc/systemd/system/wpa_supplicant.service ${D}/etc/systemd/system/multi-user.target.wants/wpa_supplicant.service
+		install -m 0644 ${WORKDIR}/neo/fi.w1.wpa_supplicant1.service -D ${D}/usr/share/dbus-1/system-services/fi.w1.wpa_supplicant1.service
+		install -m 0644 ${WORKDIR}/neo/dbus-wpa_supplicant.conf -D ${D}/usr/share/dbus-1/system.d/dbus-wpa_supplicant.conf
+		install -m 0644 ${WORKDIR}/neo/dbus-wpa_supplicant_testing.conf -D ${D}/etc/dbus-1/system.d/dbus-wpa_supplicant_testing.conf
 	fi
 }
 
