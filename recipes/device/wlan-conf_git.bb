@@ -16,6 +16,13 @@ FIRMWARE_PATH_HSP = "${D}/lib/firmware/wlan/qca_cld/qca6490"
 FIRMWARE_PATH_HMT = "${D}/lib/firmware/wlan/qca_cld/qca6797"
 FIRMWARE_PATH_ROME = "${D}/lib/firmware/wlan/qca_cld/qca6574"
 
+FILES:${PN}:sa510m += "/usr/lib/firmware/wlan/*"
+FILES:${PN}:sa510m += "/etc/misc/wifi"
+FIRMWARE_PATH_HSP:sa510m = "${D}/usr/lib/firmware/wlan/qca_cld/qca6490"
+FIRMWARE_PATH_HMT:sa510m = "${D}/usr/lib/firmware/wlan/qca_cld/qca6797"
+FIRMWARE_PATH_ROME:sa510m = "${D}/lib/firmware/wlan/qca_cld/qca6574"
+FIRMWARE_PATH_ROME:sa510m = "${D}/usr/lib/firmware/wlan/qca_cld/qca_cld3_qca6574"
+
 # Provide a baseline
 SRC_URI = "file://device/"
 
@@ -83,4 +90,11 @@ do_install:append:sa515m(){
 	install -d ${FIRMWARE_PATH}
 	install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6490.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
 	chmod -R 0664 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
+}
+do_install:append:sa510m(){
+        install -d ${D}/etc/misc/wifi
+        install -m 0644 ${S}/qcom/wlan/sdx_auto/*.conf ${D}/etc/misc/wifi
+        install -d ${FIRMWARE_PATH_ROME}
+        install -D -m 0644 ${S}/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6174.ini ${FIRMWARE_PATH_ROME}/WCNSS_qcom_cfg.ini
+        chmod -R 0664 ${FIRMWARE_PATH_ROME}/WCNSS_qcom_cfg.ini
 }
