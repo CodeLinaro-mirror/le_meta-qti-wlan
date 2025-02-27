@@ -16,13 +16,9 @@ FILES:${PN} += "/data/qca6797/*"
 FIRMWARE_PATH_HSP = "${D}/lib/firmware/wlan/qca_cld/qca6490"
 FIRMWARE_PATH_HMT = "${D}/lib/firmware/wlan/qca_cld/qca6797"
 FIRMWARE_PATH_ROME = "${D}/lib/firmware/wlan/qca_cld/qca6574"
-
+FIRMWARE_PATH_ROME:sa510m = "${D}/usr/lib/firmware/wlan/qca_cld/qca6574"
 FILES:${PN}:sa510m += "/usr/lib/firmware/wlan/*"
 FILES:${PN}:sa510m += "/etc/misc/wifi"
-FIRMWARE_PATH_HSP:sa510m = "${D}/usr/lib/firmware/wlan/qca_cld/qca6490"
-FIRMWARE_PATH_HMT:sa510m = "${D}/usr/lib/firmware/wlan/qca_cld/qca6797"
-FIRMWARE_PATH_ROME:sa510m = "${D}/lib/firmware/wlan/qca_cld/qca6574"
-FIRMWARE_PATH_ROME:sa510m = "${D}/usr/lib/firmware/wlan/qca_cld/qca_cld3_qca6574"
 
 # Provide a baseline
 SRC_URI = "file://device/"
