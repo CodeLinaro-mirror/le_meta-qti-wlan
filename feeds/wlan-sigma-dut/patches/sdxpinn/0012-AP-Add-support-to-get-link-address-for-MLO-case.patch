@@ -1,0 +1,127 @@
+From af22a90f266fee8ba51cb866acf4deaf73749fae Mon Sep 17 00:00:00 2001
+From: Chenming Huang <quic_chenhuan@quicinc.com>
+Date: Tue, 14 Jan 2025 16:01:56 +0530
+Subject: [PATCH 12/13] AP: Add support to get link address for MLO case
+
+To meet the requirements of WFA Wi-Fi7 multi-link SAP certification,
+add support to obtain link_address according to Interface parameter.
+i.e., for "mld", return mld mac address; for specified Interface
+24G/5G/6G, return corresponding link mac address.
+
+Change-Id: I15f224f28a0bb495b8718cd251a46c67276a8742
+Signed-off-by: Chenming Huang <quic_chenhuan@quicinc.com>
+---
+ ap.c          | 25 +++++++++++++++++++++++++
+ wpa_helpers.c | 39 +++++++++++++++++++++++++++++++++++++++
+ wpa_helpers.h |  2 ++
+ 3 files changed, 66 insertions(+)
+
+diff --git a/ap.c b/ap.c
+index 098c4d6..a452202 100644
+--- a/ap.c
++++ b/ap.c
+@@ -12571,6 +12571,8 @@ static enum sigma_cmd_result cmd_ap_get_mac_address(struct sigma_dut *dut,
+ 	struct ifreq ifr;
+ 	int s, wlan_tag = 1;
+ 	const char *val;
++	char link_addr[18];
++	int link_band = -1;
+ 
+ 	val = get_param(cmd, "WLAN_TAG");
+ 	if (val) {
+@@ -12588,6 +12590,29 @@ static enum sigma_cmd_result cmd_ap_get_mac_address(struct sigma_dut *dut,
+ 
+ 	get_if_name(dut, ifname, sizeof(ifname), wlan_tag);
+ 
++	val = get_param(cmd, "INTERFACE");
++	if (val) {
++		if (strcasecmp(val, "5G") == 0)
++			link_band = AP_BAND_5GHz;
++		else if (strcasecmp(val, "6G") == 0)
++			link_band = AP_BAND_6GHz;
++		else if (strcasecmp(val, "24G") == 0)
++			link_band = AP_BAND_24GHz;
++	}
++
++	/* Get link mac address for MLO case */
++	if (dut->ap_mode == AP_11be && link_band >= 0) {
++		if (ap_get_mlo_link_addr(dut, ifname, link_band, link_addr)) {
++			snprintf(resp, sizeof(resp),
++				 "errorCode,Could not get link addr");
++			send_resp(dut, conn, SIGMA_ERROR, resp);
++			return 0;
++		}
++		snprintf(resp, sizeof(resp), "mac,%s", link_addr);
++		send_resp(dut, conn, SIGMA_COMPLETE, resp);
++		return 0;
++	}
++
+ 	s = socket(AF_INET, SOCK_DGRAM, 0);
+ 	if (s < 0)
+ 		return -1;
+diff --git a/wpa_helpers.c b/wpa_helpers.c
+index f84260b..2aaed74 100644
+--- a/wpa_helpers.c
++++ b/wpa_helpers.c
+@@ -743,6 +743,45 @@ int ap_get_mlo_link_id(struct sigma_dut *dut, const char *ifname)
+ 	return link_id;
+ }
+ 
++int ap_get_mlo_link_addr(struct sigma_dut *dut, const char *ifname,
++			 int link_band, char *link_addr)
++{
++	char buf[4096];
++	int freq;
++	int freq_band;
++
++	if (get_hapd_status(ifname, "freq", buf, sizeof(buf)) < 0) {
++		sigma_dut_print(dut, DUT_MSG_DEBUG, "%s: Failed to get link freq",
++				__func__);
++		return -1;
++	}
++
++	freq = atoi(buf);
++	if (is_6ghz_freq(freq))
++		freq_band = AP_BAND_6GHz;
++	else if (freq >= 2412 && freq <= 2484)
++		freq_band = AP_BAND_24GHz;
++	else
++		freq_band = AP_BAND_5GHz;
++
++	if (link_band == freq_band) {
++		if (get_hapd_status(ifname, "link_addr", buf, sizeof(buf)) < 0) {
++			sigma_dut_print(dut, DUT_MSG_DEBUG, "%s: Failed to get link addr",
++					__func__);
++			return -1;
++		}
++		memcpy(link_addr, buf, 18);
++	} else {
++		if (get_hapd_status(ifname, "partner_link[1]", buf, sizeof(buf)) < 0) {
++			sigma_dut_print(dut, DUT_MSG_DEBUG, "%s: Failed to get partner link addr",
++					__func__);
++			return -1;
++		}
++		memcpy(link_addr, buf, 18);
++	}
++	return 0;
++}
++
+ int get_wpa_status(const char *ifname, const char *field, char *obuf,
+ 		   size_t obuf_size)
+ {
+diff --git a/wpa_helpers.h b/wpa_helpers.h
+index 88335bd..1a44bab 100644
+--- a/wpa_helpers.h
++++ b/wpa_helpers.h
+@@ -37,6 +37,8 @@ int get_mlo_link_id_link_mac(struct sigma_dut *dut, const char *ifname,
+ 			     const char *link_addr,
+ 			     char *obuf, size_t obuf_size);
+ int ap_get_mlo_link_id(struct sigma_dut *dut, const char *ifname);
++int ap_get_mlo_link_addr(struct sigma_dut *dut, const char *ifname,
++			 int link_band, char *link_addr);
+ int get_connected_mlo_link_ids(struct sigma_dut *dut, const char *ifname);
+ struct wpa_ctrl * open_wpa_mon(const char *ifname);
+ struct wpa_ctrl * open_hapd_mon(const char *ifname);
+-- 
+2.17.1
+
