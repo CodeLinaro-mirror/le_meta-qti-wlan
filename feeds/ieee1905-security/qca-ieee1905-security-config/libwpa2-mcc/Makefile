@@ -2,6 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libwpa2-mcc
 PKG_RELEASE:=1
+PKG_LICENSE:=BSD
 
 include $(TOPDIR)/owrt-qti-wlan/include/local-development.mk
 ifeq ($(DUMP)$(PKG_VERSION),)
