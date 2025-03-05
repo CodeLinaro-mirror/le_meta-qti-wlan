@@ -24,8 +24,25 @@ define Package/$(PKG_NAME)/Description
 	sigma dut tool
 endef
 
-ifeq ($(BOARD),sdx75)
-	COPY_PATCH_FILES := $(CP) ./patches/sdxpinn/*.patch ./patches/
+ifeq ($(BOARD),sdx35)
+	TARGET_LOCAL_NAME := sdxbaagha
+else ifeq ($(BOARD),sdx75)
+	TARGET_LOCAL_NAME := sdxpinn
+else ifeq ($(BOARD),sdx85)
+	# Reuse sdxpinn for now.
+	# To be revised if sigma-dut branch out later or divergency.
+	TARGET_LOCAL_NAME := sdxpinn
+else
+	TARGET_LOCAL_NAME := unknown
+endif
+
+TARGET_PATCH_EXIST := $(shell if [ -d "./patches/$(TARGET_LOCAL_NAME)" ]; then \
+	echo "yes"; else echo "no"; fi)
+ifeq ($(TARGET_PATCH_EXIST), yes)
+	TARGET_PATCH_PATH := $(TARGET_LOCAL_NAME)
+	COPY_PATCH_FILES := $(CP) ./patches/$(TARGET_PATCH_PATH)/*.patch ./patches/
+else
+	COPY_PATCH_FILES :=
 endif
 
 define Build/Prepare
