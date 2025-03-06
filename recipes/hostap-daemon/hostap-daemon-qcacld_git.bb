@@ -7,6 +7,7 @@ PV = "6.0"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 MACHINE_CONFIG = "${BASEMACHINE}"
 MACHINE_CONFIG:pineapple = "kalama"
+MACHINE_CONFIG:qcm2290-mtp = "kalama"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://external/wpa_supplicant_8/"
