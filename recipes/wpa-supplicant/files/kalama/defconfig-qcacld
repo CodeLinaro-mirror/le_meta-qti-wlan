@@ -564,3 +564,6 @@ CONFIG_ERP=y
 
 # Support Operating Channel Validation
 CONFIG_OCV=y
+
+# Enable wifi display to support P2P 6G connection
+CONFIG_WIFI_DISPLAY=y
