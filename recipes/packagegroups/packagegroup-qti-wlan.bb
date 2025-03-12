@@ -22,7 +22,6 @@ APPS ?= 'rfkill iw wireless-tools hostap-daemon-qcacld wpa-supplicant-qcacld wla
 APPS:append:sa510m = ' iperf3'
 
 CONF ?= 'wlan-conf qcacld32-cnss2'
-CONF:remove:sa510m = 'qcacld32-cnss2'
 
 RDEPENDS:${PN} += "\
     ${DRIVERS} \
