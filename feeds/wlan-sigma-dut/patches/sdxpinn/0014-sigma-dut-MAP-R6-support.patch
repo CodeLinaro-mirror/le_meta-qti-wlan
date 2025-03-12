@@ -1,0 +1,2524 @@
+From 13de6dd7333a1cd1acd12c366949201e0e2f0ef0 Mon Sep 17 00:00:00 2001
+From: Xinyue Ling <quic_xinyling@quicinc.com>
+Date: Wed, 12 Mar 2025 14:02:29 +0800
+Subject: [PATCH] sigma-dut: MAP R6 support
+
+- Add support for EasyMesh R6 cert cases.
+- Add new MSG and TLV definitions for EasyMesh R6.
+- Add handlings for MLO related configurations.
+- Set 6G radio default channel to 37.
+
+Change-Id: I1d2f08e3198c64429f7c630c02038ad89b392028
+Signed-off-by: Xinyue Ling <quic_xinyling@quicinc.com>
+---
+ dpp.c       |   10 +-
+ map.c       | 1927 +++++++++++++++++++++++++++++++++++++++++++++------
+ sigma_dut.h |    7 +-
+ sta.c       |    2 +-
+ utils.c     |    2 +
+ 5 files changed, 1747 insertions(+), 201 deletions(-)
+
+diff --git a/dpp.c b/dpp.c
+index 3bb7e9f..8b7bfcc 100644
+--- a/dpp.c
++++ b/dpp.c
+@@ -658,7 +658,10 @@ dpp_get_local_bootstrap(struct sigma_dut *dut, struct sigma_conn *conn,
+ 	}
+ 	if (dut->program == PROGRAM_MAP ||
+ 	    dut->program == PROGRAM_MAPR2 ||
+-	    dut->program == PROGRAM_MAPR3)
++		dut->program == PROGRAM_MAPR3 ||
++		dut->program == PROGRAM_MAPR4 ||
++		dut->program == PROGRAM_MAPR5 ||
++		dut->program == PROGRAM_MAPR6)
+ 		return map_dpp_get_local_bootstrap(dut, conn, send_result, success);
+ 
+ 	val = get_param(cmd, "DPPURICurves");
+@@ -997,7 +1000,10 @@ static enum sigma_cmd_result dpp_set_peer_bootstrap(struct sigma_dut *dut,
+ 
+         if (dut->program == PROGRAM_MAP ||
+             dut->program == PROGRAM_MAPR2 ||
+-            dut->program == PROGRAM_MAPR3)
++			dut->program == PROGRAM_MAPR3 ||
++			dut->program == PROGRAM_MAPR4 ||
++			dut->program == PROGRAM_MAPR5 ||
++			dut->program == PROGRAM_MAPR6)
+ 		return map_dpp_set_peer_bootstrap(dut, conn);
+ 
+ 	return SUCCESS_SEND_STATUS;
+diff --git a/map.c b/map.c
+index a7e5512..7781b69 100644
+--- a/map.c
++++ b/map.c
+@@ -113,6 +113,8 @@ enum ieee1905_message_type {
+ 	IEEE1905_MSG_TYPE_CAC_TERMINATION = 0x8021,
+ 	IEEE1905_MSG_TYPE_SERVICE_PRIORITIZATION_REQUEST = 0x8023,
+ 	IEEE1905_MSG_TYPE_LOOP_DETECTION_MESSAGE = 0x8036,
++	IEEE1905_MSG_TYPE_AP_MLD_CONFIG_REQ = 0x8044,
++	IEEE1905_MSG_TYPE_BSTA_MLD_CONFIG_REQ = 0x8046,
+ 	IEEE1905_MSG_TYPE_RESERVED /* Must be the last */
+ };
+ 
+@@ -193,19 +195,23 @@ enum ieee1905_tlv_type {
+ 	IEEE1905_TLV_TYPE_SPATIAL_REUSE_REQUEST = 0xD8,
+ 	IEEE1905_TLV_TYPE_QOSM_POLICY = 0xDB,
+ 	IEEE1905_TLV_TYPE_QOSM_DESCRIPTOR = 0xDC,
++	IEEE1905_TLV_TYPE_AGENT_AP_MLD_CONFIG = 0XE0,
++	IEEE1905_TLV_TYPE_BSTA_MLD_CONFIG = 0XE1,
++	IEEE1905_TLV_TYPE_T2LM_POLICY_TLV = 0xE6,
++	IEEE1905_TLV_TYPE_STATIC_PUNCTURING_CONFIG = 0XE7,
+ 	IEEE1905_TLV_TYPE_RESERVED /* Must be the last */
+ };
+ 
+ /*
+  * MAP utilities
+  */
+-static int map_get_ifname_apmode(struct sigma_dut *dut, const char *ssid, char *ifname)
++static int map_get_ifname_apmode(struct sigma_dut *dut, const char *ssid, char *ifname, char *radioname)
+ {
+ 	char buf[512];
+ 	int rc = -1;
+ 	bool found = false;
+ 	int i = 0;
+-	FILE *ssid_file = NULL, *mode_file = NULL, *ifname_file = NULL;
++	FILE *ssid_file = NULL, *mode_file = NULL, *ifname_file = NULL, *device_file = NULL;
+ 
+ 	while (i != 30 && !found) {
+ 		/* Get the ssid */
+@@ -219,14 +225,34 @@ static int map_get_ifname_apmode(struct sigma_dut *dut, const char *ssid, char *
+ 				if (mode_file) {
+ 					fgets (buf, sizeof(buf), mode_file);
+ 					if (strncasecmp(buf, "ap", 2) == 0) {
+-						snprintf(buf, sizeof(buf),
+-							"uci -q -P /var/state get wireless.@wifi-iface[%d].ifname", i);
+-						ifname_file = popen (buf, "r");
+-						if (ifname_file) {
+-							fgets (buf, sizeof(buf), ifname_file);
+-							strlcpy(ifname, buf, strlen(buf));
+-							rc = 1;
+-							found = true;
++						if(radioname) {
++							snprintf(buf, sizeof(buf), "uci get wireless.@wifi-iface[%d].device", i);
++							device_file = popen (buf, "r");
++							if (device_file) {
++								fgets (buf, sizeof(buf), device_file);
++								if (strncasecmp(buf, radioname, 5) == 0) {
++									snprintf(buf, sizeof(buf),
++										"uci -q -P /var/state get wireless.@wifi-iface[%d].ifname", i);
++									ifname_file = popen (buf, "r");
++									if (ifname_file) {
++										fgets (buf, sizeof(buf), ifname_file);
++										strlcpy(ifname, buf, strlen(buf));
++										rc = 1;
++										found = true;
++									}
++								}
++							}
++						}
++						else {
++							snprintf(buf, sizeof(buf),
++								"uci -q -P /var/state get wireless.@wifi-iface[%d].ifname", i);
++							ifname_file = popen (buf, "r");
++							if (ifname_file) {
++								fgets (buf, sizeof(buf), ifname_file);
++								strlcpy(ifname, buf, strlen(buf));
++								rc = 1;
++								found = true;
++							}
+ 						}
+ 					}
+ 				}
+@@ -241,6 +267,45 @@ static int map_get_ifname_apmode(struct sigma_dut *dut, const char *ssid, char *
+ 		pclose(mode_file);
+ 	if (ifname_file)
+ 		pclose(ifname_file);
++	if(device_file)
++		pclose(device_file);
++
++	return rc;
++}
++
++static int map_get_ifname(struct sigma_dut *dut, const char *ssid, char *ifname)
++{
++	char buf[512];
++	int rc = -1;
++	bool found = false;
++	int i = 0;
++	FILE *ssid_file = NULL, *ifname_file = NULL;
++
++	while (i != 30 && !found) {
++		/* Get the ssid */
++		snprintf(buf, sizeof(buf), "uci get wireless.@wifi-iface[%d].ssid", i);
++		ssid_file = popen (buf, "r");
++		if (ssid_file) {
++			fgets (buf, sizeof(buf), ssid_file);
++			if (strncasecmp(buf, ssid, strlen(buf)-1 ) == 0) {
++				snprintf(buf, sizeof(buf),
++					"uci -q -P /var/state get wireless.@wifi-iface[%d].ifname", i);
++				ifname_file = popen (buf, "r");
++				if (ifname_file) {
++					fgets (buf, sizeof(buf), ifname_file);
++					strlcpy(ifname, buf, strlen(buf));
++					rc = 1;
++					found = true;
++				}
++			}
++		}
++		i++;
++	}
++
++	if (ssid_file)
++		pclose(ssid_file);
++	if (ifname_file)
++		pclose(ifname_file);
+ 
+ 	return rc;
+ }
+@@ -631,10 +696,21 @@ static bool map_is_onboard(struct sigma_dut *dut)
+ 			dut->map_ath2_onboard = true;
+ 	}
+ 
++	if (!dut->map_ath3_onboard) {
++		if (map_is_wlanif_onboard(dut, "ath3", ssid))
++			dut->map_ath3_onboard = true;
++	}
++
++	if (!dut->map_ath4_onboard) {
++		if (map_is_wlanif_onboard(dut, "ath4", ssid))
++			dut->map_ath4_onboard = true;
++	}
++
+ 	rc = (dut->map_ath0_onboard || dut->map_ath1_onboard ||
+-	      dut->map_ath2_onboard);
++	      dut->map_ath2_onboard || dut->map_ath3_onboard ||
++		  dut->map_ath4_onboard);
+ 	dut->map_all_onboard = dut->map_ath0_onboard && dut->map_ath1_onboard &&
+-			       dut->map_ath2_onboard;
++			       dut->map_ath2_onboard && dut->map_ath3_onboard && dut->map_ath4_onboard;
+ 
+ 	return rc;
+ }
+@@ -865,7 +941,8 @@ static int map_get_bsta_bssid(struct sigma_dut *dut, char *bssid)
+ 		}
+ 	}
+ 
+-	if (dut->map_bh24g || dut->map_bh5g || dut->map_bh5gh) {
++	if (dut->map_bh24g || dut->map_bh5g || dut->map_bh5gh ||
++		dut->map_bh6g || dut->map_bh6gh) {
+ 		if (num_radio == 3) {
+ 			if (dut->map_bh24g)
+ 				snprintf(ifname, sizeof(ifname), WLANIF"%d1",
+@@ -1785,6 +1862,179 @@ static int map_parse_ap_metrics_tlv(struct sigma_dut *dut, const char *mod,
+ 	return (strtok_r(NULL, " ", &saveptr) ? -1 : 1);
+ }
+ 
++static int map_parse_eht_operations_tlv(struct sigma_dut *dut, const char *mod,
++				     char *buf, size_t bufsize)
++{
++	/* tlvtype = 0xE7 */
++	char token[4096], *token_p, *saveptr;
++	unsigned char map_ruid[6];
++	//unsigned char map_bssid[6];
++	int value, r, i, b, j, k;
++	char *pw = buf;
++
++	memset(buf, 0, bufsize);
++	if (strlen(mod) >= sizeof(token))
++		return -1;
++	strlcpy(token, mod, sizeof(token));
++
++	value = 0x01;
++	snprintf(pw, bufsize, "%02x ", (unsigned char)value);
++	pw += 3;
++
++	value = 0xE7;
++	snprintf(pw, bufsize, "%02x ", (unsigned char)value);
++	pw += 3;
++
++	/* Reserved */
++	token_p = strtok_r(token, " ", &saveptr);
++	if (!token_p)
++		return -1;
++	if ((value = get_value(token_p)) < 0)
++		return -1;
++	snprintf(pw, bufsize, "%02x ", (unsigned char)value);
++	pw += 3;
++
++	/* Reserved */
++	for (k = 0; k < 31; k++) {
++		token_p = strtok_r(NULL, " ", &saveptr);
++		if (!token_p)
++				return -1;
++		if ((value = get_value(token_p)) < 0)
++				return -1;
++		snprintf(pw, bufsize, "%02x ", (unsigned char)value);
++		pw += 3;
++	}
++
++	/* Number of radios */
++	token_p = strtok_r(NULL, " ", &saveptr);
++	if (!token_p)
++		return -1;
++	if ((r = get_value(token_p)) < 0)
++		return -1;
++	snprintf(pw, bufsize, "%02x ", (unsigned char)r);
++	pw += 3;
++
++	for (i = 0; i < r; i++) {
++		/* RUID */
++		token_p = strtok_r(NULL, " ", &saveptr);
++		if (!token_p)
++			return -1;
++		if (parse_mac_address(dut, token_p, map_ruid) < 0)
++			return -1;
++		snprintf(pw, bufsize, "%02x%02x%02x%02x%02x%02x ", map_ruid[0],
++			 map_ruid[1], map_ruid[2], map_ruid[3], map_ruid[4],
++			 map_ruid[5]);
++		pw += 13;
++
++		/* Number of bss */
++		token_p = strtok_r(NULL, " ", &saveptr);
++		if (!token_p)
++			return -1;
++		if ((b = get_value(token_p)) < 0)
++			return -1;
++		snprintf(pw, bufsize, "%02x ", (unsigned char)b);
++		pw += 3;
++
++		for (j = 0; j < b; j++) {
++			/* BSSID Field */
++			for (k = 0; k < 6; k++) {
++				token_p = strtok_r(NULL, " ", &saveptr);
++				if (!token_p)
++						return -1;
++				if ((value = get_value(token_p)) < 0)
++						return -1;
++				snprintf(pw, bufsize, "%02x", (unsigned char)value);
++				pw += 2;
++			}
++
++			snprintf(pw, bufsize, "%s", " ");
++			pw += 1;
++
++			/* Flags */
++			token_p = strtok_r(NULL, " ", &saveptr);
++			if (!token_p)
++				return -1;
++			if ((value = get_value(token_p)) < 0)
++				return -1;
++			snprintf(pw, bufsize, "%02x ", (unsigned char)value);
++			pw += 3;
++
++			/* Basic EHT-MCS And Nss Set - 4 octets */
++			for (k = 0; k < 4; k++) {
++				token_p = strtok_r(NULL, " ", &saveptr);
++				if (!token_p)
++						return -1;
++				if ((value = get_value(token_p)) < 0)
++						return -1;
++				snprintf(pw, bufsize, "%02x ", (unsigned char)value);
++				pw += 3;
++			}
++
++			/* Control */
++			token_p = strtok_r(NULL, " ", &saveptr);
++			if (!token_p)
++				return -1;
++			if ((value = get_value(token_p)) < 0)
++				return -1;
++			snprintf(pw, bufsize, "%02x ", (unsigned char)value);
++			pw += 3;
++
++			/* CCFS0 */
++			token_p = strtok_r(NULL, " ", &saveptr);
++			if (!token_p)
++				return -1;
++			if ((value = get_value(token_p)) < 0)
++				return -1;
++			snprintf(pw, bufsize, "%02x ", (unsigned char)value);
++			pw += 3;
++
++			/* CCFS1 */
++			token_p = strtok_r(NULL, " ", &saveptr);
++			if (!token_p)
++				return -1;
++			if ((value = get_value(token_p)) < 0)
++				return -1;
++			snprintf(pw, bufsize, "%02x ", (unsigned char)value);
++			pw += 3;
++
++			/* Disabled_Subchannel_Bitmap - 2 octets */
++			for (k = 0; k < 2; k++) {
++				token_p = strtok_r(NULL, " ", &saveptr);
++				if (!token_p)
++						return -1;
++				if ((value = get_value(token_p)) < 0)
++						return -1;
++				snprintf(pw, bufsize, "%02x ", (unsigned char)value);
++				pw += 3;
++			}
++
++			/* Reserved */
++			for (k = 0; k < 16; k++) {
++				token_p = strtok_r(NULL, " ", &saveptr);
++				if (!token_p)
++						return -1;
++				if ((value = get_value(token_p)) < 0)
++						return -1;
++				snprintf(pw, bufsize, "%02x ", (unsigned char)value);
++				pw += 3;
++			}
++		}
++		/* Reserved */
++		for (k = 0; k < 25; k++) {
++			token_p = strtok_r(NULL, " ", &saveptr);
++			if (!token_p)
++					return -1;
++			if ((value = get_value(token_p)) < 0)
++					return -1;
++			snprintf(pw, bufsize, "%02x ", (unsigned char)value);
++			pw += 3;
++		}
++	}
++
++	/* Done */
++	return (strtok_r(NULL, " ", &saveptr) ? -1 : 1);
++}
++
+ static int map_parse_qosm_descriptor_tlv(struct sigma_dut *dut, const char *mod,
+ 					 char *buf, size_t bufsize)
+ {
+@@ -1977,49 +2227,45 @@ static int map_parse_qosm_policy_tlv(struct sigma_dut *dut, const char *mod,
+ 	return (strtok_r(NULL, " ", &saveptr) ? -1 : 1);
+ }
+ 
+-
+-
+-static int map_parse_steering_policy_tlv(struct sigma_dut *dut, const char *mod,
+-					 char *buf, size_t bufsize)
++static int map_parse_t2lm_policy_tlv(struct sigma_dut *dut, const char *mod,
++                                     char *buf, size_t bufsize)
+ {
+-	/* tlvtype = 0x89 */
+-	unsigned char map_sta_addr[6];
+-	unsigned char map_ruid[6];
++	/* tlvtype = 0xE6 */
++	unsigned char mld_mac_addr[6], map_sta_addr[6];
+ 	char token[4096], *token_p, *saveptr;
+-	int i, h, k, m; /* for loops h, k and m */
++	int i, k, n; /* for loops k and m */
++	int numMapping;
+ 	int value;
+ 	if (strlen(mod) >= sizeof(token))
+ 		return -1;
+ 	dut->map_pw = buf;
+ 	strlcpy(token, mod, sizeof(token));
+ 
+-	value = 0x89;
++	value = 0xE6;
+ 	snprintf(dut->map_pw, bufsize, "%02x ", (unsigned char)value);
+ 	dut->map_pw += 3;
+ 
+-	/* Local Steering Disallowed STA Count h  */
++	/* is_bSTA_Config */
+ 	token_p = strtok_r(token, " ", &saveptr);
+ 	if (!token_p)
+ 		return -1;
+-	if ((h = get_value(token_p)) < 0)
+-		return -1;
+-	snprintf(dut->map_pw, bufsize, "%02x ", (unsigned char)h);
++	if ((k = get_value(token_p)) < 0)
++			return -1;
++	snprintf(dut->map_pw, bufsize, "%02x ", (unsigned char)k);
+ 	dut->map_pw += 3;
+ 
+-	for (i = 0; i < h; i++) {
+-		/* STA MAC address -loop h-1 */
+-		token_p = strtok_r(NULL, " ", &saveptr);
+-		if (!token_p)
+-			return -1;
+-		if (parse_mac_address(dut, token_p, map_sta_addr) < 0)
+-			return -1;
+-		snprintf(dut->map_pw, bufsize, "%02x%02x%02x%02x%02x%02x ",
+-			 map_sta_addr[0], map_sta_addr[1], map_sta_addr[2],
+-			 map_sta_addr[3], map_sta_addr[4], map_sta_addr[5]);
+-		dut->map_pw += 13;
+-	}
++	/* MLD MAC address */
++	token_p = strtok_r(NULL, " ", &saveptr);
++	if (!token_p)
++		return -1;
++	if (parse_mac_address(dut, token_p, mld_mac_addr) < 0)
++		return -1;
++	snprintf(dut->map_pw, bufsize, "%02x%02x%02x%02x%02x%02x ",
++				mld_mac_addr[0], mld_mac_addr[1], mld_mac_addr[2],
++				mld_mac_addr[3], mld_mac_addr[4], mld_mac_addr[5]);
++	dut->map_pw += 13;
+ 
+-	/* BTM Steering Disallowed STA Count k  */
++	/* TID-To-Link_Mapping_Negotiation */
+ 	token_p = strtok_r(NULL, " ", &saveptr);
+ 	if (!token_p)
+ 		return -1;
+@@ -2028,51 +2274,185 @@ static int map_parse_steering_policy_tlv(struct sigma_dut *dut, const char *mod,
+ 	snprintf(dut->map_pw, bufsize, "%02x ", (unsigned char)k);
+ 	dut->map_pw += 3;
+ 
+-	for (i = 0; i < k; i++) {
+-		/* STA MAC address -loop k-1 */
+-		token_p = strtok_r(NULL, " ", &saveptr);
+-		if (!token_p)
+-			return -1;
+-		if (parse_mac_address(dut, token_p, map_sta_addr) < 0)
+-			return -1;
+-		snprintf(dut->map_pw, bufsize, "%02x%02x%02x%02x%02x%02x ",
+-			 map_sta_addr[0], map_sta_addr[1], map_sta_addr[2],
+-			 map_sta_addr[3], map_sta_addr[4], map_sta_addr[5]);
+-		dut->map_pw += 13;
+-	}
++	/* Skip Reserved */
++	token_p = strtok_r(NULL, " ", &saveptr);
++	if (!token_p)
++		return -1;
+ 
+-	/* BTM Steering Disallowed STA Count m  */
++	/* Num Mapping */
+ 	token_p = strtok_r(NULL, " ", &saveptr);
+ 	if (!token_p)
+ 		return -1;
+-	if ((m = get_value(token_p)) < 0)
++	if ((numMapping = get_value(token_p)) < 0)
+ 		return -1;
+-	snprintf(dut->map_pw, bufsize, "%02x ", (unsigned char)m);
+-	dut->map_pw += 3;
++	snprintf(dut->map_pw, bufsize, "%04x ", (uint16_t)numMapping);
++	dut->map_pw += 5;
+ 
+-	/* loop m-1 */
+-	for (i = 0; i < m; i++) {
+-		/* RUID */
+-		token_p = strtok_r(NULL, " ", &saveptr);
+-		if (!token_p)
+-			return -1;
+-		if (parse_mac_address(dut, token_p, map_ruid) < 0)
+-			return -1;
+-		snprintf(dut->map_pw, bufsize, "%02x%02x%02x%02x%02x%02x ",
+-			 map_ruid[0], map_ruid[1], map_ruid[2], map_ruid[3],
+-			 map_ruid[4], map_ruid[5]);
+-		dut->map_pw += 13;
++	for (i = 0; i < numMapping; i++) {
+ 
+-		/* Steering Policy  */
++		/* add Remove bit */
+ 		token_p = strtok_r(NULL, " ", &saveptr);
+ 		if (!token_p)
+-			return -1;
+-		if ((value = get_value(token_p)) < 0)
+-			return -1;
+-		snprintf(dut->map_pw, bufsize, "%02x ", (unsigned char)value);
++				return -1;
++		if ((k = get_value(token_p)) < 0)
++				return -1;
++		snprintf(dut->map_pw, bufsize, "%02x ", (unsigned char)k);
+ 		dut->map_pw += 3;
+ 
+-		/* Channel Utilization Threshold  */
++		/* STA MAC address -loop k-1 */
++		token_p = strtok_r(NULL, " ", &saveptr);
++		if (!token_p)
++				return -1;
++		if (parse_mac_address(dut, token_p, map_sta_addr) < 0)
++				return -1;
++		snprintf(dut->map_pw, bufsize, "%02x%02x%02x%02x%02x%02x ",
++					map_sta_addr[0], map_sta_addr[1], map_sta_addr[2],
++					map_sta_addr[3], map_sta_addr[4], map_sta_addr[5]);
++		dut->map_pw += 13;
++
++		/* Tid-to-link control */
++		token_p = strtok_r(NULL, " ", &saveptr);
++		if (!token_p)
++				return -1;
++		if ((k = get_value(token_p)) < 0)
++				return -1;
++		snprintf(dut->map_pw, bufsize, "%02x ", (unsigned char)k);
++		dut->map_pw += 3;
++
++		/* Link Mapping Presence Indicator */
++		token_p = strtok_r(NULL, " ", &saveptr);
++		if (!token_p)
++				return -1;
++		if ((k = get_value(token_p)) < 0)
++				return -1;
++		snprintf(dut->map_pw, bufsize, "%02x ", (unsigned char)k);
++		dut->map_pw += 3;
++
++		/* Expected Duration */
++		token_p = strtok_r(NULL, " ", &saveptr);
++		if (!token_p)
++				return -1;
++		if ((k = get_value(token_p)) < 0)
++				return -1;
++		snprintf(dut->map_pw, bufsize, "%06x ", (uint32_t)k);
++		dut->map_pw += 7;
++
++		/* Mapping */
++		for (n = 0; n < 8; n++) {
++			token_p = strtok_r(NULL, " ", &saveptr);
++			if (!token_p)
++				return -1;
++			if ((k = get_value(token_p)) < 0)
++				return -1;
++			snprintf(dut->map_pw, bufsize, "%04x ", (uint16_t)k);
++			dut->map_pw += 5;
++		}
++
++		/* Skip Reserved */
++		token_p = strtok_r(NULL, " ", &saveptr);
++		if (!token_p)
++			return -1;
++
++	}
++
++	/* Done */
++	return (strtok_r(NULL, " ", &saveptr) ? -1 : 1);
++}
++
++static int map_parse_steering_policy_tlv(struct sigma_dut *dut, const char *mod,
++					 char *buf, size_t bufsize)
++{
++	/* tlvtype = 0x89 */
++	unsigned char map_sta_addr[6];
++	unsigned char map_ruid[6];
++	char token[4096], *token_p, *saveptr;
++	int i, h, k, m; /* for loops h, k and m */
++	int value;
++	if (strlen(mod) >= sizeof(token))
++		return -1;
++	dut->map_pw = buf;
++	strlcpy(token, mod, sizeof(token));
++
++	value = 0x89;
++	snprintf(dut->map_pw, bufsize, "%02x ", (unsigned char)value);
++	dut->map_pw += 3;
++
++	/* Local Steering Disallowed STA Count h  */
++	token_p = strtok_r(token, " ", &saveptr);
++	if (!token_p)
++		return -1;
++	if ((h = get_value(token_p)) < 0)
++		return -1;
++	snprintf(dut->map_pw, bufsize, "%02x ", (unsigned char)h);
++	dut->map_pw += 3;
++
++	for (i = 0; i < h; i++) {
++		/* STA MAC address -loop h-1 */
++		token_p = strtok_r(NULL, " ", &saveptr);
++		if (!token_p)
++			return -1;
++		if (parse_mac_address(dut, token_p, map_sta_addr) < 0)
++			return -1;
++		snprintf(dut->map_pw, bufsize, "%02x%02x%02x%02x%02x%02x ",
++			 map_sta_addr[0], map_sta_addr[1], map_sta_addr[2],
++			 map_sta_addr[3], map_sta_addr[4], map_sta_addr[5]);
++		dut->map_pw += 13;
++	}
++
++	/* BTM Steering Disallowed STA Count k  */
++	token_p = strtok_r(NULL, " ", &saveptr);
++	if (!token_p)
++		return -1;
++	if ((k = get_value(token_p)) < 0)
++		return -1;
++	snprintf(dut->map_pw, bufsize, "%02x ", (unsigned char)k);
++	dut->map_pw += 3;
++
++	for (i = 0; i < k; i++) {
++		/* STA MAC address -loop k-1 */
++		token_p = strtok_r(NULL, " ", &saveptr);
++		if (!token_p)
++			return -1;
++		if (parse_mac_address(dut, token_p, map_sta_addr) < 0)
++			return -1;
++		snprintf(dut->map_pw, bufsize, "%02x%02x%02x%02x%02x%02x ",
++			 map_sta_addr[0], map_sta_addr[1], map_sta_addr[2],
++			 map_sta_addr[3], map_sta_addr[4], map_sta_addr[5]);
++		dut->map_pw += 13;
++	}
++
++	/* BTM Steering Disallowed STA Count m  */
++	token_p = strtok_r(NULL, " ", &saveptr);
++	if (!token_p)
++		return -1;
++	if ((m = get_value(token_p)) < 0)
++		return -1;
++	snprintf(dut->map_pw, bufsize, "%02x ", (unsigned char)m);
++	dut->map_pw += 3;
++
++	/* loop m-1 */
++	for (i = 0; i < m; i++) {
++		/* RUID */
++		token_p = strtok_r(NULL, " ", &saveptr);
++		if (!token_p)
++			return -1;
++		if (parse_mac_address(dut, token_p, map_ruid) < 0)
++			return -1;
++		snprintf(dut->map_pw, bufsize, "%02x%02x%02x%02x%02x%02x ",
++			 map_ruid[0], map_ruid[1], map_ruid[2], map_ruid[3],
++			 map_ruid[4], map_ruid[5]);
++		dut->map_pw += 13;
++
++		/* Steering Policy  */
++		token_p = strtok_r(NULL, " ", &saveptr);
++		if (!token_p)
++			return -1;
++		if ((value = get_value(token_p)) < 0)
++			return -1;
++		snprintf(dut->map_pw, bufsize, "%02x ", (unsigned char)value);
++		dut->map_pw += 3;
++
++		/* Channel Utilization Threshold  */
+ 		token_p = strtok_r(NULL, " ", &saveptr);
+ 		if (!token_p)
+ 			return -1;
+@@ -4222,6 +4602,28 @@ static int map_parse_tlvvalue(struct sigma_dut *dut, char *mod, char *buf,
+ 
+ 		break;
+ 
++	case IEEE1905_TLV_TYPE_T2LM_POLICY_TLV:
++		if (map_parse_t2lm_policy_tlv(dut, mod, dut->map_pw,
++											bufsize) < 1) {
++			sigma_dut_print(dut, DUT_MSG_ERROR,
++							"MAP: parsing 1905_tlv"
++							" t2lm policy failed");
++			goto map_parse_tlvvalue_error;
++		}
++		dut->map_multi_tlv = true;
++
++		if (one_tlv == 1) {
++			dut->map_multi_tlv = false;
++			snprintf(ic, sizeof(ic), "%02x ",
++					 (unsigned char)dut->map_tlvcnt);
++			buf[0] = ic[0];
++			buf[1] = ic[1];
++			strlcpy(dut->map_tlvvalue, buf,
++					sizeof(dut->map_tlvvalue));
++		}
++
++		break;
++
+ 	case IEEE1905_TLV_TYPE_METRIC_REPORT_POLICY:
+ 		if (map_parse_metric_reporting_policy_tlv(dut, mod, dut->map_pw,
+ 							  bufsize) < 1) {
+@@ -4661,6 +5063,17 @@ static int map_parse_tlvvalue(struct sigma_dut *dut, char *mod, char *buf,
+ 
+ 		break;
+ 
++	case IEEE1905_TLV_TYPE_STATIC_PUNCTURING_CONFIG:
++		if (map_parse_eht_operations_tlv (
++			dut, mod, buf, bufsize) < 1){
++			sigma_dut_print(dut, DUT_MSG_ERROR,
++					"MAP: parsing 1905_tlv"
++					" eht operations failed");
++			goto map_parse_tlvvalue_error;
++		}
++		strlcpy(dut->map_tlvvalue, buf, sizeof(dut->map_tlvvalue));
++		break;
++
+ 	default:
+ 		sigma_dut_print(dut, DUT_MSG_ERROR,
+ 				"MAP: parsing 1905_tlv type unknown");
+@@ -4898,82 +5311,376 @@ map_send_1905_ok:
+ #endif /* __linux__ */
+ }
+ 
+-static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+-				 struct sigma_cmd *cmd)
+-{
++static char *strremove(char *str, const char *sub) {
++	char *p, *q, *r;
++	if (*sub && (q = r = strstr(str, sub)) != NULL) {
++		size_t len = strlen(sub);
++		while ((r = strstr(p = r + len, sub)) != NULL) {
++			while (p < r)
++				*q++ = *p++;
++		}
++		while ((*q++ = *p++) != '\0')
++			continue;
++	}
++	return str;
++}
+ 
++static int cmd_dev_1905_reconfig(struct sigma_dut *dut, struct sigma_conn *conn,
++			     struct sigma_cmd *cmd)
++{
+ #if defined(__linux__)
+-	const char *type;
+-	const char *type_sav;
+-	const char *name;
+-	const char *devrole;
+-	int radio_id[MAX_RADIO] = {0, 1, 2};
+-	int radio_count, radio_no;
+-	char buf[64];
++	const char *val;
++	char resp[512];
++	char buf[4096];
++	char map_tlvtype[15];
++	char map_tlvlength[15];
++	dut->map_mid = 0;
++	unsigned char map_addr[6] = {0};
++	unsigned char mld_addr[6] = {0};
++	unsigned char ruid_addr[6] = {0};
++	char ruid[20] = {0};
++	unsigned char link_addr[6] = {0};
++	unsigned int map_msgtypeval_i;
++	int l = 0;
+ 
+-	/* Incase different case/config side effect, reset
+-	 *  /etc/config/ezlbd,ezmesh,repacd,wireless,wsplcd
+-	 */
+-	run_system_wrapper(dut, "ucitool restore_default_config");
++	dut->map_tlvcnt = 0;
++	dut->map_multi_tlv = false;
++	dut->map_tlvvalue[0] = '\0';
+ 
+-	for (radio_count = 0; radio_count < MAX_RADIO; radio_count++) {
+-		snprintf(buf, sizeof(buf), "RADIO_PREFIX%d", radio_count);
+-		for (radio_no = 0; radio_no < MAX_RADIO; radio_no++) {
+-			if (!sigma_radio_ifname[radio_no] ||
+-			    strcmp(sigma_radio_ifname[radio_no], buf) != 0)
+-				continue;
+-			radio_id[radio_no] = radio_count;
++	val = get_param(cmd, "DestALid");
++	if (val) {
++		if (parse_mac_address(dut, val, map_addr) < 0) {
++			send_resp(dut, conn, SIGMA_ERROR,
++				  "errorCode,MAP invalid DestALid");
++			goto map_send_1905_error;
+ 		}
+-	}
+ 
+-	// num_radio == 3: radio_id[0] = 5GH, radio_id[1] = 5GL, radio_id[2] = 2.4G
+-	// num_radio == 2: radio_id[0] = 5G, radio_id[1] = 2.4G
++		sigma_dut_print(dut, DUT_MSG_DEBUG, "MAP: DestAlid: %s", val);
++	}
+ 
+-	dut->map_ath0_onboard = dut->map_ath1_onboard = false;
+-	dut->map_ath2_onboard = false;
++	val = get_param(cmd, "AgentAction");
++	if (val) {
++		if ((strcasecmp(val, "APAddition") == 0) || (strcasecmp(val, "APRemoval") == 0)) {
++			dut->map_tlvtype = IEEE1905_TLV_TYPE_AGENT_AP_MLD_CONFIG;
++			snprintf(map_tlvtype, sizeof(map_tlvtype), "%02x", IEEE1905_TLV_TYPE_AGENT_AP_MLD_CONFIG);
++		}
+ 
+-	dut->program = sigma_program_to_enum(get_param(cmd, "PROGRAM"));
+-	dut->device_type = AP_unknown;
+-	dut->map_device_role = MAP_DEVROLE_UNKNOWN;
++		else if ((strcasecmp(val, "bSTALinkAddition") == 0) || (strcasecmp(val, "bSTALinkRemoval") == 0)) {
++			dut->map_tlvtype = IEEE1905_TLV_TYPE_BSTA_MLD_CONFIG;
++			snprintf(map_tlvtype, sizeof(map_tlvtype), "%02x", IEEE1905_TLV_TYPE_BSTA_MLD_CONFIG);
++		}
+ 
+-	dut->map_bh24g = dut->map_bh5g = dut->map_bh5gh = false;
++		sigma_dut_print(dut, DUT_MSG_DEBUG, "MAP: tlvtype: %02x",
++				dut->map_tlvtype);
+ 
+-	type_sav = "Unknown";
+-	type = get_param(cmd, "type");
+-	if (type && strcasecmp(type, "Testbed") == 0) {
+-		dut->device_type = AP_testbed;
+-		type_sav = "Testbed";
+-	}
+-	if (type && strcasecmp(type, "DUT") == 0) {
+-		dut->device_type = AP_dut;
+-		type_sav = "DUT";
++		dut->map_tlvcnt++;
+ 	}
+ 
+-	devrole = get_param(cmd, "devrole");
+-	if (devrole && strcasecmp(devrole, "controller") == 0)
+-		dut->map_device_role = MAP_DEVROLE_CONTROLLER;
++	// map_tlvvalue Format : TargetMLD TargetRUID TargetLink(1 byte) addRemove
+ 
+-	if (devrole && strcasecmp(devrole, "agent") == 0) {
+-		dut->map_device_role = MAP_DEVROLE_AGENT;
+-		name = get_param(cmd, "name");
+-		if (name && !(strcasecmp(type_sav, "DUT") == 0)) {
+-			type_sav = strdup(name);
+-			if (type_sav == NULL)
+-				type_sav = "Unknown";
++	char *pw = buf;
++
++	val = get_param(cmd, "TargetMLD");
++	if (val) {
++		if (parse_mac_address(dut, val, mld_addr) < 0) {
++			send_resp(dut, conn, SIGMA_ERROR,
++				  "errorCode,MAP invalid TargetMLD");
++			goto map_send_1905_error;
+ 		}
++		snprintf(pw, sizeof(buf), "%02x%02x%02x%02x%02x%02x ", mld_addr[0],
++			mld_addr[1], mld_addr[2], mld_addr[3], mld_addr[4],
++			mld_addr[5]);
++		pw += 13;
++		sigma_dut_print(dut, DUT_MSG_DEBUG, "MAP: TargetMLD: %s", val);
+ 	}
+ 
+-	if (dut->program == PROGRAM_MAP || dut->program == PROGRAM_DE ||
+-	    dut->program == PROGRAM_MAPR2 || dut->program == PROGRAM_MAPR3 ||
+-		dut->program == PROGRAM_MAPR4 || dut->program == PROGRAM_MAPR5) {
+-		unlink("/tmp/map_auto_renew_mid_5g.tmp");
+-		unlink("/tmp/map_auto_renew_mid.tmp");
+-		unlink("/tmp/renew_alid.tmp");
+-		unlink("/etc/config/map.conf");
+-		unlink("/tmp/wsplcd-lan.conf");
+-		unlink("/tmp/ezmesh-lan.conf");
+-		unlink("/tmp/ieee1905.tmp");
+-		unlink(DPP_GET_FRAME_INFO_TEMP_FILE);
++	val = get_param(cmd, "TargetRUID");
++	if (val) {
++		if (parse_mac_address(dut, val, ruid_addr) < 0) {
++			send_resp(dut, conn, SIGMA_ERROR,
++				  "errorCode,MAP invalid TargetRUID");
++			goto map_send_1905_error;
++		}
++		snprintf(pw, sizeof(buf), "%02x%02x%02x%02x%02x%02x ", ruid_addr[0],
++			ruid_addr[1], ruid_addr[2], ruid_addr[3], ruid_addr[4],
++			ruid_addr[5]);
++		snprintf(ruid, sizeof(ruid), "0x%02x%02x%02x%02x%02x%02x", ruid_addr[0],
++			ruid_addr[1], ruid_addr[2], ruid_addr[3], ruid_addr[4],
++			ruid_addr[5]);
++		pw += 13;
++		sigma_dut_print(dut, DUT_MSG_DEBUG, "MAP: TargetRUID: %s", val);
++	}
++
++	val = get_param(cmd, "TargetLink");
++	if (val) {
++		if(dut->map_tlvtype == IEEE1905_TLV_TYPE_AGENT_AP_MLD_CONFIG) {
++			l = atoi(val);
++			snprintf(pw, sizeof(buf), "%02x ", (unsigned char)l);
++			pw += 3;
++			sigma_dut_print(dut, DUT_MSG_DEBUG, "MAP: TargetLink: %d", l);
++		}
++		else {
++			if (parse_mac_address(dut, val, link_addr) < 0) {
++			send_resp(dut, conn, SIGMA_ERROR,
++				  "errorCode,MAP invalid TargetLink");
++			goto map_send_1905_error;
++			}
++			snprintf(pw, sizeof(buf), "%02x%02x%02x%02x%02x%02x ", link_addr[0],
++				link_addr[1], link_addr[2], link_addr[3], link_addr[4],
++				link_addr[5]);
++			pw += 13;
++			sigma_dut_print(dut, DUT_MSG_DEBUG, "MAP: TargetLink: %s", val);
++		}
++	}
++
++	val = get_param(cmd, "AgentAction");
++	if (val) {
++		if ((strcasecmp(val, "APAddition") == 0) || (strcasecmp(val, "bSTALinkAddition") == 0)) {
++			snprintf(pw, sizeof(buf), "%02x ", 0x00);
++			pw += 3;
++		}
++
++		else if ((strcasecmp(val, "APRemoval") == 0) || (strcasecmp(val, "bSTALinkRemoval") == 0)) {
++			snprintf(pw, sizeof(buf), "%02x ", 0x01);
++			pw += 3;
++		}
++	}
++
++	val = get_param(cmd, "AgentAction");
++	if (val) {
++		if ((strcasecmp(val, "bSTALinkRemoval") == 0)) {
++			FILE *fptr;
++			char bsta_conf_line[200];
++			char * bsta_conf_line1 = NULL;
++			char substr[100];
++
++			if ((fptr = fopen("/etc/config/map_bsta.conf", "r")) == NULL){
++				sigma_dut_print(dut, DUT_MSG_ERROR, "Error! opening file");
++				goto map_send_1905_error;
++			}
++			sigma_dut_print(dut, DUT_MSG_ERROR, "ruid : %s", ruid);
++			while (fgets(bsta_conf_line, sizeof(bsta_conf_line), fptr)) {
++				sigma_dut_print(dut, DUT_MSG_ERROR, " bsta_conf_line : %s", bsta_conf_line);
++				if (strstr(bsta_conf_line, ruid) != NULL) {
++					sigma_dut_print(dut, DUT_MSG_ERROR, "bsta_conf_line : %s", bsta_conf_line);
++					substr[0] = '\0';
++					strlcat(substr, ",", sizeof(substr));
++					strlcat(substr, ruid, sizeof(substr));
++					bsta_conf_line1 = strremove(bsta_conf_line, substr);
++					sigma_dut_print(dut, DUT_MSG_ERROR, "bsta_conf_line1 : %s", bsta_conf_line1);
++					bsta_conf_line1[13] = '1';
++				}
++			}
++			fclose(fptr);
++			if(bsta_conf_line1) {
++				if ((fptr = fopen("/etc/config/map_bsta.conf", "w")) == NULL){
++					sigma_dut_print(dut, DUT_MSG_ERROR, "Error! opening file");
++					goto map_send_1905_error;
++				}
++				fputs(bsta_conf_line1, fptr);
++				fclose(fptr);
++				run_system_wrapper(
++							dut, INIT_SCRIPT_PATH"wsplcd restart");
++			}
++		}
++
++		else if ((strcasecmp(val, "bSTALinkAddition") == 0)) {
++			FILE *fptr;
++			char bsta_conf_line[200];
++			char string1[100] = {0};
++
++			if ((fptr = fopen("/etc/config/map_bsta.conf", "r")) == NULL){
++				sigma_dut_print(dut, DUT_MSG_ERROR, "Error! opening file");
++				goto map_send_1905_error;
++			}
++			sigma_dut_print(dut, DUT_MSG_ERROR, "ruid : %s", ruid);
++			while (fgets(bsta_conf_line, sizeof(bsta_conf_line), fptr)) {
++				sigma_dut_print(dut, DUT_MSG_ERROR, " bsta_conf_line : %s", bsta_conf_line); bsta_conf_line[strcspn(bsta_conf_line, "\n")] = 0;
++				string1[0] = '\0';
++				strlcat(string1, bsta_conf_line, sizeof(string1));
++				strlcat(string1, ",", sizeof(string1));
++				strlcat(string1, ruid, sizeof(string1));
++				string1[13] = '2';
++			}
++			fclose(fptr);
++			if ((fptr = fopen("/etc/config/map_bsta.conf", "w")) == NULL){
++				sigma_dut_print(dut, DUT_MSG_ERROR, "Error! opening file");
++				goto map_send_1905_error;
++			}
++			fputs(string1, fptr);
++			fclose(fptr);
++			run_system_wrapper(
++						dut, INIT_SCRIPT_PATH"wsplcd restart");
++		}
++	}
++
++	strlcpy(dut->map_tlvvalue, buf, sizeof(dut->map_tlvvalue));
++
++	sigma_dut_print(dut, DUT_MSG_DEBUG, "MAP: tlvvalue: %s",
++			dut->map_tlvvalue);
++
++	snprintf(map_tlvlength, sizeof(map_tlvlength),
++					 "%04x", (unsigned short)strlen(dut->map_tlvvalue));
++
++	sigma_dut_print(dut, DUT_MSG_DEBUG,
++			"MAP: tlvlength: %s",
++			map_tlvlength);
++
++	val = get_param(cmd, "AgentAction");
++	if (val) {
++		if ((strcasecmp(val, "APAddition") == 0) || (strcasecmp(val, "APRemoval") == 0)) {
++			snprintf(dut->map_msgtypeval, sizeof(dut->map_msgtypeval), "0x%04x",
++			 IEEE1905_MSG_TYPE_AP_MLD_CONFIG_REQ);
++		}
++
++		else if ((strcasecmp(val, "bSTALinkAddition") == 0) || (strcasecmp(val, "bSTALinkRemoval") == 0)) {
++			snprintf(dut->map_msgtypeval, sizeof(dut->map_msgtypeval), "0x%04x",
++			 IEEE1905_MSG_TYPE_BSTA_MLD_CONFIG_REQ);
++		}
++
++		else {
++			sigma_dut_print(dut, DUT_MSG_ERROR, "Unknown type %s",
++				val);
++			goto map_send_1905_error;
++		}
++
++		sigma_dut_print(dut, DUT_MSG_DEBUG, "MAP: msgtypevalue: %s",
++				dut->map_msgtypeval);
++
++		map_msgtypeval_i = get_value(dut->map_msgtypeval);
++
++		switch (map_msgtypeval_i) {
++
++		case IEEE1905_MSG_TYPE_AP_MLD_CONFIG_REQ:
++		case IEEE1905_MSG_TYPE_BSTA_MLD_CONFIG_REQ:
++
++			snprintf(buf, sizeof(buf), "%02x%02x%02x%02x%02x%02x",
++				 map_addr[0], map_addr[1], map_addr[2],
++				 map_addr[3], map_addr[4], map_addr[5]);
++			strlcpy(dut->map_alid, buf, sizeof(dut->map_alid));
++			if (map_test_socket(dut, conn, map_tlvtype,
++					    dut->map_alid, dut->map_msgtypeval,
++					    map_tlvlength,
++					    dut->map_tlvvalue) < 0) {
++				send_resp(dut, conn, SIGMA_ERROR,
++					  "errorCode,MAP socket failure");
++				goto map_send_1905_error;
++			}
++			snprintf(resp, sizeof(resp), "MID,0x%02x",
++				 dut->map_mid);
++			send_resp(dut, conn, SIGMA_COMPLETE, resp);
++			goto map_send_1905_ok;
++
++			break;
++
++		default:
++			send_resp(dut, conn, SIGMA_ERROR,
++				  "errorCode,Message Type Value "
++				  "not supported");
++			goto map_send_1905_error;
++		}
++	}
++
++	send_resp(dut, conn, SIGMA_ERROR, "errorCode,dev_1905_reconfig invalid ");
++
++map_send_1905_error:
++	dut->map_pw = NULL;
++	return -1;
++
++map_send_1905_ok:
++	dut->map_pw = NULL;
++	return 0;
++#else  /* __linux__ */
++	send_resp(dut, conn, SIGMA_ERROR,
++		  "errorCode,dev_send_1905 not supported");
++	return -1;
++#endif /* __linux__ */
++}
++
++static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
++				 struct sigma_cmd *cmd)
++{
++
++#if defined(__linux__)
++	const char *type;
++	const char *type_sav;
++	const char *name;
++	const char *devrole;
++	int radio_id[MAX_RADIO] = {0, 1, 2, 3, 4};
++	int radio_count, radio_no;
++	char buf[64];
++
++	/* Incase different case/config side effect, reset
++	 *  /etc/config/ezlbd,ezmesh,repacd,wireless,wsplcd
++	 */
++	run_system_wrapper(dut, "ucitool restore_default_config");
++
++	for (radio_count = 0; radio_count < MAX_RADIO; radio_count++) {
++		snprintf(buf, sizeof(buf), "RADIO_PREFIX%d", radio_count);
++		for (radio_no = 0; radio_no < MAX_RADIO; radio_no++) {
++			if (!sigma_radio_ifname[radio_no] ||
++			    strcmp(sigma_radio_ifname[radio_no], buf) != 0)
++				continue;
++			radio_id[radio_no] = radio_count;
++		}
++	}
++
++	// num_radio == 5: radio_id[0] = 6GH, radio_id[1] = 6GL, radio_id[2] = 5GH,
++	//				   radio_id[3] = 5GL, radio_id[4] = 2.4G
++	// num_radio == 4: radio_id[0] = 6G, radio_id[1] = 5GH, radio_id[2] = 5GL,
++	//				   radio_id[3] = 2.4G
++	// num_radio == 3: radio_id[0] = 5GH, radio_id[1] = 5GL, radio_id[2] = 2.4G
++	// num_radio == 2: radio_id[0] = 5G, radio_id[1] = 2.4G
++
++	dut->map_ath0_onboard = dut->map_ath1_onboard = false;
++	dut->map_ath2_onboard = false;
++	dut->map_ath3_onboard = false;
++	dut->map_ath4_onboard = false;
++
++	dut->program = sigma_program_to_enum(get_param(cmd, "PROGRAM"));
++	dut->device_type = AP_unknown;
++	dut->map_device_role = MAP_DEVROLE_UNKNOWN;
++
++	dut->map_bh24g = dut->map_bh5g = dut->map_bh5gh = false;
++	dut->map_bh6g = dut->map_bh6gh = false;
++
++	type_sav = "Unknown";
++	type = get_param(cmd, "type");
++	if (type && strcasecmp(type, "Testbed") == 0) {
++		dut->device_type = AP_testbed;
++		type_sav = "Testbed";
++	}
++	if (type && strcasecmp(type, "DUT") == 0) {
++		dut->device_type = AP_dut;
++		type_sav = "DUT";
++	}
++
++	devrole = get_param(cmd, "devrole");
++	if (devrole && strcasecmp(devrole, "controller") == 0)
++		dut->map_device_role = MAP_DEVROLE_CONTROLLER;
++
++	if (devrole && strcasecmp(devrole, "agent") == 0) {
++		dut->map_device_role = MAP_DEVROLE_AGENT;
++		name = get_param(cmd, "name");
++		if (name && !(strcasecmp(type_sav, "DUT") == 0)) {
++			type_sav = strdup(name);
++			if (type_sav == NULL)
++				type_sav = "Unknown";
++		}
++	}
++
++	if (dut->program == PROGRAM_MAP || dut->program == PROGRAM_DE ||
++	    dut->program == PROGRAM_MAPR2 || dut->program == PROGRAM_MAPR3 ||
++		dut->program == PROGRAM_MAPR4 || dut->program == PROGRAM_MAPR5 ||
++		dut->program == PROGRAM_MAPR6) {
++		unlink("/tmp/map_auto_renew_mid_5g.tmp");
++		unlink("/tmp/map_auto_renew_mid.tmp");
++		unlink("/tmp/renew_alid.tmp");
++		unlink("/etc/config/map.conf");
++		unlink("/tmp/wsplcd-lan.conf");
++		unlink("/tmp/ezmesh-lan.conf");
++		unlink("/tmp/ieee1905.tmp");
++		unlink(DPP_GET_FRAME_INFO_TEMP_FILE);
+ 
+ 		if (dut->map_repacd_enableDPP) {
+ 			dut->map_repacd_enableDPP = false;
+@@ -5004,13 +5711,73 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 			owrt_ap_set_radio(dut, radio_id[1], "disabled", "0");
+ 			owrt_ap_set_radio(dut, radio_id[0], "hwmode", "11axa");
+ 			owrt_ap_set_radio(dut, radio_id[1], "hwmode", "11axg");
+-			/*owrt_ap_set_radio(dut, radio_id[0], "htmode", "HT20");
+-			owrt_ap_set_radio(dut, radio_id[1], "htmode", "HT20");
++			/*
++			if (dut->program == PROGRAM_MAPR6) {
++				owrt_ap_set_radio(dut, radio_id[0], "htmode", "EHT20");
++				owrt_ap_set_radio(dut, radio_id[1], "htmode", "EHT20");
++			} else {
++				owrt_ap_set_radio(dut, radio_id[0], "htmode", "HT20");
++				owrt_ap_set_radio(dut, radio_id[1], "htmode", "HT20");
++			}
+ 			owrt_ap_set_radio(dut, radio_id[0], "txchainmask", "1");
+ 			owrt_ap_set_radio(dut, radio_id[1], "txchainmask", "1");
+ 			owrt_ap_set_radio(dut, radio_id[0], "rxchainmask", "1");
+ 			owrt_ap_set_radio(dut, radio_id[1], "rxchainmask", "1");*/
+-			if (num_radio == 3) {
++			if (dut->program == PROGRAM_MAPR6) {
++				owrt_ap_set_radio(dut, radio_id[0], "mloenabled", "1");
++				owrt_ap_set_radio(dut, radio_id[1], "mloenabled", "1");
++			}
++			if (num_radio == 5) {
++				owrt_ap_set_radio(dut, radio_id[4], "disabled", "0");
++				owrt_ap_set_radio(dut, radio_id[4], "htmode", "HT20");
++				owrt_ap_set_radio(dut, radio_id[4], "txchainmask", "1");
++				owrt_ap_set_radio(dut, radio_id[4], "rxchainmask", "1");
++				owrt_ap_set_radio(dut, radio_id[3], "disabled", "0");
++				owrt_ap_set_radio(dut, radio_id[3], "htmode", "HT20");
++				owrt_ap_set_radio(dut, radio_id[3], "txchainmask", "1");
++				owrt_ap_set_radio(dut, radio_id[3], "rxchainmask", "1");
++				owrt_ap_set_radio(dut, radio_id[2], "disabled", "0");
++				owrt_ap_set_radio(dut, radio_id[2], "htmode", "HT20");
++				owrt_ap_set_radio(dut, radio_id[2], "txchainmask", "1");
++				owrt_ap_set_radio(dut, radio_id[2], "rxchainmask", "1");
++				owrt_ap_set_radio(dut, radio_id[0], "channel", "149");
++				owrt_ap_set_radio(dut, radio_id[1], "channel", "36");
++				owrt_ap_set_radio(dut, radio_id[2], "channel", "6");
++				owrt_ap_set_radio(dut, radio_id[3], "channel", "auto");
++				owrt_ap_set_radio(dut, radio_id[4], "channel", "auto");
++				owrt_ap_set_vap(dut, radio_id[4], "wds", "1");
++				owrt_ap_set_vap(dut, radio_id[3], "wds", "1");
++				owrt_ap_set_vap(dut, radio_id[2], "wds", "1");
++				if (dut->program == PROGRAM_MAP || dut->program == PROGRAM_DE) {
++					owrt_ap_set_vap(dut, radio_id[4], "map", "1");
++					owrt_ap_set_vap(dut, radio_id[3], "map", "1");
++					owrt_ap_set_vap(dut, radio_id[2], "map", "1");
++				} else {
++					owrt_ap_set_vap(dut, radio_id[4], "map", "2");
++					owrt_ap_set_vap(dut, radio_id[3], "map", "2");
++					owrt_ap_set_vap(dut, radio_id[2], "map", "2");
++					owrt_ap_set_radio(dut, radio_id[4], "no_vlan", "1");
++					owrt_ap_set_radio(dut, radio_id[3], "no_vlan", "1");
++					owrt_ap_set_radio(dut, radio_id[2], "no_vlan", "1");
++				}
++				owrt_ap_set_vap(dut, radio_id[4], "MapBSSType", "32");
++				owrt_ap_set_vap(dut, radio_id[3], "MapBSSType", "32");
++				owrt_ap_set_vap(dut, radio_id[2], "MapBSSType", "32");
++				if (dut->program == PROGRAM_MAPR6) {
++					owrt_ap_set_radio(dut, radio_id[4], "mloenabled", "1");
++					owrt_ap_set_radio(dut, radio_id[3], "mloenabled", "1");
++					owrt_ap_set_radio(dut, radio_id[2], "mloenabled", "1");
++					run_system_wrapper(dut,
++							"uci set wireless.@wifi-iface[4].en_6g_sec_comp=0");
++					run_system_wrapper(dut,
++							"uci set wireless.@wifi-iface[3].en_6g_sec_comp=0");
++				}
++
++			} else if (num_radio == 4) {
++				owrt_ap_set_radio(dut, radio_id[3], "disabled", "0");
++				owrt_ap_set_radio(dut, radio_id[3], "htmode", "HT20");
++				owrt_ap_set_radio(dut, radio_id[3], "txchainmask", "1");
++				owrt_ap_set_radio(dut, radio_id[3], "rxchainmask", "1");
+ 				owrt_ap_set_radio(dut, radio_id[2], "disabled", "0");
+ 				owrt_ap_set_radio(dut, radio_id[2], "htmode", "HT20");
+ 				owrt_ap_set_radio(dut, radio_id[2], "txchainmask", "1");
+@@ -5018,14 +5785,46 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 				owrt_ap_set_radio(dut, radio_id[0], "channel", "149");
+ 				owrt_ap_set_radio(dut, radio_id[1], "channel", "36");
+ 				owrt_ap_set_radio(dut, radio_id[2], "channel", "6");
++				owrt_ap_set_radio(dut, radio_id[3], "channel", "37");
++				owrt_ap_set_vap(dut, radio_id[3], "wds", "1");
+ 				owrt_ap_set_vap(dut, radio_id[2], "wds", "1");
+ 				if (dut->program == PROGRAM_MAP || dut->program == PROGRAM_DE) {
++					owrt_ap_set_vap(dut, radio_id[3], "map", "1");
+ 					owrt_ap_set_vap(dut, radio_id[2], "map", "1");
+ 				} else {
+-									owrt_ap_set_vap(dut, radio_id[2], "map", "2");
+-									owrt_ap_set_radio(dut, radio_id[2], "no_vlan", "1");
++					owrt_ap_set_vap(dut, radio_id[3], "map", "2");
++					owrt_ap_set_vap(dut, radio_id[2], "map", "2");
++					owrt_ap_set_radio(dut, radio_id[3], "no_vlan", "1");
++					owrt_ap_set_radio(dut, radio_id[2], "no_vlan", "1");
++				}
++				owrt_ap_set_vap(dut, radio_id[3], "MapBSSType", "32");
++				owrt_ap_set_vap(dut, radio_id[2], "MapBSSType", "32");
++				if (dut->program == PROGRAM_MAPR6) {
++					owrt_ap_set_radio(dut, radio_id[3], "mloenabled", "1");
++					owrt_ap_set_radio(dut, radio_id[2], "mloenabled", "1");
++					run_system_wrapper(dut,
++							"uci set wireless.@wifi-iface[3].en_6g_sec_comp=0");
++				}
++
++			} else if (num_radio == 3) {
++				owrt_ap_set_radio(dut, radio_id[2], "disabled", "0");
++				owrt_ap_set_radio(dut, radio_id[2], "htmode", "HT20");
++				owrt_ap_set_radio(dut, radio_id[2], "txchainmask", "1");
++				owrt_ap_set_radio(dut, radio_id[2], "rxchainmask", "1");
++				owrt_ap_set_radio(dut, radio_id[0], "channel", "149");
++				owrt_ap_set_radio(dut, radio_id[1], "channel", "36");
++				owrt_ap_set_radio(dut, radio_id[2], "channel", "6");
++				owrt_ap_set_vap(dut, radio_id[2], "wds", "1");
++				if (dut->program == PROGRAM_MAP || dut->program == PROGRAM_DE) {
++					owrt_ap_set_vap(dut, radio_id[2], "map", "1");
++				} else {
++					owrt_ap_set_vap(dut, radio_id[2], "map", "2");
++					owrt_ap_set_radio(dut, radio_id[2], "no_vlan", "1");
++				}
++				owrt_ap_set_vap(dut, radio_id[2], "MapBSSType", "32");
++				if (dut->program == PROGRAM_MAPR6) {
++					owrt_ap_set_radio(dut, radio_id[2], "mloenabled", "1");
+ 				}
+-									owrt_ap_set_vap(dut, radio_id[2], "MapBSSType", "32");
+ 			} else {
+ 				owrt_ap_set_radio(dut, radio_id[0], "channel", "auto");
+ 				owrt_ap_set_radio(dut, radio_id[1], "channel", "6");
+@@ -5081,13 +5880,17 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 				else if (dut->program == PROGRAM_MAPR4)
+ 					run_system_wrapper(dut,
+ 						"uci set ezmesh.MultiAP.MapVersion=4");
+-								else
++				else if (dut->program == PROGRAM_MAPR5)
+ 					run_system_wrapper(dut,
+ 						"uci set ezmesh.MultiAP.MapVersion=5");
++				else
++					run_system_wrapper(dut,
++						"uci set ezmesh.MultiAP.MapVersion=6");
+ 
+ #ifdef CONFIG_BUILD_YOCTO
+ 			if (dut->program == PROGRAM_MAPR2 || dut->program == PROGRAM_MAPR3 ||
+-				dut->program == PROGRAM_MAPR4 || dut->program == PROGRAM_MAPR5) {
++				dut->program == PROGRAM_MAPR4 || dut->program == PROGRAM_MAPR5 ||
++				dut->program == PROGRAM_MAPR6) {
+ 				run_system_wrapper(dut,
+ 					"uci set ezmesh.MultiAP.VlanNetworkPrimary="DEFAULT_BRIDGE);
+ 			}
+@@ -5139,6 +5942,9 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 					"wsplcd.config.WriteDebugLogToFile="
+ 					"TRUNCATE");
+ 
++			if (dut->program == PROGRAM_MAPR6) {
++				run_system_wrapper(dut, "uci set wsplcd.config.Ezmesh6GEnable=1");
++			}
+ 
+ 			if (dut->program == PROGRAM_MAP || dut->program == PROGRAM_DE) {
+ 				run_system_wrapper(dut, "uci set wsplcd.config.MapEnable=1");
+@@ -5186,9 +5992,16 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 			else if (dut->program == PROGRAM_MAPR4)
+ 				run_system_wrapper(dut,
+ 					"uci set repacd.MAPConfig.MapVersionEnabled=4");
+-			else
++			else if (dut->program == PROGRAM_MAPR5)
+ 				run_system_wrapper(dut,
+ 					"uci set repacd.MAPConfig.MapVersionEnabled=5");
++			else
++				run_system_wrapper(dut,
++					"uci set repacd.MAPConfig.MapVersionEnabled=6");
++
++			if (dut->program == PROGRAM_MAPR6) {
++				run_system_wrapper(dut, "uci repacd.repacd.Ezmesh6GEnable=1");
++			}
+ 
+ 
+ #ifdef CONFIG_BUILD_YOCTO
+@@ -5196,7 +6009,8 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 			run_system_wrapper(dut,"uci set wireless.qcawifi.gIPAWds=1");
+ 
+ 			if (dut->program == PROGRAM_MAPR2 || dut->program == PROGRAM_MAPR3 ||
+-				dut->program == PROGRAM_MAPR4 || dut->program == PROGRAM_MAPR5) {
++				dut->program == PROGRAM_MAPR4 || dut->program == PROGRAM_MAPR5 ||
++				dut->program == PROGRAM_MAPR6) {
+ 				run_system_wrapper(dut,
+ 					"uci set wireless.qcawifi.gIPAVlanEnable=1");
+ 				run_system_wrapper(dut,
+@@ -5278,14 +6092,129 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 			owrt_ap_set_radio(dut, radio_id[1], "disabled", "0");
+ 			owrt_ap_set_radio(dut, radio_id[0], "htmode", "HT20");
+ 			owrt_ap_set_radio(dut, radio_id[1], "htmode", "HT20");
++			if (dut->program == PROGRAM_MAPR6) {
++				owrt_ap_set_radio(dut, radio_id[0], "htmode", "EHT20");
++				owrt_ap_set_radio(dut, radio_id[1], "htmode", "EHT20");
++			} else {
++				owrt_ap_set_radio(dut, radio_id[0], "htmode", "HT20");
++				owrt_ap_set_radio(dut, radio_id[1], "htmode", "HT20");
++			}
+ 			owrt_ap_set_radio(dut, radio_id[0], "txchainmask", "1");
+ 			owrt_ap_set_radio(dut, radio_id[1], "txchainmask", "1");
+ 			owrt_ap_set_radio(dut, radio_id[0], "rxchainmask", "1");
+ 			owrt_ap_set_radio(dut, radio_id[1], "rxchainmask", "1");
++			if (dut->program == PROGRAM_MAPR6) {
++				owrt_ap_set_radio(dut, radio_id[0], "mloenabled", "1");
++				owrt_ap_set_radio(dut, radio_id[1], "mloenabled", "1");
++			}
+ 
+-			if (num_radio == 3) {
++			if (num_radio == 5) {
++				owrt_ap_set_radio(dut, radio_id[4], "disabled", "0");
++				if (dut->program == PROGRAM_MAPR6) {
++					owrt_ap_set_radio(dut, radio_id[4], "htmode", "EHT20");
++				} else {
++					owrt_ap_set_radio(dut, radio_id[4], "htmode", "HT20");
++				}
++				owrt_ap_set_radio(dut, radio_id[4], "txchainmask", "1");
++				owrt_ap_set_radio(dut, radio_id[4], "rxchainmask", "1");
++				owrt_ap_set_radio(dut, radio_id[3], "disabled", "0");
++				if (dut->program == PROGRAM_MAPR6) {
++					owrt_ap_set_radio(dut, radio_id[3], "htmode", "EHT20");
++				} else {
++					owrt_ap_set_radio(dut, radio_id[3], "htmode", "HT20");
++				}
++				owrt_ap_set_radio(dut, radio_id[3], "txchainmask", "1");
++				owrt_ap_set_radio(dut, radio_id[3], "rxchainmask", "1");
++				owrt_ap_set_radio(dut, radio_id[2], "disabled", "0");
++				if (dut->program == PROGRAM_MAPR6) {
++					owrt_ap_set_radio(dut, radio_id[2], "htmode", "EHT20");
++				} else {
++					owrt_ap_set_radio(dut, radio_id[2], "htmode", "HT20");
++				}
++				owrt_ap_set_radio(dut, radio_id[2], "txchainmask", "1");
++				owrt_ap_set_radio(dut, radio_id[2], "rxchainmask", "1");
++				owrt_ap_set_radio(dut, radio_id[0], "channel", "149");
++				owrt_ap_set_radio(dut, radio_id[1], "channel", "36");
++				owrt_ap_set_radio(dut, radio_id[2], "channel", "6");
++				owrt_ap_set_radio(dut, radio_id[3], "channel", "auto");
++				owrt_ap_set_radio(dut, radio_id[4], "channel", "auto");
++				owrt_ap_set_radio(dut, radio_id[4], "bsta_fixed_idmask", "15");
++				owrt_ap_set_radio(dut, radio_id[3], "bsta_fixed_idmask", "15");
++				owrt_ap_set_radio(dut, radio_id[2], "bsta_fixed_idmask", "15");
++				run_system_wrapper(dut,
++						"uci set wireless.@wifi-iface[4].ssid=wf_OpenWrt");
++				run_system_wrapper(dut,
++						"uci set wireless.@wifi-iface[3].ssid=wf_OpenWrt");
++				run_system_wrapper(dut,
++						"uci set wireless.@wifi-iface[2].ssid=wf_OpenWrt");
++				if (dut->program == PROGRAM_MAPR2 || dut->program == PROGRAM_MAPR3 ||
++					dut->program == PROGRAM_MAPR4 || dut->program == PROGRAM_MAPR5 ||
++					dut->program == PROGRAM_MAPR6) {
++						owrt_ap_set_vap(dut, radio_id[4], "mbo", "1");
++						owrt_ap_set_radio(dut, radio_id[4], "no_vlan", "1");
++						owrt_ap_set_vap(dut, radio_id[3], "mbo", "1");
++						owrt_ap_set_radio(dut, radio_id[3], "no_vlan", "1");
++						owrt_ap_set_vap(dut, radio_id[2], "mbo", "1");
++						owrt_ap_set_radio(dut, radio_id[2], "no_vlan", "1");
++				}
++				if (dut->program == PROGRAM_MAPR6) {
++					owrt_ap_set_radio(dut, radio_id[4], "mloenabled", "1");
++					owrt_ap_set_radio(dut, radio_id[3], "mloenabled", "1");
++					owrt_ap_set_radio(dut, radio_id[2], "mloenabled", "1");
++					run_system_wrapper(dut,
++									"uci set wireless.@wifi-iface[4].en_6g_sec_comp=0");
++					run_system_wrapper(dut,
++									"uci set wireless.@wifi-iface[3].en_6g_sec_comp=0");
++				}
++			} else if (num_radio == 4) {
++				owrt_ap_set_radio(dut, radio_id[3], "disabled", "0");
++				if (dut->program == PROGRAM_MAPR6) {
++					owrt_ap_set_radio(dut, radio_id[3], "htmode", "EHT20");
++				} else {
++					owrt_ap_set_radio(dut, radio_id[3], "htmode", "HT20");
++				}
++				owrt_ap_set_radio(dut, radio_id[3], "txchainmask", "1");
++				owrt_ap_set_radio(dut, radio_id[3], "rxchainmask", "1");
++				owrt_ap_set_radio(dut, radio_id[2], "disabled", "0");
++				if (dut->program == PROGRAM_MAPR6) {
++					owrt_ap_set_radio(dut, radio_id[2], "htmode", "EHT20");
++				} else {
++					owrt_ap_set_radio(dut, radio_id[2], "htmode", "HT20");
++				}
++				owrt_ap_set_radio(dut, radio_id[2], "txchainmask", "1");
++				owrt_ap_set_radio(dut, radio_id[2], "rxchainmask", "1");
++				owrt_ap_set_radio(dut, radio_id[0], "channel", "149");
++				owrt_ap_set_radio(dut, radio_id[1], "channel", "36");
++				owrt_ap_set_radio(dut, radio_id[2], "channel", "6");
++				owrt_ap_set_radio(dut, radio_id[3], "channel", "37");
++				owrt_ap_set_radio(dut, radio_id[3], "bsta_fixed_idmask", "15");
++				owrt_ap_set_radio(dut, radio_id[2], "bsta_fixed_idmask", "15");
++				run_system_wrapper(dut,
++						"uci set wireless.@wifi-iface[3].ssid=wf_OpenWrt");
++				run_system_wrapper(dut,
++						"uci set wireless.@wifi-iface[2].ssid=wf_OpenWrt");
++				if (dut->program == PROGRAM_MAPR2 || dut->program == PROGRAM_MAPR3 ||
++					dut->program == PROGRAM_MAPR4 || dut->program == PROGRAM_MAPR5 ||
++					dut->program == PROGRAM_MAPR6) {
++						owrt_ap_set_vap(dut, radio_id[3], "mbo", "1");
++						owrt_ap_set_radio(dut, radio_id[3], "no_vlan", "1");
++						owrt_ap_set_vap(dut, radio_id[2], "mbo", "1");
++						owrt_ap_set_radio(dut, radio_id[2], "no_vlan", "1");
++				}
++				if (dut->program == PROGRAM_MAPR6) {
++					owrt_ap_set_radio(dut, radio_id[3], "mloenabled", "1");
++					owrt_ap_set_radio(dut, radio_id[2], "mloenabled", "1");
++					run_system_wrapper(dut,
++						"uci set wireless.@wifi-iface[3].en_6g_sec_comp=0");
++				}
++			} else if (num_radio == 3) {
+ 				owrt_ap_set_radio(dut, radio_id[2], "disabled", "0");
+ 				owrt_ap_set_radio(dut, radio_id[2], "htmode", "HT20");
++				if (dut->program == PROGRAM_MAPR6) {
++					owrt_ap_set_radio(dut, radio_id[2], "htmode", "EHT20");
++				} else {
++					owrt_ap_set_radio(dut, radio_id[2], "htmode", "HT20");
++				}
+ 				owrt_ap_set_radio(dut, radio_id[2], "txchainmask", "1");
+ 				owrt_ap_set_radio(dut, radio_id[2], "rxchainmask", "1");
+ 				owrt_ap_set_radio(dut, radio_id[0], "channel", "149");
+@@ -5295,17 +6224,22 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 				run_system_wrapper(dut,
+ 						   "uci set wireless.@wifi-iface[2].ssid=wf_OpenWrt");
+ 				if (dut->program == PROGRAM_MAPR2 || dut->program == PROGRAM_MAPR3 ||
+-									dut->program == PROGRAM_MAPR4 || dut->program == PROGRAM_MAPR5) {
++									dut->program == PROGRAM_MAPR4 || dut->program == PROGRAM_MAPR5 ||
++									dut->program == PROGRAM_MAPR6) {
+ 					owrt_ap_set_vap(dut, radio_id[2], "mbo", "1");
+ 					owrt_ap_set_radio(dut, radio_id[2], "no_vlan", "1");
+ 				}
++				if (dut->program == PROGRAM_MAPR6) {
++					owrt_ap_set_radio(dut, radio_id[2], "mloenabled", "1");
++				}
+ 			} else {
+ 				owrt_ap_set_radio(dut, radio_id[0], "channel", "36");
+ 				owrt_ap_set_radio(dut, radio_id[1], "channel", "6");
+ 			}
+ 
+ 			if (dut->program == PROGRAM_MAPR2 || dut->program == PROGRAM_MAPR3 ||
+-							dut->program == PROGRAM_MAPR4 || dut->program == PROGRAM_MAPR5) {
++							dut->program == PROGRAM_MAPR4 || dut->program == PROGRAM_MAPR5 ||
++							dut->program == PROGRAM_MAPR6) {
+ 				owrt_ap_set_vap(dut, radio_id[0], "mbo", "1");
+ 				owrt_ap_set_vap(dut, radio_id[1], "mbo", "1");
+ 				owrt_ap_set_radio(dut, radio_id[0], "no_vlan", "1");
+@@ -5349,7 +6283,8 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 
+ #ifdef CONFIG_BUILD_YOCTO
+ 			if (dut->program == PROGRAM_MAPR2 || dut->program == PROGRAM_MAPR3 ||
+-				dut->program == PROGRAM_MAPR4 || dut->program == PROGRAM_MAPR5) {
++				dut->program == PROGRAM_MAPR4 || dut->program == PROGRAM_MAPR5 ||
++				dut->program == PROGRAM_MAPR6) {
+ 				run_system_wrapper(dut,
+ 					"uci set ezmesh.MultiAP.VlanNetworkPrimary="DEFAULT_BRIDGE);
+ 			}
+@@ -5398,6 +6333,10 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 					"wsplcd.config.WriteDebugLogToFile="
+ 					"TRUNCATE");
+ 
++			if (dut->program == PROGRAM_MAPR6) {
++				run_system_wrapper(dut, "uci set wsplcd.config.Ezmesh6GEnable=1");
++			}
++
+ 			if (dut->program == PROGRAM_MAP || dut->program == PROGRAM_DE) {
+ 				run_system_wrapper(dut, "uci set wsplcd.config.MapEnable=1");
+ 				run_system_wrapper(dut, "uci set wsplcd.config.MapMaxBss=2");
+@@ -5447,16 +6386,24 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 			else if (dut->program == PROGRAM_MAPR4)
+ 				run_system_wrapper(dut,
+ 					"uci set repacd.MAPConfig.MapVersionEnabled=4");
+-						else
+-								run_system_wrapper(dut,
+-										"uci set repacd.MAPConfig.MapVersionEnabled=5");
++			else if (dut->program == PROGRAM_MAPR5)
++				run_system_wrapper(dut,
++					"uci set repacd.MAPConfig.MapVersionEnabled=5");
++			else
++				run_system_wrapper(dut,
++					"uci set repacd.MAPConfig.MapVersionEnabled=6");
++
++			if (dut->program == PROGRAM_MAPR6) {
++				run_system_wrapper(dut, "uci repacd.repacd.Ezmesh6GEnable=1");
++			}
+ 
+ #ifdef CONFIG_BUILD_YOCTO
+ 			 run_system_wrapper(dut,"uci set wireless.qcawifi=qcawifi");
+ 			 run_system_wrapper(dut,"uci set wireless.qcawifi.gIPAWds=1");
+ 
+ 			 if (dut->program == PROGRAM_MAPR2 || dut->program == PROGRAM_MAPR3 ||
+-				 dut->program == PROGRAM_MAPR4 || dut->program == PROGRAM_MAPR5) {
++				 dut->program == PROGRAM_MAPR4 || dut->program == PROGRAM_MAPR5 ||
++				 dut->program == PROGRAM_MAPR6) {
+ 				 run_system_wrapper(dut,
+ 					 "uci set wireless.qcawifi.gIPAVlanEnable=1");
+ 				 run_system_wrapper(dut,
+@@ -5568,15 +6515,21 @@ int cmd_dev_map_get_parameter(struct sigma_dut *dut, struct sigma_conn *conn,
+ 	char *if_name;
+ 	char ifname[16];
+ 	char ifname1[16];
++	char ifname2[16];
+ 	struct ifreq ifr;
+ 	int s, rc = -1;
+ 	const char *val;
+ 	char macaddr[32];
+-	char ruid[32];
++	char ruid[32] = "";
+ 	char bssid[32];
+-	int radio_id[MAX_RADIO] = {0, 1, 2};
++	int radio_id[MAX_RADIO] = {0, 1, 2, 3, 4};
+ 	int radio_count, radio_no;
+ 	char buf[1024];
++	FILE *mld_mac_file = NULL;
++	FILE *radio_mac_file = NULL;
++	char buf1[512];
++	char radioName[16] = "";
++	char *saveptr;
+ 
+ 	memset(addr, 0, sizeof(addr));
+ 	for (radio_count = 0; radio_count < MAX_RADIO; radio_count++) {
+@@ -5595,6 +6548,34 @@ int cmd_dev_map_get_parameter(struct sigma_dut *dut, struct sigma_conn *conn,
+ 			send_resp(dut, conn, SIGMA_ERROR,
+ 				  "errorCode,invalid ruid");
+ 			goto map_get_param_error;
++		} else {
++			snprintf(buf1, sizeof(buf1), "uci show wireless | grep %02x:%02x:%02x:%02x:%02x:%02x",
++						addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
++			radio_mac_file = popen (buf1, "r");
++			if (radio_mac_file) {
++				fgets (buf1, sizeof(buf1), radio_mac_file);
++				char* token = strtok_r(buf1, ".", &saveptr);
++				while (token) {
++					token = strtok_r(NULL, ".", &saveptr);
++					if( token && (strncasecmp(token, "wifi", 4) == 0)) {
++						strlcpy(radioName, token, 15);
++					}
++				}
++				if(strlen(radioName) == 0) {
++					goto map_get_param_error;
++				}
++			} else {
++				goto map_get_param_error;
++			}
++		}
++	}
++
++	val = get_param(cmd, "ssid");
++	if (dut->program >= PROGRAM_MAPR6 && val) {
++		if (map_get_ifname(dut, val, ifname2) < 0) {
++			send_resp(dut, conn, SIGMA_ERROR,
++				  "errorCode,invalid ssid");
++			goto map_get_param_error;
+ 		}
+ 	}
+ 
+@@ -5604,7 +6585,7 @@ int cmd_dev_map_get_parameter(struct sigma_dut *dut, struct sigma_conn *conn,
+ 			val = get_param(cmd, "ssid");
+ 			if (val) {
+ 				dut->map_ifname[0] = '\0';
+-				map_get_ifname_apmode(dut, val, dut->map_ifname);
++				map_get_ifname_apmode(dut, val, dut->map_ifname, radioName);
+ 				if ((rc = map_get_bssid(dut, val, ruid, ifname1,
+ 							bssid)) > 0)
+ 					rc =
+@@ -5630,7 +6611,7 @@ int cmd_dev_map_get_parameter(struct sigma_dut *dut, struct sigma_conn *conn,
+ 			val = get_param(cmd, "ssid");
+ 			if (val) {
+ 				dut->map_ifname[0] = '\0';
+-				map_get_ifname_apmode(dut, val, dut->map_ifname);
++				map_get_ifname_apmode(dut, val, dut->map_ifname, radioName);
+ 				if ((rc = map_get_macaddr(dut, macaddr,
+ 							  sizeof(macaddr), ruid,
+ 							  val)) > 0)
+@@ -5638,7 +6619,8 @@ int cmd_dev_map_get_parameter(struct sigma_dut *dut, struct sigma_conn *conn,
+ 							       addr);
+ 
+ 			} else if (dut->map_bh24g || dut->map_bh5g ||
+-				   dut->map_bh5gh) {
++				   dut->map_bh5gh || dut->map_bh6g ||
++				   dut->map_bh6gh) {
+ 				if (num_radio == 3) {
+ 					if (dut->map_bh24g)
+ 						snprintf(ifname, sizeof(ifname),
+@@ -5771,6 +6753,53 @@ int cmd_dev_map_get_parameter(struct sigma_dut *dut, struct sigma_conn *conn,
+ 			}
+ 			send_resp(dut, conn, SIGMA_COMPLETE, resp);
+ 			goto map_get_param_ok;
++		} else if (strcasecmp(val, "MLDAddr") == 0) {
++			if(strlen(ruid) > 0) {
++				val = get_param(cmd, "ssid");
++				if (val) {
++					sigma_dut_print(dut, DUT_MSG_ERROR,
++									"***SSID = %s", val);
++					dut->map_ifname[0] = '\0';
++					map_get_ifname_apmode(dut, val, dut->map_ifname, radioName);
++					sigma_dut_print(dut, DUT_MSG_ERROR,
++									"***ifname = %s", dut->map_ifname);
++					if ((rc = map_get_macaddr(dut, macaddr,
++								sizeof(macaddr), ruid,
++								val)) > 0)
++						rc = parse_mac_address(dut, macaddr,
++									addr);
++				}
++				else {
++					send_resp(dut, conn, SIGMA_ERROR,"SSID not provided.");
++					goto map_get_param_error;
++				}
++				snprintf(resp, sizeof(resp),
++				"macaddr,%02x:%02x:%02x:%02x:%02x:%02x",
++				addr[0], addr[1], addr[2], addr[3], addr[4],
++				addr[5]);
++				send_resp(dut, conn, SIGMA_COMPLETE, resp);
++				goto map_get_param_ok;
++			} else {
++				memcpy(resp, "MLDAddr,", 8);
++				resp[8] = '\0';
++				snprintf(buf1, sizeof(buf1), "iw dev %s info | grep mld_addr | sed 's/^[ \t]*//;s/[ \t]*$//' | cut -d ' ' -f2", ifname2);
++				mld_mac_file = popen (buf1, "r");
++				if (mld_mac_file) {
++					fgets (buf1, sizeof(buf1), mld_mac_file);
++					memcpy(&resp[8], buf1, 17);
++					resp[25] = '\0';
++					send_resp(dut, conn, SIGMA_COMPLETE, resp);
++					if (mld_mac_file)
++						pclose(mld_mac_file);
++					goto map_get_param_ok;
++				}
++				else {
++					send_resp(dut, conn, SIGMA_ERROR,"Cannot resolve MLD mac addr");
++					if (mld_mac_file)
++						pclose(mld_mac_file);
++					goto map_get_param_error;
++				}
++			}
+ 		}
+ 	}
+ 
+@@ -6047,11 +7076,17 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+ 
+ #if defined(__linux__)
+ 	const char *val;
++	const char *val1;
++	const char *val2;
++	const char *val3;
+ 	char bss_info[12] = "bss_info", ic[4], token[4096], *token_p[512];
++	char bss_info_mld_group[24] = "bss_info";
++	char bsta_info[12] = "bsta_info";
+ 	char *saveptr;
+ 	int i = 1, j;
+-	bool found_one = false, one_more = true;
++	bool found_one = false, one_more = true, found_bsta = false;
+ 	FILE *pfd = NULL;
++	FILE *f = NULL;
+ 	unsigned char map_addr[6];
+ 
+ 	bool found_one_tlv = false;
+@@ -6064,17 +7099,24 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+ 	char map_tlvtype[15];
+ 	char map_tlvlength[15];
+ 	char mod[4096], buf[4096];
++	char max_num_links_buf[256];
+ 	bool map_require_new_line;
++	bool map_require_new_line_bsta;
+ 	int value;
+ 
+ 	const bool afile_exists =
+ 	    file_exists("/etc/config/map.conf") ? true : false;
+ 
++	const bool bsta_file_exists =
++	    file_exists("/etc/config/map_bsta.conf") ? true : false;
++
+ 	while (one_more) {
+ 		if ((i & 0x0F) == 10)
+ 			i += 6;
+ 
+ 		snprintf(ic, sizeof(ic), "%02x ", (unsigned char)i++);
++
++		// Create a string of format bss_infoX
+ 		if (i < 11) {
+ 			bss_info[8] = ic[1];
+ 			bss_info[9] = '\0';
+@@ -6084,9 +7126,57 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+ 			bss_info[10] = '\0';
+ 		}
+ 
++		// Create a string of format bsta_infoX
++		if (i < 11) {
++			bsta_info[9] = ic[1];
++			bsta_info[10] = '\0';
++		} else {
++			bsta_info[9] = ic[0];
++			bsta_info[10] = ic[1];
++			bsta_info[11] = '\0';
++		}
++
++		// Create a string of format bss_infoX_mld_groupID to search in input string
++		if (i < 11) {
++			bss_info_mld_group[8] = ic[1];
++			bss_info_mld_group[9] = '_';
++			bss_info_mld_group[10] = 'm';
++			bss_info_mld_group[11] = 'l';
++			bss_info_mld_group[12] = 'd';
++			bss_info_mld_group[13] = '_';
++			bss_info_mld_group[14] = 'g';
++			bss_info_mld_group[15] = 'r';
++			bss_info_mld_group[16] = 'o';
++			bss_info_mld_group[17] = 'u';
++			bss_info_mld_group[18] = 'p';
++			bss_info_mld_group[19] = 'I';
++			bss_info_mld_group[20] = 'D';
++			bss_info_mld_group[21] = '\0';
++		} else {
++			bss_info_mld_group[8] = ic[0];
++			bss_info_mld_group[9] = ic[1];
++			bss_info_mld_group[10] = '_';
++			bss_info_mld_group[11] = 'm';
++			bss_info_mld_group[12] = 'l';
++			bss_info_mld_group[13] = 'd';
++			bss_info_mld_group[14] = '_';
++			bss_info_mld_group[15] = 'g';
++			bss_info_mld_group[16] = 'r';
++			bss_info_mld_group[17] = 'o';
++			bss_info_mld_group[18] = 'u';
++			bss_info_mld_group[19] = 'p';
++			bss_info_mld_group[20] = 'I';
++			bss_info_mld_group[21] = 'D';
++			bss_info_mld_group[22] = '\0';
++		}
++
+ 		map_require_new_line = false;
++		map_require_new_line_bsta = false;
+ 
+ 		val = get_param2(cmd, bss_info, &k);
++		val1 = get_param2(cmd, bss_info_mld_group, &k);
++		val3 = get_param2(cmd, bsta_info, &k);
++
+ 		if (val) {
+ 			printf("\nvalbss=%s\n", val);
+ 			if (found_one == false) {
+@@ -6131,7 +7221,8 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+ 					token_p[7]);
+ 				map_require_new_line = true;
+ 			} else if (j == 10 && (dut->program == PROGRAM_MAPR2 || dut->program == PROGRAM_MAPR3 ||
+-								   dut->program == PROGRAM_MAPR4 || dut->program == PROGRAM_MAPR5)) {
++								   dut->program == PROGRAM_MAPR4 || dut->program == PROGRAM_MAPR5 ||
++								   dut->program == PROGRAM_MAPR6)) {
+ 				fprintf(pfd,
+ 					"%02x%02x%02x%02x%02x%02x,%s,%s,%s,"
+ 					"%s,%s,%s,%s,%s,%s",
+@@ -6146,7 +7237,8 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+ 
+ 			found_one_tlv = false;
+ 			if (dut->program == PROGRAM_MAPR2 || dut->program == PROGRAM_MAPR3 ||
+-				dut->program == PROGRAM_MAPR4 || dut->program == PROGRAM_MAPR5) {
++				dut->program == PROGRAM_MAPR4 || dut->program == PROGRAM_MAPR5 ||
++				dut->program == PROGRAM_MAPR6) {
+ 				printf("\ni=%d k=%d\n", i, k);
+ 				tlvtype[8] = tlvlength[10] = tlvvalue[9] = '1';
+ 				tlvtype[9] = tlvlength[11] = tlvvalue[10] =
+@@ -6158,11 +7250,11 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+ 					printf("\n%s %s %s\n", tlvtype,
+ 					       tlvlength, tlvvalue);
+ 
+-					val = map_get_param_ndx(cmd, tlvtype,
++					val2 = map_get_param_ndx(cmd, tlvtype,
+ 								k++);
+-					if (val) {
++					if (val2) {
+ 						found_one_tlv = true;
+-						if (strlen(val) >
++						if (strlen(val2) >
+ 						    sizeof(map_tlvtype) - 1) {
+ 							send_resp(dut, conn,
+ 								  SIGMA_ERROR,
+@@ -6173,7 +7265,7 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+ 						}
+ 						snprintf(map_tlvtype,
+ 							 sizeof(map_tlvtype),
+-							 "%s", val);
++							 "%s", val2);
+ 						dut->map_tlvtype =
+ 						    (unsigned int)get_value(
+ 							map_tlvtype);
+@@ -6183,10 +7275,10 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+ 						    "MAP: tlvtype: %s",
+ 						    map_tlvtype);
+ 
+-						val = map_get_param_ndx(
++						val2 = map_get_param_ndx(
+ 						    cmd, tlvlength, k++);
+-						if (val) {
+-							if (strlen(val) >
++						if (val2) {
++							if (strlen(val2) >
+ 							    sizeof(
+ 								map_tlvlength) -
+ 								1) {
+@@ -6204,7 +7296,7 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+ 							    map_tlvlength,
+ 							    sizeof(
+ 								map_tlvlength),
+-							    "%s", val);
++							    "%s", val2);
+ 							sigma_dut_print(
+ 							    dut, DUT_MSG_DEBUG,
+ 							    "MAP: tlvlength: "
+@@ -6212,11 +7304,11 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+ 							    map_tlvlength);
+ 						}
+ 
+-						val = map_get_param_ndx(
++						val2 = map_get_param_ndx(
+ 						    cmd, tlvvalue, k++);
+-						if (val) {
++						if (val2) {
+ 							map_removeAllCurlyBrackets(
+-							    val, mod);
++							    val2, mod);
+ 							printf("\nmod=%s\n",
+ 							       mod);
+ 
+@@ -6324,31 +7416,102 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+ 							}
+ 						}
+ 
+-						tlvtype[8] = tlvlength[10] =
+-						    tlvvalue[9] = '2';
+-						tlvtype[9] = tlvlength[11] =
+-						    tlvvalue[10] = '\0';
+-					} else
+-						break;
+-				}
++						tlvtype[8] = tlvlength[10] =
++						    tlvvalue[9] = '2';
++						tlvtype[9] = tlvlength[11] =
++						    tlvvalue[10] = '\0';
++					} else
++						break;
++				}
++			}
++
++			if (!found_one_tlv && (dut->program == PROGRAM_MAPR2 || dut->program == PROGRAM_MAPR3 ||
++								   dut->program == PROGRAM_MAPR4 || dut->program == PROGRAM_MAPR5 ||
++								   dut->program == PROGRAM_MAPR6))
++				fprintf(pfd, ",B5,-1,0,B6,-1");
++		}
++
++		if(val1) {
++			fprintf(pfd, ",MLD,%s", val1);
++		}
++
++		if(val3) {
++			printf("\nvalbsta=%s\n", val3);
++			if (found_bsta == false) {
++				f = fopen("/etc/config/map_bsta.conf", "w");
++				if (f == NULL)
++					goto map_set_config_error;
++			}
++
++			found_bsta = true;
++			if (strlen(val3) >= sizeof(token)) {
++				fclose(f);
++				goto map_set_config_error;
++			}
++
++			memset(token, 0, sizeof(token));
++			strlcpy(token, val3, sizeof(token));
++			token_p[0] = strtok_r(token, " ", &saveptr);
++			if (!token_p[0]) {
++				fclose(f);
++				goto map_set_config_error;
++			}
++
++			if (parse_mac_address(dut, token_p[0], map_addr) < 0) {
++				fclose(f);
++				goto map_set_config_error;
+ 			}
+ 
+-			if (!found_one_tlv && (dut->program == PROGRAM_MAPR2 || dut->program == PROGRAM_MAPR3 ||
+-								   dut->program == PROGRAM_MAPR4 || dut->program == PROGRAM_MAPR5))
+-				fprintf(pfd, ",B5,-1,0,B6,-1");
+-			if (map_require_new_line)
++			j = 0;
++			while ((token_p[++j] = strtok_r(NULL, " ", &saveptr)) !=
++			       NULL)
++				;
++
++			if (j == 4) {
++				fprintf(f, "%02x%02x%02x%02x%02x%02x,%s,%s,%s",
++					map_addr[0], map_addr[1], map_addr[2],
++					map_addr[3], map_addr[4], map_addr[5],
++					token_p[1], token_p[2], token_p[3]);
++				map_require_new_line_bsta = true;
++			} else if (j == 3) {
++				fprintf(f, "%02x%02x%02x%02x%02x%02x,%s,%s",
++					map_addr[0], map_addr[1], map_addr[2],
++					map_addr[3], map_addr[4], map_addr[5],
++					token_p[1], token_p[2]);
++				map_require_new_line_bsta = true;
++			} else {
++				sigma_dut_print(dut, DUT_MSG_ERROR,
++								"MAP: Invalid number of parameters");
++				goto map_set_config_error;
++			}
++		}
++
++		if (map_require_new_line)
+ 				fprintf(pfd, "\n");
+ 
+-		} else {
++		if (map_require_new_line_bsta)
++			fprintf(f, "\n");
++
++		if(!val && !val1 && !val3) {
+ 			if (map_require_new_line &&
+-			    (found_one || found_one_tlv))
++				(found_one || found_one_tlv || found_bsta))
+ 				fprintf(pfd, "\n");
+ 			one_more = false;
++
++			if (found_bsta) {
++				fclose(f);
++				if (found_bsta && !bsta_file_exists)
++					run_system_wrapper(
++						dut, INIT_SCRIPT_PATH"wsplcd restart");
++				if (dut->program != PROGRAM_DE)
++					run_system_wrapper(dut, INIT_SCRIPT_PATH"ezmesh restart");
++			}
++
+ 			if (found_one) {
+ 				fclose(pfd);
+-				if (!afile_exists)
++				if (found_one && !afile_exists)
+ 					run_system_wrapper(
+-					    dut, INIT_SCRIPT_PATH"wsplcd restart");
++						dut, INIT_SCRIPT_PATH"wsplcd restart");
+ 				if (dut->program != PROGRAM_DE)
+ 					run_system_wrapper(dut, INIT_SCRIPT_PATH"ezmesh restart");
+ 				goto map_set_config_ok;
+@@ -6398,6 +7561,28 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+ 		}
+ 	}
+ 
++	if (dut->program == PROGRAM_MAPR6) {
++		val = get_param(cmd, "SCS");
++		if (val && (strcasecmp(val, "Enable") == 0)) {
++			run_system_wrapper(dut,
++				"uci set ezmesh.MAPQoSMSettings.EnableSCS=1");
++			run_system_wrapper(dut,
++				"uci set wsplcd.config.MapQosmEnabled=1");
++			run_system_wrapper(dut, "uci commit wsplcd");
++			goto map_set_config_ok;
++		}
++		val = get_param(cmd, "AP_Max_Links");
++		if (val) {
++			int l = atoi(val);
++			sigma_dut_print(dut, DUT_MSG_DEBUG, "MAP: AP_Max_Links: %d", l);
++			snprintf(max_num_links_buf, sizeof(max_num_links_buf), "uci set wsplcd.config.maxNumAPLinks=%d", l);
++			sigma_dut_print(dut, DUT_MSG_DEBUG, "MAP: max_num_links_buf: %s", max_num_links_buf);
++			run_system_wrapper(dut, max_num_links_buf);
++			run_system_wrapper(dut, "uci commit wsplcd");
++			goto map_set_config_ok;
++		}
++	}
++
+ 	val = get_param(cmd, "backhaul");
+ 	if (val) {
+ 		const char *typeval = get_param(cmd, "type");
+@@ -6438,7 +7623,7 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+ 			run_system_wrapper(dut, "brctl setageing "DEFAULT_BRIDGE" 10");
+ 
+ 			dut->map_ath0_onboard = dut->map_ath1_onboard =
+-			    dut->map_ath2_onboard = false;
++			    dut->map_ath2_onboard = dut->map_ath3_onboard = dut->map_ath4_onboard = false;
+ 			if (num_radio != 3)
+ 				dut->map_ath2_onboard = true;
+ 
+@@ -6527,7 +7712,27 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+ 				run_system_wrapper(
+ 				    dut, INIT_SCRIPT_PATH"hyfi-bridging stop");
+ 
+-				if (num_radio == 3) {
++				if (num_radio == 5) {
++					if (radio_id[0] == 0)
++						dut->map_bh6gh = true;
++					else if (radio_id[1] == 0)
++						dut->map_bh6g = true;
++					else if (radio_id[2] == 0)
++						dut->map_bh5gh = true;
++					else if (radio_id[3] == 0)
++						dut->map_bh5g = true;
++					else if (radio_id[4] == 0)
++						dut->map_bh24g = true;
++				} else if (num_radio == 4) {
++					if (radio_id[0] == 0)
++						dut->map_bh6g = true;
++					else if (radio_id[1] == 0)
++						dut->map_bh5gh = true;
++					else if (radio_id[2] == 0)
++						dut->map_bh5g = true;
++					else if (radio_id[3] == 0)
++						dut->map_bh24g = true;
++				} else if (num_radio == 3) {
+ 					if (radio_id[0] == 0)
+ 						dut->map_bh5gh = true;
+ 					else if (radio_id[1] == 0)
+@@ -6604,7 +7809,8 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+ 				    dut->program == PROGRAM_MAPR2 ||
+ 									dut->program == PROGRAM_MAPR3 ||
+ 									dut->program == PROGRAM_MAPR4 ||
+-									dut->program == PROGRAM_MAPR5)
++									dut->program == PROGRAM_MAPR5 ||
++									dut->program == PROGRAM_MAPR6)
+ 					run_system_wrapper(dut,
+ 						INIT_SCRIPT_PATH"repacd start");
+ 				else
+@@ -6631,7 +7837,27 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+ 				run_system_wrapper(
+ 				    dut, INIT_SCRIPT_PATH"hyfi-bridging stop");
+ 
+-				if (num_radio == 3) {
++				if (num_radio == 5) {
++					if (radio_id[0] == 1)
++						dut->map_bh6gh = true;
++					else if (radio_id[1] == 1)
++						dut->map_bh6g = true;
++					else if (radio_id[2] == 1)
++						dut->map_bh5gh = true;
++					else if (radio_id[3] == 1)
++						dut->map_bh5g = true;
++					else if (radio_id[4] == 1)
++						dut->map_bh24g = true;
++				} else if (num_radio == 4) {
++					if (radio_id[0] == 1)
++						dut->map_bh6g = true;
++					else if (radio_id[1] == 1)
++						dut->map_bh5gh = true;
++					else if (radio_id[2] == 1)
++						dut->map_bh5g = true;
++					else if (radio_id[3] == 1)
++						dut->map_bh24g = true;
++				} else if (num_radio == 3) {
+ 					if (radio_id[0] == 1)
+ 						dut->map_bh5gh = true;
+ 					else if (radio_id[1] == 1)
+@@ -6711,7 +7937,8 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+ 				    dut->program == PROGRAM_MAPR2 ||
+ 									dut->program == PROGRAM_MAPR3 ||
+ 									dut->program == PROGRAM_MAPR4 ||
+-									dut->program == PROGRAM_MAPR5)
++									dut->program == PROGRAM_MAPR5 ||
++									dut->program == PROGRAM_MAPR6)
+ 					run_system_wrapper(dut,
+ 						INIT_SCRIPT_PATH"repacd start");
+ 				else
+@@ -6740,17 +7967,321 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+ 					    dut,
+ 					    INIT_SCRIPT_PATH"hyfi-bridging stop");
+ 
+-					if (num_radio == 3) {
+-						if (radio_id[0] == 1)
++					if (num_radio == 5) {
++						if (radio_id[0] == 2)
++							dut->map_bh6gh = true;
++						else if (radio_id[1] == 2)
++							dut->map_bh6g = true;
++						else if (radio_id[2] == 2)
++							dut->map_bh5gh = true;
++						else if (radio_id[3] == 2)
++							dut->map_bh5g = true;
++						else if (radio_id[4] == 2)
++							dut->map_bh24g = true;
++					} else if (num_radio == 4) {
++						if (radio_id[0] == 2)
++							dut->map_bh6g = true;
++						else if (radio_id[1] == 2)
++							dut->map_bh5gh = true;
++						else if (radio_id[2] == 2)
++							dut->map_bh5g = true;
++						else if (radio_id[3] == 2)
++							dut->map_bh24g = true;
++					} else if (num_radio == 3) {
++						if (radio_id[0] == 2)
++							dut->map_bh5gh = true;
++						else if (radio_id[1] == 2)
++							dut->map_bh5g = true;
++						else if (radio_id[2] == 2)
++							dut->map_bh24g = true;
++					} else {
++						if (radio_id[0] == 2)
++							dut->map_bh5g = true;
++						else if (radio_id[1] == 2)
++							dut->map_bh24g = true;
++					}
++
++					if (!typeval) {
++					owrt_ap_set_radio(dut, 2,
++							  "enable_macreq", "1");
++					owrt_ap_add_vap(dut, ndx, "device",
++							"wifi2");
++					owrt_ap_set_vap(dut, ndx, "ssid", ruid);
++					owrt_ap_set_vap(dut, ndx, "mode",
++							"sta");
++					owrt_ap_set_vap(dut, ndx, "wds", "1");
++
++					if (dut->program == PROGRAM_MAP)
++						owrt_ap_set_vap(dut, ndx, "map",
++								"1");
++					else
++						owrt_ap_set_vap(dut, ndx, "map",
++								"2");
++
++					owrt_ap_set_vap(dut, ndx, "MapBSSType",
++							"128");
++					owrt_ap_set_vap(dut, ndx, "mapbsta",
++							"1");
++					owrt_ap_set_vap(dut, ndx, "wps_pbc",
++							"1");
++					owrt_ap_set_vap(dut, ndx,
++							"wps_pbc_enable", "0");
++					owrt_ap_set_vap(dut, ndx,
++							"wps_pbs_start_time",
++							"0");
++					owrt_ap_set_vap(dut, ndx,
++							"wps_pbs_duration",
++							"120");
++					owrt_ap_set_vap(dut, ndx, "wps_state",
++							"1");
++					owrt_ap_set_vap(dut, ndx, "athnewind",
++							"1");
++					owrt_ap_set_vap(dut, ndx, "vap_ind",
++							"0");
++					owrt_ap_set_vap(dut, ndx, "disabled", "0");
++                                        } else {
++                                                run_system_wrapper(dut,
++                                                        "uci set repacd.MAPConfig."
++                                                        "MapSTARadio=wifi2");
++                                                 if (strcasecmp(typeval, "dpp") == 0 )
++                                                        run_system_wrapper(dut,
++                                                             "uci set repacd.MAPConfig."
++                                                              "OnboardingType=dpp");
++                                        }
++
++					run_system_wrapper(
++					    dut, "uci set "
++						 "ezmesh.config."
++						 "NonRelayingEthernetInterface="
++						 "ath21");
++					run_system_wrapper(
++					    dut, INIT_SCRIPT_PATH"mcsd stop");
++					run_system_wrapper(
++					    dut, INIT_SCRIPT_PATH"mcsd disable");
++					run_system_wrapper(
++					    dut, "uci set"
++						 " ezmesh.config.Enable=1");
++					run_system_wrapper(dut, "uci set "
++								"wsplcd.config."
++								"HyFiSecurity="
++								"1");
++                                        run_system_wrapper(dut, "uci set"
++                                                " repacd.MAPConfig.MapBackaulType=wifi");
++                                        if (dut->map_device_role == MAP_DEVROLE_AGENT)
++                                                run_system_wrapper(dut, "uci set"
++                                                        " repacd.MAPConfig."
++                                                        "MapDevResetDefault=0");
++					run_system_wrapper(dut, "uci commit");
++					run_system_wrapper(
++					    dut,
++					    INIT_SCRIPT_PATH"hyfi-bridging start");
++
++                                        if (dut->program == PROGRAM_MAP ||
++                                            dut->program == PROGRAM_MAPR2 ||
++											dut->program == PROGRAM_MAPR3 ||
++											dut->program == PROGRAM_MAPR4 ||
++											dut->program == PROGRAM_MAPR5 ||
++											dut->program == PROGRAM_MAPR6)
++                                                run_system_wrapper(dut,
++                                                        INIT_SCRIPT_PATH"repacd start");
++                                        else
++                                                run_system_wrapper(dut, "wifi");
++
++					sleep(4);
++					run_system_wrapper(dut,
++							   "brctl setageing "
++							   DEFAULT_BRIDGE" 10");
++                                        if (typeval && strcasecmp(typeval, "dpp") == 0 ) {
++                                                sleep(30);
++                                                if (map_send_dpp_bootstrapping_data(dut, conn, ruid, MAP_DPP_LOCAL_BOOTSTRAP_DATA) < 0) {
++                                                        send_resp(dut, conn, SIGMA_ERROR,
++                                                                "errorCode,dpp bootstraping failed");
++                                                        goto map_set_config_error;
++                                                }
++                                        }
++			} else if (map_is_ifname(dut, val, "ath3")) {
++					map_disable_lan(dut);
++					// run_system_wrapper(dut, "ifconfig
++					// eth1 down");
++					run_system_wrapper(
++					    dut, INIT_SCRIPT_PATH"ezmesh stop");
++					run_system_wrapper(
++					    dut,
++					    INIT_SCRIPT_PATH"hyfi-bridging stop");
++
++					if (num_radio == 5) {
++						if (radio_id[0] == 3)
++							dut->map_bh6gh = true;
++						else if (radio_id[1] == 3)
++							dut->map_bh6g = true;
++						else if (radio_id[2] == 3)
++							dut->map_bh5gh = true;
++						else if (radio_id[3] == 3)
++							dut->map_bh5g = true;
++						else if (radio_id[4] == 3)
++							dut->map_bh24g = true;
++					} else if (num_radio == 4) {
++						if (radio_id[0] == 3)
++							dut->map_bh6g = true;
++						else if (radio_id[1] == 3)
++							dut->map_bh5gh = true;
++						else if (radio_id[2] == 3)
++							dut->map_bh5g = true;
++						else if (radio_id[3] == 3)
++							dut->map_bh24g = true;
++					} else if (num_radio == 3) {
++						if (radio_id[0] == 3)
++							dut->map_bh5gh = true;
++						else if (radio_id[1] == 3)
++							dut->map_bh5g = true;
++						else if (radio_id[2] == 3)
++							dut->map_bh24g = true;
++					} else {
++						if (radio_id[0] == 3)
++							dut->map_bh5g = true;
++						else if (radio_id[1] == 3)
++							dut->map_bh24g = true;
++					}
++
++					if (!typeval) {
++					owrt_ap_set_radio(dut, 3,
++							  "enable_macreq", "1");
++					owrt_ap_add_vap(dut, ndx, "device",
++							"wifi2");
++					owrt_ap_set_vap(dut, ndx, "ssid", ruid);
++					owrt_ap_set_vap(dut, ndx, "mode",
++							"sta");
++					owrt_ap_set_vap(dut, ndx, "wds", "1");
++
++					if (dut->program == PROGRAM_MAP)
++						owrt_ap_set_vap(dut, ndx, "map",
++								"1");
++					else
++						owrt_ap_set_vap(dut, ndx, "map",
++								"2");
++
++					owrt_ap_set_vap(dut, ndx, "MapBSSType",
++							"128");
++					owrt_ap_set_vap(dut, ndx, "mapbsta",
++							"1");
++					owrt_ap_set_vap(dut, ndx, "wps_pbc",
++							"1");
++					owrt_ap_set_vap(dut, ndx,
++							"wps_pbc_enable", "0");
++					owrt_ap_set_vap(dut, ndx,
++							"wps_pbs_start_time",
++							"0");
++					owrt_ap_set_vap(dut, ndx,
++							"wps_pbs_duration",
++							"120");
++					owrt_ap_set_vap(dut, ndx, "wps_state",
++							"1");
++					owrt_ap_set_vap(dut, ndx, "athnewind",
++							"1");
++					owrt_ap_set_vap(dut, ndx, "vap_ind",
++							"0");
++					owrt_ap_set_vap(dut, ndx, "disabled", "0");
++                                        } else {
++                                                run_system_wrapper(dut,
++                                                        "uci set repacd.MAPConfig."
++                                                        "MapSTARadio=wifi2");
++                                                 if (strcasecmp(typeval, "dpp") == 0 )
++                                                        run_system_wrapper(dut,
++                                                             "uci set repacd.MAPConfig."
++                                                              "OnboardingType=dpp");
++                                        }
++
++					run_system_wrapper(
++					    dut, "uci set "
++						 "ezmesh.config."
++						 "NonRelayingEthernetInterface="
++						 "ath21");
++					run_system_wrapper(
++					    dut, INIT_SCRIPT_PATH"mcsd stop");
++					run_system_wrapper(
++					    dut, INIT_SCRIPT_PATH"mcsd disable");
++					run_system_wrapper(
++					    dut, "uci set"
++						 " ezmesh.config.Enable=1");
++					run_system_wrapper(dut, "uci set "
++								"wsplcd.config."
++								"HyFiSecurity="
++								"1");
++                                        run_system_wrapper(dut, "uci set"
++                                                " repacd.MAPConfig.MapBackaulType=wifi");
++                                        if (dut->map_device_role == MAP_DEVROLE_AGENT)
++                                                run_system_wrapper(dut, "uci set"
++                                                        " repacd.MAPConfig."
++                                                        "MapDevResetDefault=0");
++					run_system_wrapper(dut, "uci commit");
++					run_system_wrapper(
++					    dut,
++					    INIT_SCRIPT_PATH"hyfi-bridging start");
++
++                                        if (dut->program == PROGRAM_MAP ||
++                                            dut->program == PROGRAM_MAPR2 ||
++											dut->program == PROGRAM_MAPR3 ||
++											dut->program == PROGRAM_MAPR4 ||
++											dut->program == PROGRAM_MAPR5 ||
++											dut->program == PROGRAM_MAPR6)
++                                                run_system_wrapper(dut,
++                                                        INIT_SCRIPT_PATH"repacd start");
++                                        else
++                                                run_system_wrapper(dut, "wifi");
++
++					sleep(4);
++					run_system_wrapper(dut,
++							   "brctl setageing "
++							   DEFAULT_BRIDGE" 10");
++                                        if (typeval && strcasecmp(typeval, "dpp") == 0 ) {
++                                                sleep(30);
++                                                if (map_send_dpp_bootstrapping_data(dut, conn, ruid, MAP_DPP_LOCAL_BOOTSTRAP_DATA) < 0) {
++                                                        send_resp(dut, conn, SIGMA_ERROR,
++                                                                "errorCode,dpp bootstraping failed");
++                                                        goto map_set_config_error;
++                                                }
++                                        }
++			} else if (map_is_ifname(dut, val, "ath4")) {
++					map_disable_lan(dut);
++					// run_system_wrapper(dut, "ifconfig
++					// eth1 down");
++					run_system_wrapper(
++					    dut, INIT_SCRIPT_PATH"ezmesh stop");
++					run_system_wrapper(
++					    dut,
++					    INIT_SCRIPT_PATH"hyfi-bridging stop");
++
++					if (num_radio == 5) {
++						if (radio_id[0] == 4)
++							dut->map_bh6gh = true;
++						else if (radio_id[1] == 4)
++							dut->map_bh6g = true;
++						else if (radio_id[2] == 4)
++							dut->map_bh5gh = true;
++						else if (radio_id[3] == 4)
++							dut->map_bh5g = true;
++						else if (radio_id[4] == 4)
++							dut->map_bh24g = true;
++					} else if (num_radio == 4) {
++						if (radio_id[0] == 4)
++							dut->map_bh6g = true;
++						else if (radio_id[1] == 4)
++							dut->map_bh5gh = true;
++						else if (radio_id[2] == 4)
++							dut->map_bh5g = true;
++						else if (radio_id[3] == 4)
++							dut->map_bh24g = true;
++					} else if (num_radio == 3) {
++						if (radio_id[0] == 4)
+ 							dut->map_bh5gh = true;
+-						else if (radio_id[1] == 1)
++						else if (radio_id[1] == 4)
+ 							dut->map_bh5g = true;
+-						else if (radio_id[2] == 1)
++						else if (radio_id[2] == 4)
+ 							dut->map_bh24g = true;
+ 					} else {
+-						if (radio_id[0] == 1)
++						if (radio_id[0] == 4)
+ 							dut->map_bh5g = true;
+-						else if (radio_id[1] == 1)
++						else if (radio_id[1] == 4)
+ 							dut->map_bh24g = true;
+ 					}
+ 
+@@ -6833,7 +8364,8 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+ 					    dut->program == PROGRAM_MAPR2 ||
+ 											dut->program == PROGRAM_MAPR3 ||
+ 											dut->program == PROGRAM_MAPR4 ||
+-											dut->program == PROGRAM_MAPR5)
++											dut->program == PROGRAM_MAPR5 ||
++											dut->program == PROGRAM_MAPR6)
+ 						run_system_wrapper(dut,
+ 							INIT_SCRIPT_PATH"repacd start");
+ 					else
+@@ -6887,4 +8419,5 @@ void map_register_cmds(void)
+ 	sigma_dut_reg_cmd("dev_start_buffer", NULL, cmd_dev_start_buffer);
+ 	sigma_dut_reg_cmd("dev_stop_buffer", NULL, cmd_dev_stop_buffer);
+ 	sigma_dut_reg_cmd("dev_set_trigger", NULL, cmd_dev_set_trigger);
++	sigma_dut_reg_cmd("dev_reconfig_1905", NULL, cmd_dev_1905_reconfig);
+ }
+diff --git a/sigma_dut.h b/sigma_dut.h
+index 8314e07..e05170b 100644
+--- a/sigma_dut.h
++++ b/sigma_dut.h
+@@ -104,7 +104,7 @@
+ struct sigma_dut;
+ 
+ #define MAX_PARAMS 100
+-#define MAX_RADIO 3
++#define MAX_RADIO 5
+ #ifndef MAX_NUM_MLO_LINKS
+ #define MAX_NUM_MLO_LINKS 15
+ #endif
+@@ -1066,9 +1066,13 @@ struct sigma_dut {
+ 	bool map_bh24g;
+ 	bool map_bh5g;
+ 	bool map_bh5gh;
++	bool map_bh6g;
++	bool map_bh6gh;
+ 	bool map_ath0_onboard;
+ 	bool map_ath1_onboard;
+ 	bool map_ath2_onboard;
++	bool map_ath3_onboard;
++	bool map_ath4_onboard;
+ 	bool map_all_onboard;
+ 	enum map_device_role {
+ 		MAP_DEVROLE_UNKNOWN,
+@@ -1135,6 +1139,7 @@ struct sigma_dut {
+ 		PROGRAM_MAPR3,
+ 		PROGRAM_MAPR4,
+ 		PROGRAM_MAPR5,
++		PROGRAM_MAPR6,
+ 		PROGRAM_OCE,
+ 		PROGRAM_WPA3,
+ 		PROGRAM_HE,
+diff --git a/sta.c b/sta.c
+index 345df9e..be7aadb 100644
+--- a/sta.c
++++ b/sta.c
+@@ -19328,7 +19328,7 @@ static enum sigma_cmd_result cmd_start_wps_registration(struct sigma_dut *dut,
+ 	};
+ 	int id = 0;
+ 	if (dut->program == PROGRAM_MAP || dut->program == PROGRAM_MAPR2 || dut->program == PROGRAM_MAPR3 ||
+-		dut->program == PROGRAM_MAPR4 || dut->program == PROGRAM_MAPR5) {
++		dut->program == PROGRAM_MAPR4 || dut->program == PROGRAM_MAPR5 || dut->program == PROGRAM_MAPR6) {
+ 		method = get_param(cmd, "WpsConfigMethod");
+ 		if (method && (strcasecmp(method, "PBC") == 0)) {
+ 			run_system_wrapper(dut,
+diff --git a/utils.c b/utils.c
+index 5c55751..d4b689d 100644
+--- a/utils.c
++++ b/utils.c
+@@ -200,6 +200,8 @@ enum sigma_program sigma_program_to_enum(const char *prog)
+ 		return PROGRAM_MAPR4;
+ 	if (strcasecmp(prog, "MAPR5") == 0)
+ 		return PROGRAM_MAPR5;
++	if (strcasecmp(prog, "MAPR6") == 0)
++		return PROGRAM_MAPR6;
+ 	if (strcasecmp(prog, "OCE") == 0)
+ 		return PROGRAM_OCE;
+ 	if (strcasecmp(prog, "WPA3") == 0)
+-- 
+2.17.1
+
