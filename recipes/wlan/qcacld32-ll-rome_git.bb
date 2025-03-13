@@ -179,7 +179,7 @@ do_install() {
     else
         WLAN_KO=${D}/${base_libdir}/modules/${KERNEL_VERSION}/extra
         install -d ${WLAN_KO}
-        install -m 0644 ${S}/qca_cld3_qca6574.ko ${WLAN_KO}/${_MODNAME}.ko
+        install -m 0644 ${S}/${_MODNAME}.ko ${WLAN_KO}/${_MODNAME}.ko
     fi
 
     install -d ${FIRMWARE_PATH}
