@@ -130,7 +130,7 @@ do_install:append() {
 
 
 do_module_signing() {
-    if [ ${BASEMACHINE} != "sa510m" ]; then
+    if [ "${BASEMACHINE}" != "sa510m" ]; then
         if [ -f ${STAGING_KERNEL_BUILDDIR}/signing_key.priv ]; then
             bbnote "Signing ${PN} module"
             ${STAGING_KERNEL_DIR}/scripts/sign-file sha512 ${STAGING_KERNEL_BUILDDIR}/signing_key.priv ${STAGING_KERNEL_BUILDDIR}/signing_key.x509 ${PKGDEST}/${PN}/lib/modules/${KERNEL_VERSION}/extra/cnss2/cnss2.ko
@@ -138,6 +138,17 @@ do_module_signing() {
             ${STAGING_KERNEL_BUILDDIR}/scripts/sign-file sha512 ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.pem ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.x509 ${PKGDEST}/${PN}/lib/modules/${KERNEL_VERSION}/extra/cnss2/cnss2.ko
         else
             bbnote "${PN} module is not being signed"
+        fi
+    else
+        variant="${@bb.utils.contains('DEBUG_BUILD','1', "debug", "perf", d)}"
+        if [ -f ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/signing_key.pem ]; then
+            bbnote "signing cnss modules"
+            export LD_LIBRARY_PATH=${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist
+            ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/sign-file sha1 ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/signing_key.pem ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/signing_key.x509 ${PKGDEST}/${PN}/usr/lib/modules/${KERNEL_VERSION}/extra/cnss_utils.ko
+            ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/sign-file sha1 ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/signing_key.pem ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/signing_key.x509 ${PKGDEST}/${PN}/usr/lib/modules/${KERNEL_VERSION}/extra/cnss_nl.ko
+            ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/sign-file sha1 ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/signing_key.pem ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/signing_key.x509 ${PKGDEST}/${PN}/usr/lib/modules/${KERNEL_VERSION}/extra/wlan_firmware_service.ko
+            ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/sign-file sha1 ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/signing_key.pem ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/signing_key.x509 ${PKGDEST}/${PN}/usr/lib/modules/${KERNEL_VERSION}/extra/cnss_plat_ipc_qmi_svc.ko
+            ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/sign-file sha1 ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/signing_key.pem ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/signing_key.x509 ${PKGDEST}/${PN}/usr/lib/modules/${KERNEL_VERSION}/extra/cnss2.ko
         fi
     fi
 }
