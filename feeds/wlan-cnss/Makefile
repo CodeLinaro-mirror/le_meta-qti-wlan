@@ -22,6 +22,14 @@ EXTRA_ADDR :=lib/modules/$(LINUX_VERSION)-${COMPILE_MODE}/extra
 
 include $(INCLUDE_DIR)/package.mk
 
+#Default Module Install dir
+INSTALL_DIR_CNSS := ./cnss2
+INSTALL_DIR_UTIL := ./cnss_utils
+INSTALL_DIR_GENL := ./cnss_genl
+INSTALL_DIR_PREALLOC := ./cnss_prealloc
+#Default BAZEL DISABLED
+ENABLE_BAZEL := n
+
 ifeq ($(BOARD),sdx75)
   #Dependency when CONFIG_FEATURE_SMEM_MAILBOX=y
   DATA_SMEM_MODULE := kmod-smem-mailbox
@@ -37,19 +45,17 @@ ifeq ($(BOARD),sdx75)
   DATA_SMEM_MAKEOPTS += KBUILD_EXTRA_SYMBOLS=$(DATA_SMEM_SYMBOLS)
 else ifeq ($(BOARD),sdx85)
   #Dependency when CONFIG_FEATURE_SMEM_MAILBOX=y
-  #DATA_SMEM_MODULE := kmod-smem-mailbox
-  #DATA_SMEM_MAKEOPTS := CONFIG_FEATURE_SMEM_MAILBOX=y
+  DATA_SMEM_MODULE := kmod-smem-mailbox
+  DATA_SMEM_MAKEOPTS := CONFIG_FEATURE_SMEM_MAILBOX=y
 
   #Hard-code SMEM module's include folder, when CONFIG_FEATURE_SMEM_MAILBOX=y
-  #DATA_SMEM_INC := $(TOPDIR)/src/data-kernel/drivers/smem-mailbox/include
-  #NOSTDINC_FLAGS += -I$(DATA_SMEM_INC)
-  #DATA_SMEM_MAKEOPTS += NOSTDINC_FLAGS="$(NOSTDINC_FLAGS)"
+  DATA_SMEM_INC := $(TOPDIR)/src/data-kernel/drivers/smem-mailbox/include
+  NOSTDINC_FLAGS += -I$(DATA_SMEM_INC)
+  DATA_SMEM_MAKEOPTS += NOSTDINC_FLAGS="$(NOSTDINC_FLAGS)"
 
   #Hard-code SMEM module's PKG NAME & PKG_VERSION, when CONFIG_FEATURE_SMEM_MAILBOX=y
-  #DATA_SMEM_SYMBOLS = $(PKG_BUILD_DIR)../smem-mailbox-1.0/Module.symvers
-  #DATA_SMEM_MAKEOPTS += KBUILD_EXTRA_SYMBOLS=$(DATA_SMEM_SYMBOLS)
-  DATA_SMEM_MODULE :=
-  DATA_SMEM_MAKEOPTS := CONFIG_ARCH_SDXKOVA=y
+  DATA_SMEM_SYMBOLS = $(PKG_BUILD_DIR)../smem-mailbox-1.0/Module.symvers
+  DATA_SMEM_MAKEOPTS += KBUILD_EXTRA_SYMBOLS=$(DATA_SMEM_SYMBOLS)
 
   #Disable ICNSS on SDXKOVA
   DATA_SMEM_MAKEOPTS += USE_EXTERNAL_CONFIGS=y \
@@ -63,6 +69,18 @@ else ifeq ($(BOARD),sdx85)
 				CONFIG_WCNSS_MEM_PRE_ALLOC=m \
 				CONFIG_CNSS_UTILS=m \
 				CONFIG_CNSS2_SSR_DRIVER_DUMP=y
+
+  #ENABLE_BAZEL need to be synced with *.bzl file
+  #When set to 'n', remove sdxkova support from wlan_platform_modules.bzl as well
+  ENABLE_BAZEL = y
+  ifeq ($(ENABLE_BAZEL), y)
+    #Module Install dir for sdx85 with Bazel enabled
+    INSTALL_DIR_CNSS = .
+    INSTALL_DIR_UTIL = .
+    INSTALL_DIR_GENL = .
+    INSTALL_DIR_PREALLOC = .
+  endif
+
 else
   DATA_SMEM_MODULE :=
   DATA_SMEM_MAKEOPTS :=
@@ -144,16 +162,16 @@ endef
 
 define KernelPackage/wlan-cnss2/install
 	$(INSTALL_DIR) $(1)/$(EXTRA_ADDR)/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss2/cnss2.ko $(1)/$(EXTRA_ADDR)/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss_utils/cnss_utils.ko $(1)/$(EXTRA_ADDR)/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss_utils/cnss_plat_ipc_qmi_svc.ko $(1)/$(EXTRA_ADDR)/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss_utils/wlan_firmware_service.ko $(1)/$(EXTRA_ADDR)/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(INSTALL_DIR_CNSS)/cnss2.ko $(1)/$(EXTRA_ADDR)/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(INSTALL_DIR_UTIL)/cnss_utils.ko $(1)/$(EXTRA_ADDR)/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(INSTALL_DIR_UTIL)/cnss_plat_ipc_qmi_svc.ko $(1)/$(EXTRA_ADDR)/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(INSTALL_DIR_UTIL)/wlan_firmware_service.ko $(1)/$(EXTRA_ADDR)/
 ifneq ($(BOARD),sdx35)
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss_genl/cnss_nl.ko $(1)/$(EXTRA_ADDR)/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(INSTALL_DIR_GENL)/cnss_nl.ko $(1)/$(EXTRA_ADDR)/
 endif
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss_prealloc/cnss_prealloc.ko $(1)/$(EXTRA_ADDR)/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(INSTALL_DIR_PREALLOC)/cnss_prealloc.ko $(1)/$(EXTRA_ADDR)/
 	$(INSTALL_DIR) $(TOPDIR)/bin/targets/$(COMPILE_MODE)/modules
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss2/cnss2.ko $(TOPDIR)/bin/targets/$(COMPILE_MODE)/modules/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(INSTALL_DIR_CNSS)/cnss2.ko $(TOPDIR)/bin/targets/$(COMPILE_MODE)/modules/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_DIR) $(1)/etc/initscripts
 	$(INSTALL_BIN) ./files/wlan-cnss.init $(1)/etc/init.d/
