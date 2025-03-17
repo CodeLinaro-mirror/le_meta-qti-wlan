@@ -17,7 +17,7 @@ _src_includes = [
 def define_modules():
     for (t, v) in get_all_variants():
         tv = "{}_{}".format(t, v)
-        name = "hyfi-bridge_{}".format(tv)
+        name = "{}_hyfi-bridge".format(tv)
         tgt = "target-aarch64_cortex-a53_musl"
         board = "sdx85"
 
@@ -40,7 +40,7 @@ def define_modules():
             deps = [
                 "//msm-kernel:all_headers",
                 ":emesh-sp-headers",
-                "//build_dir/{}/linux-{}/emesh-sp-mcc-1.0:emesh_sp_{}".format(tgt, board, tv),
+                "//build_dir/{}/linux-{}/emesh-sp-mcc-1.0:{}_emesh_sp".format(tgt, board, tv),
             ],
         )
 
