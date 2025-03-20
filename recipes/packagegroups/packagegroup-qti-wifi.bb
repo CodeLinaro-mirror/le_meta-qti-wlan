@@ -10,7 +10,7 @@ PACKAGES = "packagegroup-qti-wifi"
 
 QCACLD32-LL ?= "qcacld32-ll"
 QCACLD32-LL_qcs6490 = "qcacld32-ll qcacld32-ll-msl"
-RDEPENDS_packagegroup-qti-wifi = " \
+RDEPENDS:packagegroup-qti-wifi = " \
         ${QCACLD32-LL} \
         iw \
         wlan-conf \
