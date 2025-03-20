@@ -82,6 +82,9 @@ define Package/$(PKG_NAME)/install
 	$(CP) $(CONF_ADDR)/sta_mode_hostapd.conf $(1)/$(MISC_WIFI_ADDR)/
 	$(CP) $(CONF_ADDR)/wpa_supplicant.conf $(1)/$(MISC_WIFI_ADDR)/
 	$(CP) $(CONF_ADDR)/$(WLAN_INI_FILE) $(1)/$(MISC_WIFI_ADDR)/$(WLAN_INI_DEFAULT)
+ifeq ($(BOARD),sdx85)
+	chmod 0664 $(1)/$(MISC_WIFI_ADDR)/$(WLAN_INI_DEFAULT)
+endif
 	$(CP) $(CONF_ADDR)/wlan $(1)/$(INIT_D_ADDR)/
 	$(LN) -rsf $(1)/$(MISC_WIFI_ADDR)/$(WLAN_INI_DEFAULT) $(1)/$(FIRMWARE_ADDR)/$(WLAN_INI_DEFAULT)
 ifeq ($(BOARD),sdx35)
