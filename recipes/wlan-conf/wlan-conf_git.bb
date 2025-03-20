@@ -13,7 +13,7 @@ SRC_URI += "file://cnss.service"
 # Update for each machine
 S = "${WORKDIR}/mdm-init/"
 
-do_install_append_mdm(){
+do_install:append:mdm(){
 	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
 		if grep -q "CONFIG_CNSS2=m" ${STAGING_KERNEL_BUILDDIR}/.config
 		then
@@ -31,7 +31,7 @@ do_install_append_mdm(){
 	fi
 }
 
-do_install_append_msm(){
+do_install:append:msm(){
   if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
       install -d ${D}/etc/initscripts
       cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
@@ -50,7 +50,7 @@ do_install_append_msm(){
   fi
 }
 
-do_install_append(){
+do_install:append(){
     if [ "${BASEMACHINE}" == "qrbx210" ] || [ "${BASEMACHINE}" == "qcs6490" ] ; then
         if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
             install -d ${D}/etc/initscripts
@@ -65,9 +65,9 @@ do_install_append(){
     fi
 }
 
-FILES_${PN} += "${userfsdatadir}/misc/wifi/*"
-FILES_${PN} += "${base_libdir}/firmware/wlan/qca_cld/*"
-FILES_${PN} += "/lib/firmware/wlan/qca_cld/* ${sysconfdir}/init.d/* "
+FILES:${PN} += "${userfsdatadir}/misc/wifi/*"
+FILES:${PN} += "${base_libdir}/firmware/wlan/qca_cld/*"
+FILES:${PN} += "${sysconfdir}/init.d/* "
 
 BASEPRODUCT = "${@d.getVar('PRODUCT', False)}"
 
@@ -91,21 +91,21 @@ EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'apq8053', '--enable-pronto
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'apq8017', '--enable-pronto-wlan=yes', '', d)}"
 
 # Enable qsap-wlan in place of pronto-wlan for Drones
-EXTRA_OECONF_append_qsap += "--enable-snap-wlan=yes --enable-qsap-wlan=yes --enable-naples-wlan=yes"
+EXTRA_OECONF:append:qsap += "--enable-snap-wlan=yes --enable-qsap-wlan=yes --enable-naples-wlan=yes"
 
 # Enable drone-wlan in place of pronto-wlan for Drones
-EXTRA_OECONF_append_drone += "'--enable-drone-wlan=yes"
+EXTRA_OECONF:append:drone += "'--enable-drone-wlan=yes"
 
 # Enable robot-wlan according to variants
-EXTRA_OECONF_append_robot-som += "--enable-robot-som-wlan=yes"
-EXTRA_OECONF_remove_robot-rome += "--enable-robot-som-wlan=yes"
-EXTRA_OECONF_append_robot-rome += "--enable-robot-wlan=yes"
-EXTRA_OECONF_remove_robot-pronto += "--enable-robot-som-wlan=yes"
-EXTRA_OECONF_append_robot-pronto += "--enable-pronto-wlan=yes"
+EXTRA_OECONF:append:robot-som += "--enable-robot-som-wlan=yes"
+EXTRA_OECONF:remove:robot-rome += "--enable-robot-som-wlan=yes"
+EXTRA_OECONF:append:robot-rome += "--enable-robot-wlan=yes"
+EXTRA_OECONF:remove:robot-pronto += "--enable-robot-som-wlan=yes"
+EXTRA_OECONF:append:robot-pronto += "--enable-pronto-wlan=yes"
 
 INITSCRIPT_NAME   = "wlan_daemon"
 INITSCRIPT_PARAMS = "remove"
-INITSCRIPT_PARAMS_apq8009 = "${@bb.utils.contains('BASEPRODUCT', 'drone', 'start 01 2 3 4 5 . stop 2 0 1 6 .', 'start 98 5 . stop 2 0 1 6 .', d)}"
-INITSCRIPT_PARAMS_apq8053 = "start 98 5 . stop 2 0 1 6 ."
-INITSCRIPT_PARAMS_apq8017 = "start 98 5 . stop 2 0 1 6 ."
-INITSCRIPT_PARAMS_apq8096 = "${@bb.utils.contains('BASEPRODUCT', 'drone', 'start 01 2 3 4 5 . stop 2 0 1 6 .', 'start 98 5 . stop 2 0 1 6 .', d)}"
+INITSCRIPT_PARAMS:apq8009 = "${@bb.utils.contains('BASEPRODUCT', 'drone', 'start 01 2 3 4 5 . stop 2 0 1 6 .', 'start 98 5 . stop 2 0 1 6 .', d)}"
+INITSCRIPT_PARAMS:apq8053 = "start 98 5 . stop 2 0 1 6 ."
+INITSCRIPT_PARAMS:apq8017 = "start 98 5 . stop 2 0 1 6 ."
+INITSCRIPT_PARAMS:apq8096 = "${@bb.utils.contains('BASEPRODUCT', 'drone', 'start 01 2 3 4 5 . stop 2 0 1 6 .', 'start 98 5 . stop 2 0 1 6 .', d)}"

@@ -1,5 +1,7 @@
 inherit pkgconfig
 include wpa-supplicant.inc
+LICENSE = "BSD-3-Clause-Clear"
+LIC_FILES_CHKSUM = "file://${COREBASE}/meta-qti-bsp/files/common-licenses/${LICENSE};md5=3771d4920bd6cdb8cbdf1e8344489ee0"
 
 PR = "${INC_PR}.2"
 
@@ -10,13 +12,13 @@ SRC_URI += "file://p2p_tmp_config.patch"
 SRC_URI += "file://driver_cmd.patch"
 SRC_URI += "file://driver_cmd_ks-3.0.patch"
 SRC_URI += "file://driver_cmd_ks-4.0.patch"
-SRC_URI_append_qcs6490 += "file://${BASEMACHINE}"
+SRC_URI:append:qcs6490 += "file://${BASEMACHINE}"
 
 DEPENDS += "qmi"
 DEPENDS += "qmi-framework"
 DEPENDS += "diag configdb dsutils common glib-2.0 time-genoff xmllib wpa-supplicant-8-lib"
 
-FILES_${PN} += "/usr/include/*"
+FILES:${PN} += "/usr/include/*"
 
 S = "${WORKDIR}/external/wpa_supplicant_8/wpa_supplicant"
 PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"

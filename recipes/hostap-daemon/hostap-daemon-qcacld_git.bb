@@ -2,6 +2,8 @@ inherit pkgconfig
 
 include hostap-daemon.inc
 inherit pkgconfig
+LICENSE = "BSD-3-Clause-Clear"
+LIC_FILES_CHKSUM = "file://${COREBASE}/meta-qti-bsp/files/common-licenses/${LICENSE};md5=3771d4920bd6cdb8cbdf1e8344489ee0"
 
 PR = "${INC_PR}.2"
 
@@ -9,8 +11,8 @@ FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://external/wpa_supplicant_8/"
 SRC_URI += "file://defconfig-qcacld"
 DEPENDS = "pkgconfig libnl openssl"
-SRC_URI_append_qcs6490 += "file://${BASEMACHINE}"
-DEPENDS_append_qcs6490 += "wpa-supplicant-8-lib"
+SRC_URI:append:qcs6490 += "file://${BASEMACHINE}"
+DEPENDS:append:qcs6490 += "wpa-supplicant-8-lib"
 
 S = "${WORKDIR}/external/wpa_supplicant_8/hostapd/"
 PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"

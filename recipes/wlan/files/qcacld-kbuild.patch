@@ -11,20 +11,20 @@ Signed-off-by: Yi Chen <quic_yichen@quicinc.com>
  2 files changed, 14 insertions(+), 5 deletions(-)
 
 diff --git a/Kbuild b/Kbuild
-index c430de49d..f61b993b8 100644
+index ac1bffd86..af950991c 100644
 --- a/Kbuild
 +++ b/Kbuild
-@@ -2296,7 +2296,6 @@ ccflags-y += $(INCS)
+@@ -3028,7 +3028,6 @@ INCS +=		$(COAP_WMI_INC)
+ ccflags-y += $(INCS)
  
- cppflags-y +=	-DANI_OS_TYPE_ANDROID=6 \
- 		-Wall\
--		-Werror\
- 		-D__linux__
+ cppflags-y +=	-Wall\
+-		-Werror
  
+ cppflags-$(CONFIG_THERMAL_STATS_SUPPORT) += -DTHERMAL_STATS_SUPPORT
  cppflags-$(CONFIG_PTT_SOCK_SVC_ENABLE) += -DPTT_SOCK_SVC_ENABLE
-@@ -3317,7 +3316,10 @@ cppflags-$(CONFIG_SMMU_S1_UNMAP) += -DCONFIG_SMMU_S1_UNMAP
- cppflags-$(CONFIG_GENERIC_SHADOW_REGISTER_ACCESS_ENABLE) += -DGENERIC_SHADOW_REGISTER_ACCESS_ENABLE
- cppflags-$(CONFIG_IPA_SET_RESET_TX_DB_PA) += -DIPA_SET_RESET_TX_DB_PA
+@@ -4342,7 +4341,10 @@ ifeq ($(CONFIG_FEATURE_COEX_TPUT_SHAPING_ENABLE), y)
+ cppflags-y += -DFEATURE_COEX_TPUT_SHAPING_CONFIG
+ endif
  
 -KBUILD_CPPFLAGS += $(cppflags-y)
 +inc_file := wlan_cppflags_opts
@@ -34,8 +34,8 @@ index c430de49d..f61b993b8 100644
  
  # Currently, for versions of gcc which support it, the kernel Makefile
  # is disabling the maybe-uninitialized warning.  Re-enable it for the
-@@ -3383,6 +3385,11 @@ else
- 	ccflags-y += -DWLAN_HOST_ARCH_ARM=1
+@@ -4414,6 +4416,11 @@ ifneq ($(WLAN_CTRL_NAME),)
+ ccflags-y += -DWLAN_CTRL_NAME=\"$(WLAN_CTRL_NAME)\"
  endif
  
 +ccflags_file := wlan_ccflags_opts
@@ -47,16 +47,17 @@ index c430de49d..f61b993b8 100644
  ifeq ($(CONFIG_BUILD_TAG), y)
  CLD_CHECKOUT = $(shell cd "$(WLAN_ROOT)" && \
 diff --git a/Makefile b/Makefile
-index fb78b0346..2ac0cb4f7 100644
+index 1e04c13d2..8923a6dac 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -23,10 +23,12 @@ KBUILD_OPTIONS += $(WLAN_SELECT)
- KBUILD_OPTIONS += $(KBUILD_EXTRA) # Extra config if any
+@@ -31,10 +31,13 @@ KBUILD_OPTIONS += $(KBUILD_EXTRA) # Extra config if any
+ endif
  
  all:
 -	$(MAKE) -C $(KERNEL_SRC) M=$(M) modules $(KBUILD_OPTIONS)
 +	$(shell [ ! -e $(KERNEL_SRC)/../qcacld ] && ln -s $(shell pwd) $(KERNEL_SRC)/../qcacld)
 +	$(MAKE) -C $(KERNEL_SRC) M="../qcacld" modules $(KBUILD_OPTIONS)
++
 +
  
  modules_install:
@@ -66,6 +67,3 @@ index fb78b0346..2ac0cb4f7 100644
  clean:
 -	$(MAKE) -C $(KERNEL_SRC) M=$(M) clean $(KBUILD_OPTIONS)
 +	$(MAKE) -C $(KERNEL_SRC) M="../qcacld" clean $(KBUILD_OPTIONS)
--- 
-2.25.1
-

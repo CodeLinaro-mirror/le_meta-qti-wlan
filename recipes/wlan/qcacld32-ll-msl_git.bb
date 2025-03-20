@@ -9,20 +9,20 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5
 
 MODULE_NAME = "wlan-msl"
 
-FILES_${PN}     += "lib/firmware/wlan/*"
-FILES_${PN}     += "lib/modules/${KERNEL_VERSION}/extra/${MODULE_NAME}.ko"
+FILES:${PN}     += "lib/firmware/wlan/*"
+FILES:${PN}     += "lib/modules/${KERNEL_VERSION}/extra/${MODULE_NAME}.ko"
 PROVIDES_NAME   = "kernel-module-${MODULE_NAME}"
-RPROVIDES_${PN} += "${PROVIDES_NAME}-${KERNEL_VERSION}"
+RPROVIDES:${PN} += "${PROVIDES_NAME}-${KERNEL_VERSION}"
 
 do_unpack[deptask] = "do_populate_sysroot"
 PR = "r8"
 
 # This DEPENDS is to serialize kernel module builds
 DEPENDS = "rtsp-alg"
-DEPENDS_append_sdmsteppe = " virtual/kernel"
-DEPENDS_remove_sdmsteppe = "rtsp-alg"
-DEPENDS_remove_qrbx210-rbx = "rtsp-alg"
-DEPENDS_remove_qcs6490 = "rtsp-alg"
+DEPENDS:append:sdmsteppe = " virtual/kernel"
+DEPENDS:remove:sdmsteppe = "rtsp-alg"
+DEPENDS:remove:qrbx210-rbx = "rtsp-alg"
+DEPENDS:remove:qcs6490 = "rtsp-alg"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/qcacld-3.0/"
@@ -42,8 +42,8 @@ EXTRA_OEMAKE += "MODNAME=${MODULE_NAME}"
 
 # The common header file, 'wlan_nlink_common.h' can be installed from other
 # qcacld recipes too. To suppress the duplicate detection error, add it to
-# SSTATE_DUPWHITELIST.
-SSTATE_DUPWHITELIST += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wlan_nlink_common.h"
+# SSTATE_ALLOW_OVERLAP_FILES.
+SSTATE_ALLOW_OVERLAP_FILES += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wlan_nlink_common.h"
 
 # NF perf image select WLAN perf config
 NF_PERF = "${@oe.utils.conditional('MACHINE', 'qcs403-som2', oe.utils.conditional('PERF_BUILD', '1', '1', '0', d), '0', d)}"

@@ -11,7 +11,7 @@ do_configure() {
     install -m 0644 ${WORKDIR}/defconfig-ath6kl .config
 }
 
-do_configure_append() {
+do_configure:append() {
     echo "CFLAGS += -I${WORKSPACE}/wlan/include" >> .config
     echo "CFLAGS += -I${WORKSPACE}/wlan/host/include" >> .config
     echo "CFLAGS += -I${WORKSPACE}/wlan/host/os/linux/include" >> .config
