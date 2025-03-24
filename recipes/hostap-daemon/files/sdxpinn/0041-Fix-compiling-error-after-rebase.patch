@@ -83,7 +83,7 @@ index 43bd5ef24a..ca1e3b3be1 100644
  	if (wpa_auth_pmksa_add2(wpa->auth_group, wpa->supp_addr[i], wpa->psk,
  				PMK_LEN, wpa->pmkid, 0,
 -				conf.wpa_key_mgmt) < 0) {
-+				conf.wpa_key_mgmt, NULL) < 0) {
++				conf.wpa_key_mgmt, NULL, false) < 0) {
  		wpa_printf(MSG_ERROR, "DPP: Failed to add PMKSA cache entry");
  		return -1;
  	}
@@ -91,7 +91,7 @@ index 43bd5ef24a..ca1e3b3be1 100644
  	if (wpa_validate_wpa_ie(wpa->auth_group, wpa->auth[i], 2412,
  				wpa->supp_ie, wpa->supp_ie_len, NULL, 0,
 -				NULL, 0, NULL, 0) != WPA_IE_OK) {
-+				NULL, 0, NULL, 0, NULL) != WPA_IE_OK) {
++				NULL, 0, NULL, 0, NULL, false) != WPA_IE_OK) {
  		wpa_printf(MSG_DEBUG, "AUTH: wpa_validate_wpa_ie() failed");
  		wpa_auth_sta_deinit(wpa->auth[i]);
  		wpa->sta_count--;
