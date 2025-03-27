@@ -143,7 +143,7 @@ do_module_signing() {
         variant="${@bb.utils.contains('DEBUG_BUILD','1', "debug", "perf", d)}"
         if [ -f ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/signing_key.pem ]; then
             bbnote "signing cnss modules"
-            export LD_LIBRARY_PATH=${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist
+            export LD_LIBRARY_PATH=${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/openssl/lib64/
             ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/sign-file sha1 ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/signing_key.pem ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/signing_key.x509 ${PKGDEST}/${PN}/usr/lib/modules/${KERNEL_VERSION}/extra/cnss_utils.ko
             ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/sign-file sha1 ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/signing_key.pem ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/signing_key.x509 ${PKGDEST}/${PN}/usr/lib/modules/${KERNEL_VERSION}/extra/cnss_nl.ko
             ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/sign-file sha1 ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/signing_key.pem ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/signing_key.x509 ${PKGDEST}/${PN}/usr/lib/modules/${KERNEL_VERSION}/extra/wlan_firmware_service.ko
