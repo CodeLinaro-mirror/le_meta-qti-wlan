@@ -1559,7 +1559,7 @@ index a7e5512..7781b69 100644
  	char *if_name;
  	char ifname[16];
  	char ifname1[16];
-+	char ifname2[16];
++	char ifname2[16] = "";
  	struct ifreq ifr;
  	int s, rc = -1;
  	const char *val;
@@ -1906,7 +1906,7 @@ index a7e5512..7781b69 100644
 +				fprintf(pfd, ",B5,-1,0,B6,-1");
 +		}
 +
-+		if(val1) {
++		if(val1 && pfd != NULL) {
 +			fprintf(pfd, ",MLD,%s", val1);
 +		}
 +
