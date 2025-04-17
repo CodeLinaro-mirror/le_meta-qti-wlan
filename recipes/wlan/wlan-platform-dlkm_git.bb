@@ -69,6 +69,7 @@ SRC_URI:append = " file://init.qti.cnss2_off.sh"
 KERNEL_CC:append:sa525m = " ${SECURITY_CFLAGS} "
 
 do_compile:sa510m() {
+    variant="${@bb.utils.contains('KERNEL_VARIANT', 'perf_', 'perf_defconfig', 'debug_defconfig', d)}"
     cd ${KERNEL_PLATFORM_PATH}
     ENABLE_DDK_BUILD=true \
     TARGET_BOARD_PLATFORM=${BASEMACHINE} \
@@ -77,6 +78,7 @@ do_compile:sa510m() {
     ROOTDIR=${WORKDIR}/ \
     MODULE_OUT=${S} \
     OUT_DIR=${KERNEL_OUT_PATH}/ \
+    VARIANT=${variant} \
     KERNEL_UAPI_HEADERS_DIR=${STAGING_KERNEL_BUILDDIR} \
     ./build/build_module.sh
 }
