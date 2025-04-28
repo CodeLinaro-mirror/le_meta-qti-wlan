@@ -1,4 +1,4 @@
-inherit module
+inherit module deploy
 
 DESCRIPTION = "Qualcomm Technologies, Inc. WLAN CLD3.0 low latency driver"
 LICENSE = "ISC"
@@ -71,6 +71,12 @@ do_module_signing() {
     ${STAGING_KERNEL_BUILDDIR}/scripts/sign-file sha512 ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.pem ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.x509 ${PKGDEST}/${PN}/lib/modules/${KERNEL_VERSION}/extra/${WLAN_CHIP}_${TARGET_WLAN_CHIP}.ko
 }
 
+# Deploying unstripped modules is done for crash analysis
+do_deploy () {
+    install -d ${DEPLOYDIR}/kernel_modules
+    install -m 0755 ${S}/unstripped/${WLAN_CHIP}_${TARGET_WLAN_CHIP}.ko ${DEPLOYDIR}/kernel_modules
+}
+
 do_patch() {
      cd ${S}
      patch -p1 < ${WORKDIR}/qcacld-kbuild.patch
@@ -78,5 +84,7 @@ do_patch() {
 
 FILES:${PN} += "${sysconfdir}/*"
 FILES:${PN} += "${nonarch_base_libdir}/modules/*"
+
+addtask do_deploy after do_install
 
 addtask module_signing after do_package before do_package_write_ipk
