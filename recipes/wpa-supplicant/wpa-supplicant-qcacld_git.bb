@@ -93,3 +93,8 @@ do_patch:neo() {
         patch -p1 < ${WORKDIR}/${BASEMACHINE}/driver_cmd.patch
     fi
 }
+
+do_install:append:kalama(){
+      install -d ${D}/etc/dbus-1/system.d/
+      install -m 0644 ${S}/dbus/dbus-wpa_supplicant.conf -D ${D}/etc/dbus-1/system.d/dbus-wpa_supplicant.conf
+}

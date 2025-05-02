@@ -25,7 +25,7 @@ MODULE_LIST = "${@bb.utils.contains('BASEMACHINE', 'qcm2290-mtp', '${MODULE_ICNS
 
 WLAN_VAR = ""
 WLAN_VAR:qcs40x = "qcs40x"
-WLAN_VAR:qcm2290-mtp = "qcm2290-mtp"
+WLAN_VAR:qcm2290-mtp = "qcs40x"
 
 KERNEL_VERSION = "${@get_kernelversion_file("${STAGING_KERNEL_BUILDDIR}")}"
 EXT_MODULES = "${@os.path.relpath("${S}", "${KERNEL_PLATFORM_PATH}")}"
