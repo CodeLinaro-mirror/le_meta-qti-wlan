@@ -28,24 +28,26 @@
 #
 #
 
-echo -n "start to unlaod cnss2 module" > /dev/kmsg
+echo -n "start to unload cnss2 module" > /dev/kmsg
 if (lspci -k|grep cnss_pci);then
 	echo -n "start to unlaod wlan driver before unload cnss2" > /dev/kmsg
 	if (lspci -k|grep 1102);then
 		echo -n "unload qca6595" > /dev/kmsg
-		modprobe -r qca6595
+		rmmod qca6595
 	elif ((lspci -k|grep 003e) || (lspci -k|grep QCA6174));then
 		echo -n "unload qca6574" > /dev/kmsg
-		modprobe -r qca6574
+		rmmod qca6574
 	elif (lspci -k|grep 1101);then
 		echo -n "unload qca6696" > /dev/kmsg
-		modprobe -r qca6696
+		rmmod qca6696
+	elif (lspci -k|grep 1103);then
+		echo -n "unload qca6490" > /dev/kmsg
+		rmmod qca6490
 	else
 		echo -n "unload default wlan" > /dev/kmsg
-		modprobe -r wlan
+		rmmod wlan
 	fi
-	echo -n "unload cnss2" > /dev/kmsg
-	modprobe -r cnss2
+	echo -n "Skip unloading cnss2" > /dev/kmsg
 fi
 echo -n "unload wlanhost driver done" > /dev/kmsg
 
