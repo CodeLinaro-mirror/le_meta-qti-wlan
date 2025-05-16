@@ -24,10 +24,12 @@ MODULE_CNSS = "cnss_prealloc.ko cnss_utils.ko cnss_nl.ko cnss_plat_ipc_qmi_svc.k
 MODULE_LIST = "${MODULE_CNSS}"
 MODULE_LIST:qcs40x = "${MODULE_ICNSS}"
 MODULE_LIST:qcm2290-mtp = "${MODULE_ICNSS}"
+MODULE_LIST:qcm4325-mtp = "${MODULE_ICNSS}"
 
 WLAN_VAR = ""
 WLAN_VAR:qcs40x = "qcs40x"
 WLAN_VAR:qcm2290-mtp = "qcs40x"
+WLAN_VAR:qcm4325-mtp = "qcm4325-mtp"
 
 KERNEL_VERSION = "${@get_kernelversion_file("${STAGING_KERNEL_BUILDDIR}")}"
 EXT_MODULES = "${@os.path.relpath("${S}", "${KERNEL_PLATFORM_PATH}")}"
@@ -37,6 +39,7 @@ EXT_COMPILE_CONFIG:append:kalama = " CONFIG_PCIE_SWITCH_NTN3=y "
 EXT_COMPILE_CONFIG:append:qrb5165 = " CONFIG_PCI_MSM=m "
 EXT_COMPILE_CONFIG:append:qcs40x = " CONFIG_PCI_MSM=m "
 EXT_COMPILE_CONFIG:append:qcm2290-mtp = " CONFIG_PCI_MSM=m "
+EXT_COMPILE_CONFIG:append:qcm4325-mtp = " CONFIG_PCI_MSM=m "
 
 do_compile[depends] += "virtual/kernel:do_shared_workdir"
 do_compile[cleandirs] += "${WORKDIR}/out/${KERNEL_DEFCONFIG}"

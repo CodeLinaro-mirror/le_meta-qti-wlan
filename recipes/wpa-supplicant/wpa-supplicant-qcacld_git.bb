@@ -7,6 +7,7 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 MACHINE_CONFIG = "${BASEMACHINE}"
 MACHINE_CONFIG:pineapple = "kalama"
 MACHINE_CONFIG:qcm2290-mtp = "kalama"
+MACHINE_CONFIG:qcm4325-mtp = "kalama"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://external/wpa_supplicant_8/"
@@ -20,6 +21,7 @@ DEPENDS:append:sdxlemur = " qmi qmi-framework"
 DEPENDS:append:qrb5165 = " qmi-framework "
 DEPENDS:append:pineapple = " qmi-framework "
 DEPENDS:append:qcm2290-mtp = " qmi-framework "
+DEPENDS:append:qcm4325-mtp = " qmi-framework "
 
 FILES:${PN} += "/usr/include/*"
 
