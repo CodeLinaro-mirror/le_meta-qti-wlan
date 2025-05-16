@@ -59,7 +59,15 @@ do_module_signing() {
     done
 }
 
+# Deploying unstripped modules is done for crash analysis
+do_deploy() {
+    install -d ${DEPLOYDIR}/kernel_modules
+    install -m 0755 ${S}/unstripped/*.ko ${DEPLOYDIR}/kernel_modules
+}
+
 FILES:${PN} += "${sysconfdir}/*"
 FILES:${PN} += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/*"
+
+addtask do_deploy after do_install
 
 addtask module_signing after do_package before do_package_write_ipk
