@@ -1,4 +1,4 @@
-From 13de6dd7333a1cd1acd12c366949201e0e2f0ef0 Mon Sep 17 00:00:00 2001
+From 48c99890c18b629fb51c7c3dfef6f858a39b2101 Mon Sep 17 00:00:00 2001
 From: Xinyue Ling <quic_xinyling@quicinc.com>
 Date: Wed, 12 Mar 2025 14:02:29 +0800
 Subject: [PATCH] sigma-dut: MAP R6 support
@@ -11,13 +11,31 @@ Subject: [PATCH] sigma-dut: MAP R6 support
 Change-Id: I1d2f08e3198c64429f7c630c02038ad89b392028
 Signed-off-by: Xinyue Ling <quic_xinyling@quicinc.com>
 ---
+ dev.c       |    5 +-
  dpp.c       |   10 +-
  map.c       | 1927 +++++++++++++++++++++++++++++++++++++++++++++------
  sigma_dut.h |    7 +-
  sta.c       |    2 +-
  utils.c     |    2 +
- 5 files changed, 1747 insertions(+), 201 deletions(-)
+ 6 files changed, 1750 insertions(+), 203 deletions(-)
 
+diff --git a/dev.c b/dev.c
+index 8928f0f..2bf8a7e 100644
+--- a/dev.c
++++ b/dev.c
+@@ -79,9 +79,10 @@ static enum sigma_cmd_result cmd_dev_get_parameter(struct sigma_dut *dut,
+ {
+ 	if (dut->program == PROGRAM_MAP ||
+ 	    dut->program == PROGRAM_MAPR2 ||
+-		dut->program == PROGRAM_MAPR3 ||
++	    dut->program == PROGRAM_MAPR3 ||
+ 	    dut->program == PROGRAM_MAPR4 ||
+-		dut->program == PROGRAM_MAPR5) {
++	    dut->program == PROGRAM_MAPR5 ||
++	    dut->program == PROGRAM_MAPR6) {
+ 		sigma_dut_print(dut, DUT_MSG_DEBUG, "Convert "
+ 				"dev_get_parameter to map_get_parameter");
+ 		return cmd_dev_map_get_parameter(dut, conn, cmd);
 diff --git a/dpp.c b/dpp.c
 index 3bb7e9f..8b7bfcc 100644
 --- a/dpp.c
@@ -47,7 +65,7 @@ index 3bb7e9f..8b7bfcc 100644
  
  	return SUCCESS_SEND_STATUS;
 diff --git a/map.c b/map.c
-index a7e5512..7781b69 100644
+index a7e5512..c5000ab 100644
 --- a/map.c
 +++ b/map.c
 @@ -113,6 +113,8 @@ enum ieee1905_message_type {
@@ -2459,7 +2477,7 @@ index a7e5512..7781b69 100644
 +	sigma_dut_reg_cmd("dev_reconfig_1905", NULL, cmd_dev_1905_reconfig);
  }
 diff --git a/sigma_dut.h b/sigma_dut.h
-index 8314e07..e05170b 100644
+index 41d1190..d215d4b 100644
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
 @@ -104,7 +104,7 @@
@@ -2471,7 +2489,7 @@ index 8314e07..e05170b 100644
  #ifndef MAX_NUM_MLO_LINKS
  #define MAX_NUM_MLO_LINKS 15
  #endif
-@@ -1066,9 +1066,13 @@ struct sigma_dut {
+@@ -1107,9 +1107,13 @@ struct sigma_dut {
  	bool map_bh24g;
  	bool map_bh5g;
  	bool map_bh5gh;
@@ -2485,7 +2503,7 @@ index 8314e07..e05170b 100644
  	bool map_all_onboard;
  	enum map_device_role {
  		MAP_DEVROLE_UNKNOWN,
-@@ -1135,6 +1139,7 @@ struct sigma_dut {
+@@ -1176,6 +1180,7 @@ struct sigma_dut {
  		PROGRAM_MAPR3,
  		PROGRAM_MAPR4,
  		PROGRAM_MAPR5,
@@ -2494,10 +2512,10 @@ index 8314e07..e05170b 100644
  		PROGRAM_WPA3,
  		PROGRAM_HE,
 diff --git a/sta.c b/sta.c
-index 345df9e..be7aadb 100644
+index 9c1192c..a0fc13e 100644
 --- a/sta.c
 +++ b/sta.c
-@@ -19328,7 +19328,7 @@ static enum sigma_cmd_result cmd_start_wps_registration(struct sigma_dut *dut,
+@@ -19757,7 +19757,7 @@ static enum sigma_cmd_result cmd_start_wps_registration(struct sigma_dut *dut,
  	};
  	int id = 0;
  	if (dut->program == PROGRAM_MAP || dut->program == PROGRAM_MAPR2 || dut->program == PROGRAM_MAPR3 ||
@@ -2507,7 +2525,7 @@ index 345df9e..be7aadb 100644
  		if (method && (strcasecmp(method, "PBC") == 0)) {
  			run_system_wrapper(dut,
 diff --git a/utils.c b/utils.c
-index 5c55751..d4b689d 100644
+index 6a9932a..97f9914 100644
 --- a/utils.c
 +++ b/utils.c
 @@ -200,6 +200,8 @@ enum sigma_program sigma_program_to_enum(const char *prog)
