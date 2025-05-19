@@ -1,4 +1,4 @@
-From 48c99890c18b629fb51c7c3dfef6f858a39b2101 Mon Sep 17 00:00:00 2001
+From f4dd6333a924df7b4febc71239c8786494eaf0aa Mon Sep 17 00:00:00 2001
 From: Xinyue Ling <quic_xinyling@quicinc.com>
 Date: Wed, 12 Mar 2025 14:02:29 +0800
 Subject: [PATCH] sigma-dut: MAP R6 support
@@ -13,11 +13,11 @@ Signed-off-by: Xinyue Ling <quic_xinyling@quicinc.com>
 ---
  dev.c       |    5 +-
  dpp.c       |   10 +-
- map.c       | 1927 +++++++++++++++++++++++++++++++++++++++++++++------
+ map.c       | 1933 +++++++++++++++++++++++++++++++++++++++++++++------
  sigma_dut.h |    7 +-
  sta.c       |    2 +-
  utils.c     |    2 +
- 6 files changed, 1750 insertions(+), 203 deletions(-)
+ 6 files changed, 1756 insertions(+), 203 deletions(-)
 
 diff --git a/dev.c b/dev.c
 index 8928f0f..2bf8a7e 100644
@@ -65,7 +65,7 @@ index 3bb7e9f..8b7bfcc 100644
  
  	return SUCCESS_SEND_STATUS;
 diff --git a/map.c b/map.c
-index a7e5512..c5000ab 100644
+index a7e5512..8683233 100644
 --- a/map.c
 +++ b/map.c
 @@ -113,6 +113,8 @@ enum ieee1905_message_type {
@@ -1329,7 +1329,7 @@ index a7e5512..c5000ab 100644
  				run_system_wrapper(dut,
  					"uci set ezmesh.MultiAP.VlanNetworkPrimary="DEFAULT_BRIDGE);
  			}
-@@ -5139,6 +5942,9 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -5139,10 +5942,16 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
  					"wsplcd.config.WriteDebugLogToFile="
  					"TRUNCATE");
  
@@ -1339,7 +1339,14 @@ index a7e5512..c5000ab 100644
  
  			if (dut->program == PROGRAM_MAP || dut->program == PROGRAM_DE) {
  				run_system_wrapper(dut, "uci set wsplcd.config.MapEnable=1");
-@@ -5186,9 +5992,16 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+ 				run_system_wrapper(dut, "uci set wsplcd.config.MapMaxBss=2");
++			} else if (dut->program == PROGRAM_MAPR6) {
++				run_system_wrapper(dut, "uci set wsplcd.config.MapEnable=6");
++				run_system_wrapper(dut, "uci set wsplcd.config.MapMaxBss=4");
+ 			} else {
+ 				run_system_wrapper(dut, "uci set wsplcd.config.MapEnable=2");
+ 				run_system_wrapper(dut, "uci set wsplcd.config.MapMaxBss=4");
+@@ -5186,9 +5995,16 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
  			else if (dut->program == PROGRAM_MAPR4)
  				run_system_wrapper(dut,
  					"uci set repacd.MAPConfig.MapVersionEnabled=4");
@@ -1357,7 +1364,7 @@ index a7e5512..c5000ab 100644
  
  
  #ifdef CONFIG_BUILD_YOCTO
-@@ -5196,7 +6009,8 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -5196,7 +6012,8 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
  			run_system_wrapper(dut,"uci set wireless.qcawifi.gIPAWds=1");
  
  			if (dut->program == PROGRAM_MAPR2 || dut->program == PROGRAM_MAPR3 ||
@@ -1367,7 +1374,7 @@ index a7e5512..c5000ab 100644
  				run_system_wrapper(dut,
  					"uci set wireless.qcawifi.gIPAVlanEnable=1");
  				run_system_wrapper(dut,
-@@ -5278,14 +6092,129 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -5278,14 +6095,129 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
  			owrt_ap_set_radio(dut, radio_id[1], "disabled", "0");
  			owrt_ap_set_radio(dut, radio_id[0], "htmode", "HT20");
  			owrt_ap_set_radio(dut, radio_id[1], "htmode", "HT20");
@@ -1498,7 +1505,7 @@ index a7e5512..c5000ab 100644
  				owrt_ap_set_radio(dut, radio_id[2], "txchainmask", "1");
  				owrt_ap_set_radio(dut, radio_id[2], "rxchainmask", "1");
  				owrt_ap_set_radio(dut, radio_id[0], "channel", "149");
-@@ -5295,17 +6224,22 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -5295,17 +6227,22 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
  				run_system_wrapper(dut,
  						   "uci set wireless.@wifi-iface[2].ssid=wf_OpenWrt");
  				if (dut->program == PROGRAM_MAPR2 || dut->program == PROGRAM_MAPR3 ||
@@ -1523,7 +1530,7 @@ index a7e5512..c5000ab 100644
  				owrt_ap_set_vap(dut, radio_id[0], "mbo", "1");
  				owrt_ap_set_vap(dut, radio_id[1], "mbo", "1");
  				owrt_ap_set_radio(dut, radio_id[0], "no_vlan", "1");
-@@ -5349,7 +6283,8 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -5349,7 +6286,8 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
  
  #ifdef CONFIG_BUILD_YOCTO
  			if (dut->program == PROGRAM_MAPR2 || dut->program == PROGRAM_MAPR3 ||
@@ -1533,7 +1540,7 @@ index a7e5512..c5000ab 100644
  				run_system_wrapper(dut,
  					"uci set ezmesh.MultiAP.VlanNetworkPrimary="DEFAULT_BRIDGE);
  			}
-@@ -5398,6 +6333,10 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -5398,9 +6336,16 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
  					"wsplcd.config.WriteDebugLogToFile="
  					"TRUNCATE");
  
@@ -1544,7 +1551,13 @@ index a7e5512..c5000ab 100644
  			if (dut->program == PROGRAM_MAP || dut->program == PROGRAM_DE) {
  				run_system_wrapper(dut, "uci set wsplcd.config.MapEnable=1");
  				run_system_wrapper(dut, "uci set wsplcd.config.MapMaxBss=2");
-@@ -5447,16 +6386,24 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
++			} else if (dut->program == PROGRAM_MAPR6) {
++				run_system_wrapper(dut, "uci set wsplcd.config.MapEnable=6");
++				run_system_wrapper(dut, "uci set wsplcd.config.MapMaxBss=4");
+ 			} else {
+ 				run_system_wrapper(dut, "uci set wsplcd.config.MapEnable=2");
+ 				run_system_wrapper(dut, "uci set wsplcd.config.MapMaxBss=4");
+@@ -5447,16 +6392,24 @@ static int cmd_dev_reset_default(struct sigma_dut *dut, struct sigma_conn *conn,
  			else if (dut->program == PROGRAM_MAPR4)
  				run_system_wrapper(dut,
  					"uci set repacd.MAPConfig.MapVersionEnabled=4");
@@ -1573,7 +1586,7 @@ index a7e5512..c5000ab 100644
  				 run_system_wrapper(dut,
  					 "uci set wireless.qcawifi.gIPAVlanEnable=1");
  				 run_system_wrapper(dut,
-@@ -5568,15 +6515,21 @@ int cmd_dev_map_get_parameter(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -5568,15 +6521,21 @@ int cmd_dev_map_get_parameter(struct sigma_dut *dut, struct sigma_conn *conn,
  	char *if_name;
  	char ifname[16];
  	char ifname1[16];
@@ -1597,7 +1610,7 @@ index a7e5512..c5000ab 100644
  
  	memset(addr, 0, sizeof(addr));
  	for (radio_count = 0; radio_count < MAX_RADIO; radio_count++) {
-@@ -5595,6 +6548,34 @@ int cmd_dev_map_get_parameter(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -5595,6 +6554,34 @@ int cmd_dev_map_get_parameter(struct sigma_dut *dut, struct sigma_conn *conn,
  			send_resp(dut, conn, SIGMA_ERROR,
  				  "errorCode,invalid ruid");
  			goto map_get_param_error;
@@ -1632,7 +1645,7 @@ index a7e5512..c5000ab 100644
  		}
  	}
  
-@@ -5604,7 +6585,7 @@ int cmd_dev_map_get_parameter(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -5604,7 +6591,7 @@ int cmd_dev_map_get_parameter(struct sigma_dut *dut, struct sigma_conn *conn,
  			val = get_param(cmd, "ssid");
  			if (val) {
  				dut->map_ifname[0] = '\0';
@@ -1641,7 +1654,7 @@ index a7e5512..c5000ab 100644
  				if ((rc = map_get_bssid(dut, val, ruid, ifname1,
  							bssid)) > 0)
  					rc =
-@@ -5630,7 +6611,7 @@ int cmd_dev_map_get_parameter(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -5630,7 +6617,7 @@ int cmd_dev_map_get_parameter(struct sigma_dut *dut, struct sigma_conn *conn,
  			val = get_param(cmd, "ssid");
  			if (val) {
  				dut->map_ifname[0] = '\0';
@@ -1650,7 +1663,7 @@ index a7e5512..c5000ab 100644
  				if ((rc = map_get_macaddr(dut, macaddr,
  							  sizeof(macaddr), ruid,
  							  val)) > 0)
-@@ -5638,7 +6619,8 @@ int cmd_dev_map_get_parameter(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -5638,7 +6625,8 @@ int cmd_dev_map_get_parameter(struct sigma_dut *dut, struct sigma_conn *conn,
  							       addr);
  
  			} else if (dut->map_bh24g || dut->map_bh5g ||
@@ -1660,7 +1673,7 @@ index a7e5512..c5000ab 100644
  				if (num_radio == 3) {
  					if (dut->map_bh24g)
  						snprintf(ifname, sizeof(ifname),
-@@ -5771,6 +6753,53 @@ int cmd_dev_map_get_parameter(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -5771,6 +6759,53 @@ int cmd_dev_map_get_parameter(struct sigma_dut *dut, struct sigma_conn *conn,
  			}
  			send_resp(dut, conn, SIGMA_COMPLETE, resp);
  			goto map_get_param_ok;
@@ -1714,7 +1727,7 @@ index a7e5512..c5000ab 100644
  		}
  	}
  
-@@ -6047,11 +7076,17 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -6047,11 +7082,17 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
  
  #if defined(__linux__)
  	const char *val;
@@ -1733,7 +1746,7 @@ index a7e5512..c5000ab 100644
  	unsigned char map_addr[6];
  
  	bool found_one_tlv = false;
-@@ -6064,17 +7099,24 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -6064,17 +7105,24 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
  	char map_tlvtype[15];
  	char map_tlvlength[15];
  	char mod[4096], buf[4096];
@@ -1758,7 +1771,7 @@ index a7e5512..c5000ab 100644
  		if (i < 11) {
  			bss_info[8] = ic[1];
  			bss_info[9] = '\0';
-@@ -6084,9 +7126,57 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -6084,9 +7132,57 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
  			bss_info[10] = '\0';
  		}
  
@@ -1816,7 +1829,7 @@ index a7e5512..c5000ab 100644
  		if (val) {
  			printf("\nvalbss=%s\n", val);
  			if (found_one == false) {
-@@ -6131,7 +7221,8 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -6131,7 +7227,8 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
  					token_p[7]);
  				map_require_new_line = true;
  			} else if (j == 10 && (dut->program == PROGRAM_MAPR2 || dut->program == PROGRAM_MAPR3 ||
@@ -1826,7 +1839,7 @@ index a7e5512..c5000ab 100644
  				fprintf(pfd,
  					"%02x%02x%02x%02x%02x%02x,%s,%s,%s,"
  					"%s,%s,%s,%s,%s,%s",
-@@ -6146,7 +7237,8 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -6146,7 +7243,8 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
  
  			found_one_tlv = false;
  			if (dut->program == PROGRAM_MAPR2 || dut->program == PROGRAM_MAPR3 ||
@@ -1836,7 +1849,7 @@ index a7e5512..c5000ab 100644
  				printf("\ni=%d k=%d\n", i, k);
  				tlvtype[8] = tlvlength[10] = tlvvalue[9] = '1';
  				tlvtype[9] = tlvlength[11] = tlvvalue[10] =
-@@ -6158,11 +7250,11 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -6158,11 +7256,11 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
  					printf("\n%s %s %s\n", tlvtype,
  					       tlvlength, tlvvalue);
  
@@ -1851,7 +1864,7 @@ index a7e5512..c5000ab 100644
  						    sizeof(map_tlvtype) - 1) {
  							send_resp(dut, conn,
  								  SIGMA_ERROR,
-@@ -6173,7 +7265,7 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -6173,7 +7271,7 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
  						}
  						snprintf(map_tlvtype,
  							 sizeof(map_tlvtype),
@@ -1860,7 +1873,7 @@ index a7e5512..c5000ab 100644
  						dut->map_tlvtype =
  						    (unsigned int)get_value(
  							map_tlvtype);
-@@ -6183,10 +7275,10 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -6183,10 +7281,10 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
  						    "MAP: tlvtype: %s",
  						    map_tlvtype);
  
@@ -1874,7 +1887,7 @@ index a7e5512..c5000ab 100644
  							    sizeof(
  								map_tlvlength) -
  								1) {
-@@ -6204,7 +7296,7 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -6204,7 +7302,7 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
  							    map_tlvlength,
  							    sizeof(
  								map_tlvlength),
@@ -1883,7 +1896,7 @@ index a7e5512..c5000ab 100644
  							sigma_dut_print(
  							    dut, DUT_MSG_DEBUG,
  							    "MAP: tlvlength: "
-@@ -6212,11 +7304,11 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -6212,11 +7310,11 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
  							    map_tlvlength);
  						}
  
@@ -1898,7 +1911,7 @@ index a7e5512..c5000ab 100644
  							printf("\nmod=%s\n",
  							       mod);
  
-@@ -6324,31 +7416,102 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -6324,31 +7422,102 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
  							}
  						}
  
@@ -2016,7 +2029,7 @@ index a7e5512..c5000ab 100644
  				if (dut->program != PROGRAM_DE)
  					run_system_wrapper(dut, INIT_SCRIPT_PATH"ezmesh restart");
  				goto map_set_config_ok;
-@@ -6398,6 +7561,28 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -6398,6 +7567,28 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
  		}
  	}
  
@@ -2045,7 +2058,7 @@ index a7e5512..c5000ab 100644
  	val = get_param(cmd, "backhaul");
  	if (val) {
  		const char *typeval = get_param(cmd, "type");
-@@ -6438,7 +7623,7 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -6438,7 +7629,7 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
  			run_system_wrapper(dut, "brctl setageing "DEFAULT_BRIDGE" 10");
  
  			dut->map_ath0_onboard = dut->map_ath1_onboard =
@@ -2054,7 +2067,7 @@ index a7e5512..c5000ab 100644
  			if (num_radio != 3)
  				dut->map_ath2_onboard = true;
  
-@@ -6527,7 +7712,27 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -6527,7 +7718,27 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
  				run_system_wrapper(
  				    dut, INIT_SCRIPT_PATH"hyfi-bridging stop");
  
@@ -2083,7 +2096,7 @@ index a7e5512..c5000ab 100644
  					if (radio_id[0] == 0)
  						dut->map_bh5gh = true;
  					else if (radio_id[1] == 0)
-@@ -6604,7 +7809,8 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -6604,7 +7815,8 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
  				    dut->program == PROGRAM_MAPR2 ||
  									dut->program == PROGRAM_MAPR3 ||
  									dut->program == PROGRAM_MAPR4 ||
@@ -2093,7 +2106,7 @@ index a7e5512..c5000ab 100644
  					run_system_wrapper(dut,
  						INIT_SCRIPT_PATH"repacd start");
  				else
-@@ -6631,7 +7837,27 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -6631,7 +7843,27 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
  				run_system_wrapper(
  				    dut, INIT_SCRIPT_PATH"hyfi-bridging stop");
  
@@ -2122,7 +2135,7 @@ index a7e5512..c5000ab 100644
  					if (radio_id[0] == 1)
  						dut->map_bh5gh = true;
  					else if (radio_id[1] == 1)
-@@ -6711,7 +7937,8 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -6711,7 +7943,8 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
  				    dut->program == PROGRAM_MAPR2 ||
  									dut->program == PROGRAM_MAPR3 ||
  									dut->program == PROGRAM_MAPR4 ||
@@ -2132,7 +2145,7 @@ index a7e5512..c5000ab 100644
  					run_system_wrapper(dut,
  						INIT_SCRIPT_PATH"repacd start");
  				else
-@@ -6740,17 +7967,321 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -6740,17 +7973,321 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
  					    dut,
  					    INIT_SCRIPT_PATH"hyfi-bridging stop");
  
@@ -2460,7 +2473,7 @@ index a7e5512..c5000ab 100644
  							dut->map_bh24g = true;
  					}
  
-@@ -6833,7 +8364,8 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -6833,7 +8370,8 @@ static int cmd_dev_set_config(struct sigma_dut *dut, struct sigma_conn *conn,
  					    dut->program == PROGRAM_MAPR2 ||
  											dut->program == PROGRAM_MAPR3 ||
  											dut->program == PROGRAM_MAPR4 ||
@@ -2470,7 +2483,7 @@ index a7e5512..c5000ab 100644
  						run_system_wrapper(dut,
  							INIT_SCRIPT_PATH"repacd start");
  					else
-@@ -6887,4 +8419,5 @@ void map_register_cmds(void)
+@@ -6887,4 +8425,5 @@ void map_register_cmds(void)
  	sigma_dut_reg_cmd("dev_start_buffer", NULL, cmd_dev_start_buffer);
  	sigma_dut_reg_cmd("dev_stop_buffer", NULL, cmd_dev_stop_buffer);
  	sigma_dut_reg_cmd("dev_set_trigger", NULL, cmd_dev_set_trigger);
