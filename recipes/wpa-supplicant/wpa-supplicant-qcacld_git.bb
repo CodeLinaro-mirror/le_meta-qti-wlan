@@ -28,6 +28,7 @@ PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"
 
 LDFLAGS:append:neo = " -Wl,--no-as-needed -L${RECIPE_SYSROOT}/usr/lib -llog"
 CFLAGS:append:neo =" -DCONFIG_ANDROID_LOG"
+EXTRA_OEMAKE:append:ar-sg1 += "CONFIG_OCV=y"
 
 do_configure() {
     if [ "$(ls -A "${WORKDIR}/${MACHINE_CONFIG}")" ]
