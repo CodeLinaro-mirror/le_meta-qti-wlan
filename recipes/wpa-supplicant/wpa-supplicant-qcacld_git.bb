@@ -28,6 +28,7 @@ PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"
 
 LDFLAGS:append:neo = " -Wl,--no-as-needed -L${RECIPE_SYSROOT}/usr/lib -llog"
 CFLAGS:append:neo =" -DCONFIG_ANDROID_LOG"
+EXTRA_OEMAKE:append:ar-sg1 += "CONFIG_OCV=y"
 
 do_configure() {
     if [ "$(ls -A "${WORKDIR}/${MACHINE_CONFIG}")" ]
@@ -91,4 +92,9 @@ do_patch:neo() {
         bbwarn "============================================================"
         patch -p1 < ${WORKDIR}/${BASEMACHINE}/driver_cmd.patch
     fi
+}
+
+do_install:append:kalama(){
+      install -d ${D}/etc/dbus-1/system.d/
+      install -m 0644 ${S}/dbus/dbus-wpa_supplicant.conf -D ${D}/etc/dbus-1/system.d/dbus-wpa_supplicant.conf
 }
