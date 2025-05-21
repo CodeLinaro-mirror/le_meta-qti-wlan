@@ -166,6 +166,7 @@ do_compile:sa510m() {
     OUT_DIR=${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig \
     VARIANT=${variant}_defconfig \
     KERNEL_UAPI_HEADERS_DIR=${STAGING_KERNEL_BUILDDIR} \
+    SUBTARGET_REGEX=${_MODNAME}_modules \
     ./build/build_module.sh
 }
 
@@ -241,7 +242,7 @@ do_module_signing() {
             WLAN_KO=${D}/${base_libdir}/modules/${KERNEL_VERSION}/extra
             export LD_LIBRARY_PATH=${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist
             ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/sign-file sha1 ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/signing_key.pem ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/signing_key.x509 ${WLAN_KO}/${_MODNAME}.ko
-	fi
+        fi
     fi
 }
 
