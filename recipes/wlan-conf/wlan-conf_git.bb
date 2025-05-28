@@ -9,6 +9,8 @@ FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://mdm-init/"
 SRC_URI += "file://wlan_daemon.service"
 SRC_URI += "file://cnss.service"
+SRC_URI:append:qcs610-odk-64+= "file://qcs610/wlan_daemon.service"
+SRC_URI:append:qcs610-odk-64+= "file://qcs610/wlan-conf_systemd_tmpfiles.conf"
 
 # Update for each machine
 S = "${WORKDIR}/mdm-init/"
@@ -65,9 +67,28 @@ do_install:append(){
     fi
 }
 
+do_install:append:qcs610-odk-64(){
+	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
+		#systemd-tmpfiles service for wlan-conf
+		install -d ${D}${sysconfdir}/tmpfiles.d
+		install -m 0644 ${WORKDIR}/qcs610/wlan-conf_systemd_tmpfiles.conf \
+				-D ${D}${sysconfdir}/tmpfiles.d/wlan-conf_systemd_tmpfiles.conf
+		install -d ${D}/etc/initscripts
+		cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
+		install -d ${D}/etc/systemd/system/
+		install -m 0644 ${WORKDIR}/qcs610/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
+		install -d ${D}/etc/systemd/system/multi-user.target.wants/
+		ln -sf /etc/systemd/system/wlan_daemon.service \
+			${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
+		install -d ${D}/etc/systemd/network/
+		ln -sf /dev/null ${D}/etc/systemd/network/99-default.link
+		install -d ${D}/etc/misc/wifi/
+	fi
+}
+
 FILES:${PN} += "${userfsdatadir}/misc/wifi/*"
 FILES:${PN} += "${base_libdir}/firmware/wlan/qca_cld/*"
-FILES:${PN} += "${sysconfdir}/init.d/* "
+FILES:${PN} += "/lib/firmware/wlan/qca_cld/* ${sysconfdir}/init.d/* "
 
 BASEPRODUCT = "${@d.getVar('PRODUCT', False)}"
 
@@ -89,6 +110,8 @@ EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'sdmsteppe', '--enable-targ
 
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'apq8053', '--enable-pronto-wlan=yes', '', d)}"
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'apq8017', '--enable-pronto-wlan=yes', '', d)}"
+
+EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'qcs610-odk-64', '--enable-target-qcs610-odk-64=yes', '', d)}"
 
 # Enable qsap-wlan in place of pronto-wlan for Drones
 EXTRA_OECONF:append:qsap += "--enable-snap-wlan=yes --enable-qsap-wlan=yes --enable-naples-wlan=yes"
