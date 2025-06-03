@@ -1,0 +1,251 @@
+commit ee40d97ec8cd55493cebf3edfe4f1a2424aa52cc
+Author: Shailendra Singh <quic_shasing@quicinc.com>
+Date:   Mon Apr 7 14:36:04 2025 +0530
+
+    [PATCH] hostapd_driver_cmd.patch
+
+    Patch for hostapd.
+
+    Change-Id: I26ff6f347610522d136fadc95f90ec9f137cdbe6
+    Signed-off-by: Shailendra Singh <quic_shasing@quicinc.com>
+
+diff --git a/hostapd/Android.mk b/hostapd/Android.mk
+index f6bd9a66..096efa8e 100644
+--- a/hostapd/Android.mk
++++ b/hostapd/Android.mk
+@@ -1131,6 +1131,14 @@ ifdef CONFIG_ANDROID_LOG
+ L_CFLAGS += -DCONFIG_ANDROID_LOG
+ endif
+ 
++ifdef CONFIG_LINUX_EMBEDDED
++L_CFLAGS += -DLINUX_EMBEDDED
++endif
++
++ifdef CONFIG_LINUX_EMBEDDED_LIB_EVENT
++L_CFLAGS += -DLINUX_EMBEDDED_LIB_EVENT
++endif
++
+ OBJS_c = hostapd_cli.c
+ OBJS_c += src/common/wpa_ctrl.c
+ OBJS_c += src/utils/os_$(CONFIG_OS).c
+diff --git a/hostapd/Makefile b/hostapd/Makefile
+index 865b3181..eaaf4201 100644
+--- a/hostapd/Makefile
++++ b/hostapd/Makefile
+@@ -174,6 +174,14 @@ LIBS_h += -lgcov
+ LIBS_n += -lgcov
+ endif
+ 
++ifdef CONFIG_LINUX_EMBEDDED
++CFLAGS += -DLINUX_EMBEDDED
++endif
++
++ifdef CONFIG_LINUX_EMBEDDED_LIB_EVENT
++CFLAGS += -DLINUX_EMBEDDED_LIB_EVENT
++endif
++
+ ifndef CONFIG_NO_DUMP_STATE
+ # define HOSTAPD_DUMP_STATE to include support for dumping internal state
+ # through control interface commands (undefine it, if you want to save in
+@@ -1264,6 +1272,10 @@ LIBS += -lsqlite3
+ LIBS_h += -lsqlite3
+ endif
+ 
++ifdef CONFIG_LINUX_EMBEDDED
++LIBS += -lwpa_supplicant_8_lib
++endif
++
+ ifdef CONFIG_FST
+ CFLAGS += -DCONFIG_FST
+ OBJS += ../src/fst/fst.o
+diff --git a/hostapd/android.config b/hostapd/android.config
+index 0de9720a..8d6a830e 100644
+--- a/hostapd/android.config
++++ b/hostapd/android.config
+@@ -150,6 +150,9 @@ endif
+ # Add support for writing debug log to Android logcat instead of standard output
+ CONFIG_ANDROID_LOG=y
+ 
++# LE platform build with wpa_cli "driver" command
++#CONFIG_LINUX_EMBEDDED=y
++
+ # Remove support for RADIUS accounting
+ #CONFIG_NO_ACCOUNTING=y
+ 
+diff --git a/hostapd/ctrl_iface.c b/hostapd/ctrl_iface.c
+index c0a08e3e..f07aa2aa 100644
+--- a/hostapd/ctrl_iface.c
++++ b/hostapd/ctrl_iface.c
+@@ -3194,7 +3194,7 @@ static int hostapd_ctrl_iface_get_capability(struct hostapd_data *hapd,
+ }
+ 
+ 
+-#ifdef ANDROID
++#if defined(ANDROID) || defined(LINUX_EMBEDDED)
+ static int hostapd_ctrl_iface_driver_cmd(struct hostapd_data *hapd, char *cmd,
+ 					 char *buf, size_t buflen)
+ {
+@@ -3208,7 +3208,7 @@ static int hostapd_ctrl_iface_driver_cmd(struct hostapd_data *hapd, char *cmd,
+ 	}
+ 	return ret;
+ }
+-#endif /* ANDROID */
++#endif /* ANDROID || LINUX_EMBEDDED */
+ 
+ 
+ static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
+@@ -3466,9 +3466,6 @@ static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
+ 	} else if (os_strncmp(buf, "REKEY_PTK ", 10) == 0) {
+ 		if (hostapd_ctrl_rekey_ptk(hapd, buf + 10) < 0)
+ 			reply_len = -1;
+-	} else if (os_strcmp(buf, "REKEY_GTK") == 0) {
+-		if (wpa_auth_rekey_gtk(hapd->wpa_auth) < 0)
+-			reply_len = -1;
+ 	} else if (os_strncmp(buf, "GET_PMK ", 8) == 0) {
+ 		reply_len = hostapd_ctrl_get_pmk(hapd, buf + 8, reply,
+ 						 reply_size);
+@@ -3737,11 +3734,14 @@ static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
+ 	} else if (os_strcmp(buf, "PTKSA_CACHE_LIST") == 0) {
+ 		reply_len = ptksa_cache_list(hapd->ptksa, reply, reply_size);
+ #endif /* CONFIG_PASN */
+-#ifdef ANDROID
++#if defined(ANDROID) || defined(LINUX_EMBEDDED)
++	} else if (os_strcmp(buf, "REKEY_GTK") == 0) {
++		if (wpa_auth_rekey_gtk(hapd->wpa_auth) < 0)
++			reply_len = -1;
+ 	} else if (os_strncmp(buf, "DRIVER ", 7) == 0) {
+ 		reply_len = hostapd_ctrl_iface_driver_cmd(hapd, buf + 7, reply,
+ 							  reply_size);
+-#endif /* ANDROID */
++#endif /* ANDROID || LINUX_EMBEDDED */
+ 	} else {
+ 		os_memcpy(reply, "UNKNOWN COMMAND\n", 16);
+ 		reply_len = 16;
+diff --git a/src/ap/ap_drv_ops.h b/src/ap/ap_drv_ops.h
+index 94a3586e..1b32f69f 100644
+--- a/src/ap/ap_drv_ops.h
++++ b/src/ap/ap_drv_ops.h
+@@ -419,7 +419,7 @@ hostapd_drv_set_band(struct hostapd_data *hapd, u32 band_mask)
+ 	return hapd->driver->set_band(hapd->drv_priv, band_mask);
+ }
+ 
+-#ifdef ANDROID
++#if defined(ANDROID) || defined(LINUX_EMBEDDED)
+ static inline int hostapd_drv_driver_cmd(struct hostapd_data *hapd,
+ 					 char *cmd, char *buf, size_t buf_len)
+ {
+@@ -427,7 +427,7 @@ static inline int hostapd_drv_driver_cmd(struct hostapd_data *hapd,
+ 		return -1;
+ 	return hapd->driver->driver_cmd(hapd->drv_priv, cmd, buf, buf_len);
+ }
+-#endif /* ANDROID */
++#endif /* ANDROID || LINUX_EMBEDDED */
+ 
+ #ifdef CONFIG_TESTING_OPTIONS
+ static inline int
+diff --git a/src/ap/wpa_auth.c b/src/ap/wpa_auth.c
+index f450f21a..bc7ef6fc 100644
+--- a/src/ap/wpa_auth.c
++++ b/src/ap/wpa_auth.c
+@@ -6181,6 +6181,14 @@ void wpa_auth_set_enable_eapol_large_timeout(struct wpa_authenticator *wpa_auth,
+ #endif /* CONFIG_TESTING_OPTIONS */
+ 
+ 
++int wpa_auth_rekey_gtk(struct wpa_authenticator *wpa_auth)
++{
++	if (!wpa_auth)
++		return -1;
++	eloop_cancel_timeout(wpa_rekey_gtk, wpa_auth, NULL);
++	return eloop_register_timeout(0, 0, wpa_rekey_gtk, wpa_auth, NULL);
++}
++
+ void wpa_auth_sta_radius_psk_resp(struct wpa_state_machine *sm, bool success)
+ {
+ 	if (!sm->waiting_radius_psk) {
+diff --git a/src/drivers/driver.h b/src/drivers/driver.h
+index 4d853652..2aea30da 100644
+--- a/src/drivers/driver.h
++++ b/src/drivers/driver.h
+@@ -4139,7 +4139,7 @@ struct wpa_driver_ops {
+ 	 */
+ 	int (*set_authmode)(void *priv, int authmode);
+ 
+-#ifdef ANDROID
++#if defined(ANDROID) || defined(LINUX_EMBEDDED)
+ 	/**
+ 	 * driver_cmd - Execute driver-specific command
+ 	 * @priv: Private driver interface data
+@@ -4149,7 +4149,7 @@ struct wpa_driver_ops {
+ 	 * Returns: 0 on success, -1 on failure
+ 	 */
+ 	int (*driver_cmd)(void *priv, char *cmd, char *buf, size_t buf_len);
+-#endif /* ANDROID */
++#endif /* ANDROID || LINUX_EMBEDDED */
+ 
+ 	/**
+ 	 * vendor_cmd - Execute vendor specific command
+diff --git a/src/drivers/driver_nl80211.c b/src/drivers/driver_nl80211.c
+index 79074dc1..a26913e0 100644
+--- a/src/drivers/driver_nl80211.c
++++ b/src/drivers/driver_nl80211.c
+@@ -13533,11 +13533,11 @@ const struct wpa_driver_ops wpa_driver_nl80211_ops = {
+ 	.get_noa = wpa_driver_get_p2p_noa,
+ 	.set_ap_wps_ie = wpa_driver_set_ap_wps_p2p_ie,
+ #endif /* ANDROID_P2P */
+-#ifdef ANDROID
++#if defined(ANDROID) || defined(LINUX_EMBEDDED)
+ #ifndef ANDROID_LIB_STUB
+ 	.driver_cmd = wpa_driver_nl80211_driver_cmd,
+ #endif /* !ANDROID_LIB_STUB */
+-#endif /* ANDROID */
++#endif /* ANDROID || LINUX_EMBEDDED */
+ 	.vendor_cmd = nl80211_vendor_cmd,
+ 	.set_qos_map = nl80211_set_qos_map,
+ 	.get_wowlan = nl80211_get_wowlan,
+diff --git a/src/drivers/driver_nl80211.h b/src/drivers/driver_nl80211.h
+index a7972f99..ddeb41b0 100644
+--- a/src/drivers/driver_nl80211.h
++++ b/src/drivers/driver_nl80211.h
+@@ -328,14 +328,17 @@ int android_nl_socket_set_nonblocking(struct nl_sock *handle);
+ int android_pno_start(struct i802_bss *bss,
+ 		      struct wpa_driver_scan_params *params);
+ int android_pno_stop(struct i802_bss *bss);
++#endif
++
++#if defined(ANDROID) || defined(LINUX_EMBEDDED)
+ extern int wpa_driver_nl80211_driver_cmd(void *priv, char *cmd, char *buf,
+ 					 size_t buf_len);
+ extern int wpa_driver_nl80211_driver_event(struct wpa_driver_nl80211_data *drv,
+ 					   u32 vendor_id, u32 subcmd,
+ 					   u8 *data, size_t len);
++#endif  /* ANDROID || LINUX_EMBEDDED */
+ 
+-
+-#ifdef ANDROID_P2P
++#if defined(ANDROID_P2P) || defined(LINUX_EMBEDDED)
+ int wpa_driver_set_p2p_noa(void *priv, u8 count, int start, int duration);
+ int wpa_driver_get_p2p_noa(void *priv, u8 *buf, size_t len);
+ int wpa_driver_set_p2p_ps(void *priv, int legacy_ps, int opp_ps, int ctwindow);
+@@ -343,7 +346,6 @@ int wpa_driver_set_ap_wps_p2p_ie(void *priv, const struct wpabuf *beacon,
+ 				 const struct wpabuf *proberesp,
+ 				 const struct wpabuf *assocresp);
+ #endif /* ANDROID_P2P */
+-#endif /* ANDROID */
+ 
+ 
+ /* driver_nl80211_scan.c */
+diff --git a/src/drivers/driver_nl80211_event.c b/src/drivers/driver_nl80211_event.c
+index d2c52b02..dfba0bbf 100644
+--- a/src/drivers/driver_nl80211_event.c
++++ b/src/drivers/driver_nl80211_event.c
+@@ -2572,8 +2572,8 @@ static void qca_nl80211_key_mgmt_auth(struct wpa_driver_nl80211_data *drv,
+ 			   tb[QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_PMKID],
+ 			   tb[QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_MLO_LINKS]);
+ 
+-#ifdef ANDROID
+-#ifdef ANDROID_LIB_EVENT
++#if defined(ANDROID) || defined(LINUX_EMBEDDED)
++#if defined(ANDROID_LIB_EVENT) || defined(LINUX_EMBEDDED_LIB_EVENT)
+ 	wpa_driver_nl80211_driver_event(
+ 		drv, OUI_QCA, QCA_NL80211_VENDOR_SUBCMD_KEY_MGMT_ROAM_AUTH,
+ 		data, len);
