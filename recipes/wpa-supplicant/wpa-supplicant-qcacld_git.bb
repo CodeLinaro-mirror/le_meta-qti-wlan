@@ -7,6 +7,7 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 MACHINE_CONFIG = "${BASEMACHINE}"
 MACHINE_CONFIG:pineapple = "kalama"
 MACHINE_CONFIG:qcm2290-mtp = "kalama"
+MACHINE_CONFIG:kera = "kalama"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://external/wpa_supplicant_8/"
@@ -14,12 +15,11 @@ SRC_URI += "file://${MACHINE_CONFIG}/"
 SRC_URI += "file://misc/"
 SRC_URI:append:neo += "file://${BASEMACHINE}/"
 
-DEPENDS += "glib-2.0 wpa-supplicant-8-lib dbus liblog"
-DEPENDS:append:kalama = " qmi-framework "
-DEPENDS:append:sdxlemur = " qmi qmi-framework"
-DEPENDS:append:qrb5165 = " qmi-framework "
-DEPENDS:append:pineapple = " qmi-framework "
-DEPENDS:append:qcm2290-mtp = " qmi-framework "
+DEPENDS += "glib-2.0 wpa-supplicant-8-lib dbus liblog qmi-framework"
+DEPENDS:append:sdxlemur = "qmi"
+DEPENDS:remove:neo = "qmi-framework"
+DEPENDS:remove:ar-sg1 = "qmi-framework"
+
 
 FILES:${PN} += "/usr/include/*"
 
