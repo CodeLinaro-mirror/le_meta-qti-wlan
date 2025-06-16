@@ -37,7 +37,10 @@ WLAN_CONFIG = "qcs40x.snoc.perf"
 KERNEL_VERSION = "${@get_kernelversion_file("${STAGING_KERNEL_BUILDDIR}")}"
 EXT_MODULES = "${@os.path.relpath("${S}", "${KERNEL_PLATFORM_PATH}")}"
 
-do_configure:append:sxrneo() {
+ADDITIONAL_CONFIGS = ""
+ADDITIONAL_CONFIGS:append:qcm2290-mtp = " CONFIG_CP_STATS=y "
+
+do_configure:append:neo() {
     sed -i '1i DYNAMIC_SINGLE_CHIP=${TARGET_WLAN_CHIP}' ${WORKDIR}/wlan/qcacld-3.0/configs/${TARGET_WLAN_CHIP}_defconfig
     sed -i 's/CONFIG_WLAN_FEATURE_COAP := y/#CONFIG_WLAN_FEATURE_COAP := y/g' ${WORKDIR}/wlan/qcacld-3.0/configs/${TARGET_WLAN_CHIP}_defconfig
 }
@@ -69,7 +72,8 @@ do_compile() {
     KERNEL_SUPPORTS_NESTED_COMPOSITES=n \
     CONFIG_CNSS_GENL=m \
     CONFIG_FEATURE_COEX_TPUT_SHAPING_ENABLE=y \
-    KBUILD_EXTRA_SYMBOLS=${STAGING_DIR_HOST}/lib/modules/${KERNEL_VERSION}/cnsswlan-kernel/Module.symvers
+    KBUILD_EXTRA_SYMBOLS=${STAGING_DIR_HOST}/lib/modules/${KERNEL_VERSION}/cnsswlan-kernel/Module.symvers \
+    ${ADDITIONAL_CONFIGS}
 }
 
 do_install() {

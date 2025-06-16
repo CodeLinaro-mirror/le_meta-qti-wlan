@@ -16,8 +16,24 @@ WPA_SUPPLICANT_DIR = "${WORKSPACE}/external/wpa_supplicant_8/"
 EXTRA_OECONF += "WPA_SUPPLICANT_DIR=${WPA_SUPPLICANT_DIR}"
 
 SRC_URI = "file://wlan/qcwcn/wpa_supplicant_8_lib/"
+SRC_URI += "file://misc/"
+
 PACKAGE_ARCH ?= "${MACHINE_ARCH}"
 
 S = "${WORKDIR}/wlan/qcwcn/wpa_supplicant_8_lib"
 
+PATCH_DIR = "${WORKDIR}/wlan/qcwcn/wpa_supplicant_8_lib"
+
 CFLAGS:append= " -fcommon  -lcutils "
+
+do_patch() {
+    cd ${PATCH_DIR}
+
+    if [[ ${MACHINE} == "sxrneo" || ${MACHINE} == "sxrneo-ar-sg1" ]]
+    then
+        bbwarn "============================================================"
+        bbwarn "picking ${WORKDIR}/misc"
+        bbwarn "============================================================"
+        patch -p1 < ${WORKDIR}/misc/0001-wpa_supplicant_8_lib-Remove-deprecated-send_and_recv.patch
+    fi
+}
