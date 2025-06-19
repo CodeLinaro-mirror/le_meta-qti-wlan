@@ -1,7 +1,7 @@
-From ce68370a85513f3335bc92cfe9d560464f5b6f4b Mon Sep 17 00:00:00 2001
+From 3911d911c3530575832427cdada4f44296256fcc Mon Sep 17 00:00:00 2001
 From: Chenming Huang <quic_chenhuan@quicinc.com>
 Date: Sat, 11 Jan 2025 08:49:28 +0530
-Subject: [PATCH 11/13] AP: Add support for 2-link MLO configuration
+Subject: [PATCH] AP: Add support for 2-link MLO configuration
 
 Add support to generate correct link configuration for AP MLD case.
 1. Defines ap_mlo_links to store different links' channel/bandwidth.
@@ -13,12 +13,12 @@ directory as legacy case. Another config use a "_1" suffix.
 Change-Id: I90ba767d9facd2235b2c9b756e4a48a7e8f54028
 Signed-off-by: Chenming Huang <quic_chenhuan@quicinc.com>
 ---
- ap.c        | 276 +++++++++++++++++++++++++++++++++++++---------------
+ ap.c        | 281 +++++++++++++++++++++++++++++++++++++---------------
  sigma_dut.h |  17 ++++
- 2 files changed, 216 insertions(+), 77 deletions(-)
+ 2 files changed, 219 insertions(+), 79 deletions(-)
 
 diff --git a/ap.c b/ap.c
-index da338f5..098c4d6 100644
+index 731b2cd..ecb3cbb 100644
 --- a/ap.c
 +++ b/ap.c
 @@ -123,7 +123,7 @@ static void ath_ap_set_params(struct sigma_dut *dut);
@@ -91,7 +91,7 @@ index da338f5..098c4d6 100644
  	}
  
  	val = get_param(cmd, "CountryCode");
-@@ -1123,6 +1151,9 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+@@ -1123,15 +1151,19 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
  		} else {
  			dut->ap_tag_channel[wlan_tag - 2] = atoi(val);
  		}
@@ -101,7 +101,19 @@ index da338f5..098c4d6 100644
  	}
  
  	val = get_param(cmd, "ChnlFreq");
-@@ -1241,7 +1272,7 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+ 	if (val) {
+ 		int freq = atoi(val);
+ 
+-		if (is_6ghz_freq(freq))
++		if (is_6ghz_freq(freq)) {
+ 			dut->ap_band_6g = 1;
+-		else
++			dut->ap_band = AP_BAND_6GHz;
++		} else
+ 			dut->ap_band_6g = 0;
+ 
+ 		dut->ap_center_freq = 0;
+@@ -1241,7 +1273,7 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
  		break;
  	}
  
@@ -110,7 +122,7 @@ index da338f5..098c4d6 100644
  		dut->use_5g = 1;
  
  	val = get_param(cmd, "WME");
-@@ -1518,25 +1549,48 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+@@ -1518,25 +1550,48 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
  
  	val = get_param(cmd, "WIDTH");
  	if (val) {
@@ -178,7 +190,7 @@ index da338f5..098c4d6 100644
  		}
  	}
  
-@@ -3235,6 +3289,8 @@ static enum sigma_cmd_result cmd_ap_set_security(struct sigma_dut *dut,
+@@ -3243,6 +3298,8 @@ static enum sigma_cmd_result cmd_ap_set_security(struct sigma_dut *dut,
  	val = get_param(cmd, "BeaconProtection");
  	if (val)
  		dut->ap_beacon_prot = atoi(val);
@@ -187,7 +199,7 @@ index da338f5..098c4d6 100644
  
  	val = get_param(cmd, "Transition_Disable");
  	if (val) {
-@@ -8303,7 +8359,7 @@ static void set_ebtables_forward_drop(struct sigma_dut *dut,
+@@ -8313,7 +8370,7 @@ static void set_ebtables_forward_drop(struct sigma_dut *dut,
  }
  
  
@@ -196,7 +208,7 @@ index da338f5..098c4d6 100644
  {
  	int channel_list[] = { 36, 40, 44, 48, 52, 60, 64, 100, 104, 108, 112,
  			       116, 120, 124, 128, 132, 140, 144, 149, 153, 157,
-@@ -8317,7 +8373,7 @@ static int check_channel(struct sigma_dut *dut, int channel)
+@@ -8327,7 +8384,7 @@ static int check_channel(struct sigma_dut *dut, int channel)
  	int num_chan, *chan_list;
  	int i;
  
@@ -205,7 +217,7 @@ index da338f5..098c4d6 100644
  		num_chan = ARRAY_SIZE(chan_list_6g);
  		chan_list = chan_list_6g;
  	} else {
-@@ -8380,15 +8436,15 @@ static int get_6g_ch_op_class(int channel)
+@@ -8390,15 +8447,15 @@ static int get_6g_ch_op_class(int channel)
  
  
  static int get_oper_centr_freq_seq_idx(struct sigma_dut *dut, int chwidth,
@@ -224,7 +236,7 @@ index da338f5..098c4d6 100644
  		return get_oper_center_freq_6g(chwidth, channel);
  
  	if (channel >= 36 && channel <= 64)
-@@ -8825,6 +8881,8 @@ enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
+@@ -8835,6 +8892,8 @@ enum sigma_cmd_result cmd_ap_config_commit(struct sigma_dut *dut,
  	enum driver_type drv;
  	const char *key_mgmt;
  	int conf_counter = 0;
@@ -233,7 +245,7 @@ index da338f5..098c4d6 100644
  	bool append_vht = false;
  	enum ap_mode mode;
  #ifdef ANDROID
-@@ -8885,6 +8943,14 @@ write_conf:
+@@ -8895,6 +8954,14 @@ write_conf:
  		if (run_system_wrapper(dut, "cp %s %s", f1, f2) != 0)
  			sigma_dut_print(dut, DUT_MSG_INFO,
  					"Failed to copy %s to %s", f1, f2);
@@ -248,7 +260,7 @@ index da338f5..098c4d6 100644
  
  #ifdef ANDROID
  		if (chmod(f2, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP) < 0)
-@@ -8897,6 +8963,14 @@ write_conf:
+@@ -8907,6 +8974,14 @@ write_conf:
  					"Error changing groupid");
  #endif /* ANDROID */
  	} else {
@@ -263,7 +275,7 @@ index da338f5..098c4d6 100644
  		ap_conf_path_1[0] = '\0';
  	}
  
-@@ -8948,6 +9022,12 @@ write_conf:
+@@ -8958,6 +9033,12 @@ write_conf:
  					fprintf(f, "hw_mode=a\n");
  				else
  					fprintf(f, "hw_mode=g\n");
@@ -276,7 +288,7 @@ index da338f5..098c4d6 100644
  			} else {
  				fprintf(f, "hw_mode=a\n");
  			}
-@@ -8971,6 +9051,9 @@ write_conf:
+@@ -8981,6 +9062,9 @@ write_conf:
  	    (mode == AP_11ng || mode == AP_11na ||
  	     ((mode == AP_11ax || mode == AP_11be) && !dut->use_5g))) {
  		int ht40plus = 0, ht40minus = 0, tx_stbc = 0;
@@ -286,7 +298,7 @@ index da338f5..098c4d6 100644
  
  		fprintf(f, "ieee80211n=1\n");
  		if (mode == AP_11ax || mode == AP_11be)
-@@ -8979,8 +9062,8 @@ write_conf:
+@@ -8989,8 +9073,8 @@ write_conf:
  			fprintf(f, "ieee80211be=1\n");
  
  		if (mode == AP_11ng &&
@@ -297,7 +309,7 @@ index da338f5..098c4d6 100644
  		      dut->default_11ng_ap_chwidth == AP_40))) {
  			if (dut->ap_channel >= 1 && dut->ap_channel <= 7)
  				ht40plus = 1;
-@@ -8991,8 +9074,8 @@ write_conf:
+@@ -9001,8 +9085,8 @@ write_conf:
  
  		/* configure ht_capab based on channel width */
  		if (mode == AP_11na &&
@@ -308,7 +320,7 @@ index da338f5..098c4d6 100644
  		      dut->default_11na_ap_chwidth == AP_40))) {
  			if (is_ht40plus_chan(dut->ap_channel))
  				ht40plus = 1;
-@@ -9004,11 +9087,11 @@ write_conf:
+@@ -9014,11 +9098,11 @@ write_conf:
  			tx_stbc = 1;
  
  		/* Overwrite the ht_capab with offset value if configured */
@@ -322,7 +334,7 @@ index da338f5..098c4d6 100644
  			   dut->ap_chwidth_offset == SEC_CH_40BELOW) {
  			ht40minus = 1;
  			ht40plus = 0;
-@@ -9025,6 +9108,12 @@ write_conf:
+@@ -9035,6 +9119,12 @@ write_conf:
  	    (mode == AP_11ac ||
  	    ((mode == AP_11ax || mode == AP_11be) && dut->use_5g))) {
  		int ht40plus = 0, ht40minus = 0;
@@ -335,7 +347,7 @@ index da338f5..098c4d6 100644
  
  		fprintf(f, "ieee80211ac=1\n"
  			"ieee80211n=1\n");
-@@ -9034,10 +9123,10 @@ write_conf:
+@@ -9044,10 +9134,10 @@ write_conf:
  			fprintf(f, "ieee80211be=1\n");
  
  		/* configure ht_capab based on channel width */
@@ -349,7 +361,7 @@ index da338f5..098c4d6 100644
  				ht40minus = 1;
  
  			fprintf(f, "ht_capab=%s%s\n",
-@@ -9094,18 +9183,23 @@ write_conf:
+@@ -9104,18 +9194,23 @@ write_conf:
  
  		fprintf(f, "mld_ap=1\n");
  		/* Use the same MLD and link MAC address */
@@ -380,7 +392,7 @@ index da338f5..098c4d6 100644
  		if (if_nametoindex(ifname2) == 0) {
  			if (ap_create_or_remove_interface(dut, ifname2, true)
  			    >= 0) {
-@@ -9124,19 +9218,27 @@ write_conf:
+@@ -9134,19 +9229,27 @@ write_conf:
  	if (dut->bridge)
  		fprintf(f, "bridge=%s\n", dut->bridge);
  
@@ -415,7 +427,7 @@ index da338f5..098c4d6 100644
  
  	if (dut->ap_ssid[0] && conf_counter == 0)
  		fprintf(f, "ssid=%s\n", dut->ap_ssid);
-@@ -9737,13 +9839,27 @@ skip_key_mgmt:
+@@ -9747,13 +9850,27 @@ skip_key_mgmt:
  	      dut->program == PROGRAM_WPA3) &&
  	     dut->use_5g)) {
  		int vht_oper_centr_freq_idx;
@@ -445,7 +457,7 @@ index da338f5..098c4d6 100644
  
  				if (conf_counter)
  					chan = dut->ap_tag_channel[0];
-@@ -9758,7 +9874,7 @@ skip_key_mgmt:
+@@ -9768,7 +9885,7 @@ skip_key_mgmt:
  		if (!append_vht)
  			goto skip_vht_parameters_set;
  
@@ -454,7 +466,7 @@ index da338f5..098c4d6 100644
  			send_resp(dut, conn, SIGMA_INVALID,
  				  "errorCode,Invalid channel");
  			fclose(f);
-@@ -9771,42 +9887,42 @@ skip_key_mgmt:
+@@ -9781,42 +9898,42 @@ skip_key_mgmt:
  			goto set_center_freq_idx_conf;
  		}
  
@@ -504,7 +516,7 @@ index da338f5..098c4d6 100644
  			break;
  		}
  
-@@ -9827,11 +9943,10 @@ set_center_freq_idx_conf:
+@@ -9837,11 +9954,10 @@ set_center_freq_idx_conf:
  				vht_oper_centr_freq_idx);
  		}
  
@@ -517,7 +529,7 @@ index da338f5..098c4d6 100644
  		find_ap_ampdu_exp_and_max_mpdu_len(dut);
  
  		if (append_vht &&
-@@ -9839,9 +9954,9 @@ set_center_freq_idx_conf:
+@@ -9849,9 +9965,9 @@ set_center_freq_idx_conf:
  		     dut->ap_ldpc != VALUE_NOT_SET ||
  		     dut->ap_tx_stbc == VALUE_ENABLED || dut->ap_mu_txBF ||
  		     dut->ap_ampdu_exp || dut->ap_max_mpdu_len ||
@@ -530,7 +542,7 @@ index da338f5..098c4d6 100644
  			fprintf(f, "vht_capab=%s%s%s%s%s%s",
  				dut->ap_sgi80 ? "[SHORT-GI-80]" : "",
  				dut->ap_txBF ?
-@@ -9851,9 +9966,9 @@ set_center_freq_idx_conf:
+@@ -9861,9 +9977,9 @@ set_center_freq_idx_conf:
  				(dut->ap_tx_stbc == VALUE_ENABLED) ?
  				"[TX-STBC-2BY1]" : "",
  				dut->ap_mu_txBF ? "[MU-BEAMFORMER]" : "",
@@ -543,7 +555,7 @@ index da338f5..098c4d6 100644
  				 "[VHT160-80PLUS80]" : ""));
  
  			if (dut->ap_ampdu_exp)
-@@ -9973,7 +10088,7 @@ skip_vht_parameters_set:
+@@ -9983,7 +10099,7 @@ skip_vht_parameters_set:
  	}
  	fclose(f);
  
@@ -552,7 +564,7 @@ index da338f5..098c4d6 100644
  		conf_counter++;
  		goto write_conf;
  	}
-@@ -10076,8 +10191,8 @@ skip_vht_parameters_set:
+@@ -10086,8 +10202,8 @@ skip_vht_parameters_set:
  			 dut->use_hostapd_pid_file ?
  			 " -P " SIGMA_DUT_HOSTAPD_PID_FILE : "",
  			 dut->sigma_tmpdir,
@@ -563,7 +575,7 @@ index da338f5..098c4d6 100644
  	}
  
  	sigma_dut_print(dut, DUT_MSG_DEBUG, "hostapd command: %s", buf);
-@@ -10763,6 +10878,9 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+@@ -10773,6 +10889,9 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
  		dut->ap_tag_channel[i] = 0;
  	}
  
@@ -573,7 +585,7 @@ index da338f5..098c4d6 100644
  	drv = get_driver_type(dut);
  
  	program = get_param(cmd, "program");
-@@ -10787,6 +10905,7 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+@@ -10797,6 +10916,7 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
  	dut->ap_addba_reject = VALUE_NOT_SET;
  	dut->ap_noack = VALUE_NOT_SET;
  	dut->ap_is_dual = 0;
@@ -581,7 +593,7 @@ index da338f5..098c4d6 100644
  	dut->ap_mode = AP_inval;
  	dut->ap_mode_1 = AP_inval;
  	dut->ap_channel_1 = 0;
-@@ -10805,6 +10924,7 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+@@ -10815,6 +10935,7 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
  	dut->ap_ampdu_exp = 0;
  	dut->ap_max_mpdu_len = 0;
  	dut->ap_band_6g = 0;
@@ -589,7 +601,7 @@ index da338f5..098c4d6 100644
  	dut->ap_punct_bitmap = 0;
  	dut->ap_center_freq = 0;
  
-@@ -10821,6 +10941,7 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+@@ -10831,6 +10952,7 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
  	dut->ft_bss_mac_cnt = 0;
  	dut->ap_interface_5g = 0;
  	dut->ap_interface_2g = 0;
@@ -597,7 +609,7 @@ index da338f5..098c4d6 100644
  	dut->ap_pmf = AP_PMF_DISABLED;
  
  	dut->wsc_fragment = 0;
-@@ -14894,7 +15015,8 @@ static int hostapd_chan_switch(struct sigma_dut *dut, const char *ifname,
+@@ -14910,7 +15032,8 @@ static int hostapd_chan_switch(struct sigma_dut *dut, const char *ifname,
  								    is_6g);
  			center_freq_idx = get_oper_centr_freq_seq_idx(dut,
  								      chwidth,
@@ -607,7 +619,7 @@ index da338f5..098c4d6 100644
  		} else {
  			sec_channel_offset = 1;
  			center_freq_idx = channel + 10;
-@@ -15228,7 +15350,7 @@ static int mac80211_vht_chnum_band(struct sigma_dut *dut, const char *ifname,
+@@ -15307,7 +15430,7 @@ static int mac80211_vht_chnum_band(struct sigma_dut *dut, const char *ifname,
  	if (result)
  		chwidth = atoi(result);
  
@@ -616,7 +628,7 @@ index da338f5..098c4d6 100644
  	if (center_freq_idx < 0) {
  		free(token);
  		return -1;
-@@ -15278,7 +15400,7 @@ mac80211_he_tx_bandwidth(struct sigma_dut *dut, struct sigma_conn *conn,
+@@ -15357,7 +15480,7 @@ mac80211_he_tx_bandwidth(struct sigma_dut *dut, struct sigma_conn *conn,
  
  	width = atoi(val);
  	center_freq_idx = get_oper_centr_freq_seq_idx(dut, width,
@@ -626,10 +638,10 @@ index da338f5..098c4d6 100644
  		return ERROR_SEND_STATUS;
  
 diff --git a/sigma_dut.h b/sigma_dut.h
-index 929d4ad..beac284 100644
+index c32f0c9..2a8f4a0 100644
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
-@@ -527,6 +527,19 @@ struct mdnss_discovery_info {
+@@ -538,6 +538,19 @@ struct mdnss_discovery_info {
  };
  #endif /* ANDROID_MDNS */
  
@@ -649,7 +661,7 @@ index 929d4ad..beac284 100644
  enum sigma_akm_suites {
  	SIGMA_AKM_WPA_PSK = 0,
  	SIGMA_AKM_FT_PSK,
-@@ -598,10 +611,12 @@ struct sigma_dut {
+@@ -609,10 +622,12 @@ struct sigma_dut {
  	char *p2p_ifname_buf;
  	int use_5g;
  	int ap_band_6g;
@@ -662,7 +674,7 @@ index 929d4ad..beac284 100644
  
  	int s; /* server TCP socket */
  	int debug_level;
-@@ -927,6 +942,7 @@ struct sigma_dut {
+@@ -938,6 +953,7 @@ struct sigma_dut {
  	int ap_name;
  	int ap_interface_5g;
  	int ap_interface_2g;
@@ -670,7 +682,7 @@ index 929d4ad..beac284 100644
  	int ap_assoc_delay;
  	int ap_btmreq_bss_term_tsf;
  	int ap_fils_dscv_int;
-@@ -1045,6 +1061,7 @@ struct sigma_dut {
+@@ -1057,6 +1073,7 @@ struct sigma_dut {
  	const char *set_macaddr;
  	int tmp_mac_addr;
  	int ap_is_dual;
