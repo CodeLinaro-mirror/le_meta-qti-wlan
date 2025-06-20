@@ -14,6 +14,8 @@ QCACLD32-LL:qcs610-odk-64 = "qcacld32-ll-qcs610"
 WLAN_PLATFORM=""
 WLAN_PLATFORM:qcs610-odk-64="wlan-platform"
 
+RDEPENDS:packagegroup-qti-wifi:append:qcs610-odk-64 = "tcpdump rfkill dnsmasq dhcpcd iperf2 iperf3"
+
 RDEPENDS:packagegroup-qti-wifi = " \
         ${QCACLD32-LL} \
         iw \

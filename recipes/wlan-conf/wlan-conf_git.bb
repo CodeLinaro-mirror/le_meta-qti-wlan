@@ -10,7 +10,6 @@ SRC_URI = "file://mdm-init/"
 SRC_URI += "file://wlan_daemon.service"
 SRC_URI += "file://cnss.service"
 SRC_URI:append:qcs610-odk-64+= "file://qcs610/wlan_daemon.service"
-SRC_URI:append:qcs610-odk-64+= "file://qcs610/wlan-conf_systemd_tmpfiles.conf"
 
 # Update for each machine
 S = "${WORKDIR}/mdm-init/"
@@ -69,10 +68,6 @@ do_install:append(){
 
 do_install:append:qcs610-odk-64(){
 	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
-		#systemd-tmpfiles service for wlan-conf
-		install -d ${D}${sysconfdir}/tmpfiles.d
-		install -m 0644 ${WORKDIR}/qcs610/wlan-conf_systemd_tmpfiles.conf \
-				-D ${D}${sysconfdir}/tmpfiles.d/wlan-conf_systemd_tmpfiles.conf
 		install -d ${D}/etc/initscripts
 		cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
 		install -d ${D}/etc/systemd/system/
