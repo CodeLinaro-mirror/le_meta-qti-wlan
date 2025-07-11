@@ -38,7 +38,7 @@ After=persist.mount firmware-links.service usb.service
 Restart=no
 RemainAfterExit=yes
 ExecStart=/etc/initscripts/wlan start
-Type=oneshot
+Type=simple
 ExecStop=/etc/initscripts/wlan stop
 
 [Install]
