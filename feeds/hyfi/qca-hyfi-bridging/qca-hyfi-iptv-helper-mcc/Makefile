@@ -34,7 +34,7 @@ define KernelPackage/qca-hyfi-iptv-helper-mcc
   URL:=http://www.qca.qualcomm.com
   MAINTAINER:=Qualcomm Atheros, Inc.
   TITLE:=IPTV on Wireless Interface Netfilter Module
-  DEPENDS:=@$(WIFI_PKGS) +kmod-bridge
+  DEPENDS:=@$(WIFI_PKGS)
   KCONFIG:= \
     CONFIG_NETFILTER=y \
     CONFIG_BRIDGE_NETFILTER=y
