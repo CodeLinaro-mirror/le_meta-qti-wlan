@@ -9,7 +9,7 @@ FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://mdm-init/"
 SRC_URI += "file://wlan_daemon.service"
 SRC_URI += "file://cnss.service"
-SRC_URI:append:qcs610-odk-64+= "file://qcs610/wlan_daemon.service"
+# SRC_URI:append:qcs610-odk-64+= "file://qcs610/wlan_daemon.service"
 
 # Update for each machine
 S = "${WORKDIR}/mdm-init/"
@@ -70,11 +70,11 @@ do_install:append:qcs610-odk-64(){
 	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
 		install -d ${D}/etc/initscripts
 		cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
-		install -d ${D}/etc/systemd/system/
-		install -m 0644 ${WORKDIR}/qcs610/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
-		install -d ${D}/etc/systemd/system/multi-user.target.wants/
-		ln -sf /etc/systemd/system/wlan_daemon.service \
-			${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
+#		install -d ${D}/etc/systemd/system/
+#		install -m 0644 ${WORKDIR}/qcs610/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
+#		install -d ${D}/etc/systemd/system/multi-user.target.wants/
+#		ln -sf /etc/systemd/system/wlan_daemon.service \
+#			${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
 		install -d ${D}/etc/systemd/network/
 		ln -sf /dev/null ${D}/etc/systemd/network/99-default.link
 		install -d ${D}/etc/misc/wifi/
