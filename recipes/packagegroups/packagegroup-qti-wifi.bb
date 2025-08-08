@@ -17,6 +17,7 @@ QCACLD32_LL:pineapple="qcacld32-ll-kiwi"
 QCACLD32_LL:qcm2290-mtp="${@bb.utils.contains('DEBUG_BUILD', '1', "qcacld32-ll-debug", "qcacld32-ll-qcs40x", d)}"
 QCACLD32_LL:ar-sg1="qcacld32-ar-sg1"
 QCACLD32_LL:kera="qcacld32-ll-debug"
+QCACLD32_LL:sun="qcacld32-ll-peach"
 
 # default WLAN and network software package
 RDEPENDS:packagegroup-qti-wifi:append = "iw rfkill dnsmasq iperf2 iperf3"
