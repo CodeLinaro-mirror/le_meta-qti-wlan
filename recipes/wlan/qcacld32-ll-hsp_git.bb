@@ -214,6 +214,9 @@ _WLAN_CFG_OVERRIDE_525 = "\
 						CONFIG_IPA_P2P_SUPPORT=y \
 						"
 
+_WLAN_CFG_OVERRIDE_510 = "\
+						CONFIG_FEATURE_SET=y \
+						"
 EXTRA_OEMAKE:append:sa515m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_515}"
 EXTRA_OEMAKE:append:sa525m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_525}"
 
@@ -242,6 +245,19 @@ FILES:${PN}     += "${bindir}/init.qti.wlan_on.sh"
 FILES:${PN}     += "${bindir}/init.qti.wlan_off.sh"
 
 EXT_MODULES = "${@os.path.relpath("${S}", "${KERNEL_PLATFORM_PATH}")}"
+
+do_compile:sa510m:prepend() {
+    CFG_FILE=${S}/configs/sa510m_gki_qca6490_defconfig
+    for cfg in ${_WLAN_CFG_OVERRIDE_510}
+    do
+        item="${cfg%=*}"
+        if (( `grep -c "$item" ${CFG_FILE}` )); then
+            sed -i "/$item/c\\$cfg" "${CFG_FILE}"
+        else
+            echo "$cfg" >> ${CFG_FILE}
+        fi
+    done
+}
 
 do_compile:prepend() {
     if ${@bb.utils.contains('PREFERRED_VERSION_linux-msm', '5.15', 'true', 'false', d)}; then
