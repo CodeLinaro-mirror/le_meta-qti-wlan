@@ -8,6 +8,7 @@ MACHINE_CONFIG = "${BASEMACHINE}"
 MACHINE_CONFIG:pineapple = "kalama"
 MACHINE_CONFIG:qcm2290-mtp = "kalama"
 MACHINE_CONFIG:kera = "kalama"
+MACHINE_CONFIG:sun = "kalama"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://external/wpa_supplicant_8/"

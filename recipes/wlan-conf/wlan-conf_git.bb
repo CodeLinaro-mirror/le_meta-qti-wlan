@@ -179,6 +179,15 @@ do_install:append:kera(){
 	fi
 }
 
+do_install:append:sun(){
+	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
+		do_install_common_service
+		install -d ${D}/etc/systemd/network/
+		ln -sf /dev/null ${D}/etc/systemd/network/99-default.link
+		install -d ${D}/etc/misc/wifi/
+	fi
+}
+
 FILES:${PN} += "${userfsdatadir}/misc/wifi/*"
 FILES:${PN} += "${base_libdir}/firmware/wlan/qca_cld/*"
 FILES:${PN} += "${sysconfdir}/init.d/* "
