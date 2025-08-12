@@ -106,6 +106,9 @@ _WLAN_CFG_OVERRIDE_525 = "\
 						CONFIG_AUTO_PLATFORM=y \
                         "
 
+_WLAN_CFG_OVERRIDE_510 = "\
+						CONFIG_SHUTDOWN_WLAN_IN_SYSTEM_SUSPEND=y \
+						"
 EXTRA_OEMAKE:append:sdxpoorwills = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_415}"
 EXTRA_OEMAKE:append:sa515m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_515}"
 EXTRA_OEMAKE:append:sa410m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_410}"
@@ -141,6 +144,19 @@ SRC_URI:append = " file://init.qti.wlan_off.sh"
 
 
 EXT_MODULES = "${@os.path.relpath("${S}", "${KERNEL_PLATFORM_PATH}")}"
+
+do_compile:sa510m:prepend() {
+    CFG_FILE=${S}/configs/sa510m_gki_qca6574_defconfig
+    for cfg in ${_WLAN_CFG_OVERRIDE_510}
+    do
+        item="${cfg%=*}"
+        if (( `grep -c "$item" ${CFG_FILE}` )); then
+            sed -i "/$item/c\\$cfg" "${CFG_FILE}"
+        else
+            echo "$cfg" >> ${CFG_FILE}
+        fi
+    done
+}
 
 do_compile:prepend() {
     if ${@bb.utils.contains('PREFERRED_VERSION_linux-msm', '5.15', 'true', 'false', d)}; then
