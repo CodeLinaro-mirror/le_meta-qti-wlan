@@ -91,6 +91,8 @@ do_install:append:sa515m(){
 do_install:append:sa510m(){
         install -d ${D}/etc/misc/wifi
         install -m 0644 ${S}/qcom/wlan/sdx_auto/*.conf ${D}/etc/misc/wifi
+        chown -h 1001:1001 ${D}/etc/misc/wifi
+        chown -h 1001:1001 ${D}/etc/misc/wifi/*.conf
         install -d ${FIRMWARE_PATH_ROME}
         install -D -m 0644 ${S}/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6174.ini ${FIRMWARE_PATH_ROME}/WCNSS_qcom_cfg.ini
         chmod -R 0664 ${FIRMWARE_PATH_ROME}/WCNSS_qcom_cfg.ini
