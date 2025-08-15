@@ -1,12 +1,16 @@
 inherit linux-kernel-base deploy
 
 DESCRIPTION = "Qualcomm Technologies, Inc. WLAN CLD3.0 low latency driver"
-LICENSE = "ISC & BSD-3-Clause & GPL-V2"
+LICENSE = "ISC & BSD-3-Clause & GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/ISC;md5=f3b90e78ea0cffb20bf5cca7947a896d \
                     file://${COREBASE}/meta/files/common-licenses/BSD-3-Clause;md5=550794465ba0ec5312d6919e203a55f9 \
                     file://${COREBASE}/meta/files/common-licenses/GPL-2.0-only;md5=801f80980d171dd6425610833a22dbe6"
 
-MODULE_NAME = "wlan_debug"
+TARGET_WLAN_CHIP:kera = "wcn7750"
+MODULE_NAME = "wlan"
+
+MACHINE_CONFIG = "${BASEMACHINE}"
+MACHINE_CONFIG:kera = "sun"
 
 do_unpack[deptask] = "do_populate_sysroot"
 PR = "r8"
@@ -23,7 +27,7 @@ FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/qcacld-3.0/"
 SRC_URI += "file://wlan/qca-wifi-host-cmn/"
 SRC_URI += "file://wlan/fw-api/"
-SRC_URI += "file://device/qcom/wlan/${BASEMACHINE}/"
+SRC_URI += "file://device/qcom/wlan/${MACHINE_CONFIG}/"
 SRC_URI += "file://wlan_load.conf"
 SRC_URI += "file://wlan/platform/"
 
@@ -31,7 +35,7 @@ S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn"
 S = "${WORKDIR}/wlan/qcacld-3.0"
 FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld/${TARGET_WLAN_CHIP}"
 
-WLAN_CONFIG = "default"
+WLAN_CONFIG = "${TARGET_WLAN_CHIP}"
 
 KERNEL_VERSION = "${@get_kernelversion_file("${STAGING_KERNEL_BUILDDIR}")}"
 EXT_MODULES = "${@os.path.relpath("${S}", "${KERNEL_PLATFORM_PATH}")}"
@@ -69,7 +73,7 @@ do_compile() {
     KERNEL_SUPPORTS_NESTED_COMPOSITES=n \
     BUILD_DEBUG_VERSION=y \
     CONFIG_CNSS_GENL=m \
-    KBUILD_EXTRA_SYMBOLS=${STAGING_DIR_HOST}/lib/modules/${KERNEL_VERSION}/cnsswlan-kernel/Module.symvers
+    KBUILD_EXTRA_SYMBOLS=${STAGING_DIR_HOST}/usr/lib/modules/${KERNEL_VERSION}/cnsswlan-kernel/Module.symvers
 }
 
 do_install() {

@@ -7,28 +7,15 @@ PR = "r3"
 DEPENDS += "virtual/kernel"
 
 FILESPATH =+ "${WORKSPACE}:"
+MACHINE_CONFIG = "${BASEMACHINE}"
+MACHINE_CONFIG:kera = "sun"
+
 # Provide a baseline
-SRC_URI = "file://mdm-init/"
-SRC_URI += "file://wlan_daemon.service"
-SRC_URI += "file://cnss.service"
-SRC_URI += "file://device/qcom/wlan/${BASEMACHINE}/"
-SRC_URI:append:neo+= "file://neo/dhcpcd.service"
-SRC_URI:append:neo+= "file://neo/wlan_daemon.service"
-SRC_URI:append:neo+= "file://neo/wpa_supplicant.service"
-SRC_URI:append:neo+= "file://neo/wlan-conf_systemd_tmpfiles.conf"
-SRC_URI:append:neo+= "file://neo/fi.w1.wpa_supplicant1.service"
-SRC_URI:append:neo+= "file://neo/dbus-wpa_supplicant.conf"
-SRC_URI:append:neo+= "file://neo/dbus-wpa_supplicant_testing.conf"
-SRC_URI:append:kalama+= "file://neo/wlan_daemon.service"
-SRC_URI:append:kalama+= "file://neo/wlan-conf_systemd_tmpfiles.conf"
-SRC_URI:append:qrb5165+= "file://neo/wlan_daemon.service"
-SRC_URI:append:qrb5165+= "file://neo/wlan-conf_systemd_tmpfiles.conf"
-SRC_URI:append:qcs40x+= "file://neo/wlan_daemon.service"
-SRC_URI:append:qcs40x+= "file://neo/wlan-conf_systemd_tmpfiles.conf"
-SRC_URI:append:pineapple+= "file://neo/wlan_daemon.service"
-SRC_URI:append:pineapple+= "file://neo/wlan-conf_systemd_tmpfiles.conf"
-SRC_URI:append:qcm2290-mtp+= "file://neo/wlan_daemon.service"
-SRC_URI:append:qcm2290-mtp+= "file://neo/wlan-conf_systemd_tmpfiles.conf"
+SRC_URI = "file://mdm-init/ \
+           file://wlan_daemon.service \
+           file://cnss.service \
+           file://device/qcom/wlan/${MACHINE_CONFIG} \
+           file://neo"
 
 # Update for each machine
 S = "${WORKDIR}/mdm-init/"
@@ -61,7 +48,7 @@ do_install:append:sdxlemur(){
 			install -m 0644 ${WORKDIR}/cnss.service -D ${D}/etc/systemd/system/cnss.service
 			install -d ${D}/etc/systemd/system/multi-user.target.wants/
 			ln -sf /etc/systemd/system/cnss.service \
-					${D}/etc/systemd/system/multi-user.target.wants/cnss.service
+                                      ${D}/etc/systemd/system/multi-user.target.wants/cnss.service
 			rm -rf ${D}/etc/init.d/start_cnss_le
 		fi
 
@@ -69,39 +56,46 @@ do_install:append:sdxlemur(){
 	fi
 }
 
-do_install:append:msm(){
-  if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
-      install -d ${D}/etc/initscripts
-      cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
-      install -d ${D}/etc/systemd/system/
-      install -d ${D}/etc/systemd/system/multi-user.target.wants/
-    if ${@bb.utils.contains('BASEMACHINE', 'apq8009', bb.utils.contains('BASEPRODUCT', 'qsap', 'false', 'true', d), 'true', d)}; then
-        install -m 0644 ${WORKDIR}/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
-        # enable the service for multi-user.target
-        ln -sf /etc/systemd/system/wlan_daemon.service \
-           ${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
-    fi
-  else
-    if ${@bb.utils.contains('BASEMACHINE', 'apq8009', bb.utils.contains('BASEPRODUCT', 'qsap', 'false', 'true', d), 'true', d)}; then
-        install -m 0755 ${S}/wlan_daemon -D ${D}${sysconfdir}/init.d/wlan_daemon
-    fi
-  fi
+do_install:msm() {
+       APQ8009_NON_QSAP="${@bb.utils.contains('BASEMACHINE', 'apq8009', \
+                       bb.utils.contains('BASEPRODUCT', 'qsap', 'false', 'true', d), 'true', d)}"
+
+       if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
+               install -d ${D}/etc/initscripts
+               cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
+               install -d ${D}/etc/systemd/system/
+               install -d ${D}/etc/systemd/system/multi-user.target.wants/
+               if [ "$APQ8009_NON_QSAP" = "true" ]; then
+                       install -m 0644 ${WORKDIR}/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
+                       ln -sf /etc/systemd/system/wlan_daemon.service \
+                               ${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
+               fi
+       else
+               if [ "$APQ8009_NON_QSAP" = "true" ]; then
+                       install -m 0755 ${S}/wlan_daemon -D ${D}${sysconfdir}/init.d/wlan_daemon
+               fi
+       fi
+}
+
+do_install_common_service(){
+	# Install common systemd dirs
+	install -d ${D}${sysconfdir}/tmpfiles.d
+	install -d ${D}/etc/initscripts
+	install -d ${D}/etc/systemd/system/
+	install -d ${D}/etc/systemd/system/multi-user.target.wants/
+	# Install common systemd files
+	install -m 0644 ${WORKDIR}/neo/wlan-conf_systemd_tmpfiles.conf \
+		-D ${D}${sysconfdir}/tmpfiles.d/wlan-conf_systemd_tmpfiles.conf
+	cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
+	install -m 0644 ${WORKDIR}/neo/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
+	ln -sf /etc/systemd/system/wlan_daemon.service ${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
 }
 
 do_install:append:neo(){
 	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
 		if grep -q "CONFIG_ICNSS2=m" ${STAGING_KERNEL_BUILDDIR}/.config
 		then
-			#systemd-tmpfiles service for wlan-conf
-			install -d ${D}${sysconfdir}/tmpfiles.d
-			install -m 0644 ${WORKDIR}/neo/wlan-conf_systemd_tmpfiles.conf \
-				-D ${D}${sysconfdir}/tmpfiles.d/wlan-conf_systemd_tmpfiles.conf
-			install -d ${D}/etc/initscripts
-			cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
-			install -d ${D}/etc/systemd/system/
-			install -d ${D}/etc/systemd/system/multi-user.target.wants/
-			install -m 0644 ${WORKDIR}/neo/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
-			ln -sf /etc/systemd/system/wlan_daemon.service ${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
+			do_install_common_service
 			install -m 0644 ${WORKDIR}/neo/dhcpcd.service -D ${D}/etc/systemd/system/dhcpcd.service
 			ln -sf /etc/systemd/system/dhcpcd.service ${D}/etc/systemd/system/multi-user.target.wants/dhcpcd.service
 			install -m 0644 ${WORKDIR}/neo/wpa_supplicant.service -D ${D}/etc/systemd/system/wpa_supplicant.service
@@ -120,17 +114,7 @@ do_install:append:neo(){
 
 do_install:append:kalama(){
 	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
-		#systemd-tmpfiles service for wlan-conf
-		install -d ${D}${sysconfdir}/tmpfiles.d
-		install -m 0644 ${WORKDIR}/neo/wlan-conf_systemd_tmpfiles.conf \
-				-D ${D}${sysconfdir}/tmpfiles.d/wlan-conf_systemd_tmpfiles.conf
-		install -d ${D}/etc/initscripts
-		cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
-		install -d ${D}/etc/systemd/system/
-		install -m 0644 ${WORKDIR}/neo/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
-		install -d ${D}/etc/systemd/system/multi-user.target.wants/
-		ln -sf /etc/systemd/system/wlan_daemon.service \
-			${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
+		do_install_common_service
 		install -d ${D}/etc/systemd/network/
 		ln -sf /dev/null ${D}/etc/systemd/network/99-default.link
 		install -d ${D}/etc/misc
@@ -140,16 +124,7 @@ do_install:append:kalama(){
 
 do_install:append:qrb5165(){
 	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
-		install -d ${D}${sysconfdir}/tmpfiles.d
-		install -m 0644 ${WORKDIR}/neo/wlan-conf_systemd_tmpfiles.conf \
-				-D ${D}${sysconfdir}/tmpfiles.d/wlan-conf_systemd_tmpfiles.conf
-		install -d ${D}/etc/initscripts
-		cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
-		install -d ${D}/etc/systemd/system/
-		install -m 0644 ${WORKDIR}/neo/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
-		install -d ${D}/etc/systemd/system/multi-user.target.wants/
-		ln -sf /etc/systemd/system/wlan_daemon.service \
-			${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
+		do_install_common_service
 		install -d ${D}/etc/systemd/network/
 		ln -sf /dev/null ${D}/etc/systemd/network/99-default.link
 	fi
@@ -157,15 +132,7 @@ do_install:append:qrb5165(){
 
 do_install:append:qcs40x(){
 	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
-		#systemd-tmpfiles service for wlan-conf
-		install -d ${D}${sysconfdir}/tmpfiles.d
-		install -m 0644 ${WORKDIR}/neo/wlan-conf_systemd_tmpfiles.conf \
-				-D ${D}${sysconfdir}/tmpfiles.d/wlan-conf_systemd_tmpfiles.conf
-		install -d ${D}/etc/systemd/system/
-		install -m 0644 ${WORKDIR}/neo/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
-		install -d ${D}/etc/systemd/system/multi-user.target.wants/
-		ln -sf /etc/systemd/system/wlan_daemon.service \
-			${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
+		do_install_common_service
 		install -d ${D}/etc/systemd/network/
 		ln -sf /dev/null ${D}/etc/systemd/network/99-default.link
 		install -d ${D}/etc/misc/wifi/
@@ -174,17 +141,7 @@ do_install:append:qcs40x(){
 
 do_install:append:pineapple(){
 	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
-		#systemd-tmpfiles service for wlan-conf
-		install -d ${D}${sysconfdir}/tmpfiles.d
-		install -m 0644 ${WORKDIR}/neo/wlan-conf_systemd_tmpfiles.conf \
-				-D ${D}${sysconfdir}/tmpfiles.d/wlan-conf_systemd_tmpfiles.conf
-		install -d ${D}/etc/initscripts
-		cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
-		install -d ${D}/etc/systemd/system/
-		install -m 0644 ${WORKDIR}/neo/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
-		install -d ${D}/etc/systemd/system/multi-user.target.wants/
-		ln -sf /etc/systemd/system/wlan_daemon.service \
-			${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
+		do_install_common_service
 		install -d ${D}/etc/systemd/network/
 		ln -sf /dev/null ${D}/etc/systemd/network/99-default.link
 		install -d ${D}/etc/misc
@@ -194,17 +151,7 @@ do_install:append:pineapple(){
 
 do_install:append:qcm2290-mtp(){
 	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
-		#systemd-tmpfiles service for wlan-conf
-		install -d ${D}${sysconfdir}/tmpfiles.d
-		install -m 0644 ${WORKDIR}/neo/wlan-conf_systemd_tmpfiles.conf \
-				-D ${D}${sysconfdir}/tmpfiles.d/wlan-conf_systemd_tmpfiles.conf
-		install -d ${D}/etc/initscripts
-		cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
-		install -d ${D}/etc/systemd/system/
-		install -m 0644 ${WORKDIR}/neo/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
-		install -d ${D}/etc/systemd/system/multi-user.target.wants/
-		ln -sf /etc/systemd/system/wlan_daemon.service \
-			${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
+		do_install_common_service
 		install -d ${D}/etc/systemd/network/
 		ln -sf /dev/null ${D}/etc/systemd/network/99-default.link
 		install -d ${D}/etc/misc/wifi/
@@ -213,17 +160,7 @@ do_install:append:qcm2290-mtp(){
 
 do_install:append:ar-sg1(){
 	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
-		#systemd-tmpfiles service for wlan-conf
-		install -d ${D}${sysconfdir}/tmpfiles.d
-		install -m 0644 ${WORKDIR}/neo/wlan-conf_systemd_tmpfiles.conf \
-			-D ${D}${sysconfdir}/tmpfiles.d/wlan-conf_systemd_tmpfiles.conf
-		install -d ${D}/etc/initscripts
-		cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
-		install -d ${D}/etc/systemd/system/
-		install -d ${D}/etc/systemd/system/multi-user.target.wants/
-		install -m 0644 ${WORKDIR}/neo/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
-		ln -sf /etc/systemd/system/wlan_daemon.service ${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
-		install -m 0644 ${WORKDIR}/neo/dhcpcd.service -D ${D}/etc/systemd/system/dhcpcd.service
+		do_install_common_service
 		ln -sf /etc/systemd/system/dhcpcd.service ${D}/etc/systemd/system/multi-user.target.wants/dhcpcd.service
 		install -m 0644 ${WORKDIR}/neo/wpa_supplicant.service -D ${D}/etc/systemd/system/wpa_supplicant.service
 		ln -sf /etc/systemd/system/wpa_supplicant.service ${D}/etc/systemd/system/multi-user.target.wants/wpa_supplicant.service
@@ -233,35 +170,31 @@ do_install:append:ar-sg1(){
 	fi
 }
 
+do_install:append:kera(){
+	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
+		do_install_common_service
+		install -d ${D}/etc/systemd/network/
+		ln -sf /dev/null ${D}/etc/systemd/network/99-default.link
+		install -d ${D}/etc/misc/wifi/
+	fi
+}
+
 FILES:${PN} += "${userfsdatadir}/misc/wifi/*"
 FILES:${PN} += "${base_libdir}/firmware/wlan/qca_cld/*"
-FILES:${PN} += "/lib/firmware/wlan/qca_cld/* ${sysconfdir}/init.d/* "
+FILES:${PN} += "${sysconfdir}/init.d/* "
 FILES:${PN}:append:neo += "/usr/share/dbus-1/system-services/*"
 FILES:${PN}:append:neo += "/usr/share/dbus-1/system.d/*"
 FILES:${PN}:append:neo += "/etc/dbus-1/system.d/*"
 
 BASEPRODUCT = "${@d.getVar('PRODUCT', False)}"
 
-EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'mdm9607', '--enable-target-mdm9607=yes', '', d)}"
-EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'mdm9650', '--enable-target-mdm9650=yes', '', d)}"
-EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'apq8096', '--enable-target-apq8096=yes', '', d)}"
-EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'apq8098', '--enable-target-apq8098=yes', '', d)}"
-EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'apq8009', '--enable-target-apq8009=yes', '', d)}"
-EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'apq8017', '--enable-target-apq8017=yes', '', d)}"
-EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'sdx20', '--enable-target-sdx20=yes', '', d)}"
-EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'sdxpoorwills', '--enable-target-sdxpoorwills=yes', '', d)}"
-EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'sdxprairie', '--enable-target-sdxprairie=yes', '', d)}"
-EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'sdxlemur', '--enable-target-sdxlemur=yes', '', d)}"
-EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'qcs40x', '--enable-target-qcs405-som1=yes', '', d)}"
-EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'qcs605', '--enable-target-qcs605=yes', '', d)}"
+ENABLE_TARGET_FLAG = "--enable-target-${BASEMACHINE}=yes"
+ENABLE_TARGET_FLAG:qcs40x = "--enable-target-qcs405-som1=yes"
+ENABLE_TARGET_FLAG:apq8053 = "--enable-pronto-wlan=yes"
+ENABLE_TARGET_FLAG:apq8017 = "--enable-pronto-wlan=yes"
 
-EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'apq8053', '--enable-pronto-wlan=yes', '', d)}"
-EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'apq8017', '--enable-pronto-wlan=yes', '', d)}"
-EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'neo', '--enable-target-neo', '', d)}"
-EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'kalama', '--enable-target-kalama=yes', '', d)}"
-EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'qrb5165', '--enable-target-qrb5165=yes', '', d)}"
-EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'pineapple', '--enable-target-pineapple=yes', '', d)}"
-EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'qcm2290-mtp', '--enable-target-qcm2290-mtp=yes', '', d)}"
+EXTRA_OECONF += "${ENABLE_TARGET_FLAG}"
+
 
 # Enable qsap-wlan in place of pronto-wlan for Drones
 EXTRA_OECONF:append:qsap += "--enable-snap-wlan=yes --enable-qsap-wlan=yes --enable-naples-wlan=yes"
