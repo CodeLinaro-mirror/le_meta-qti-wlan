@@ -40,6 +40,7 @@ EXT_COMPILE_CONFIG:append:qrb5165 = " CONFIG_PCI_MSM=m "
 EXT_COMPILE_CONFIG:append:qcs40x = " CONFIG_PCI_MSM=m "
 EXT_COMPILE_CONFIG:append:qcm2290-mtp = " CONFIG_PCI_MSM=m "
 EXT_COMPILE_CONFIG:append:kera = " CONFIG_PCI_MSM=m "
+EXT_COMPILE_CONFIG:append:sun = " CONFIG_PCI_MSM=m CONFIG_EXCLUDE_ICNSS=y "
 
 do_compile[depends] += "virtual/kernel:do_shared_workdir"
 do_compile[cleandirs] += "${WORKDIR}/out/${KERNEL_DEFCONFIG}"
