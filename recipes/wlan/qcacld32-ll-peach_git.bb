@@ -83,7 +83,7 @@ do_install() {
 #auto load
     install -d ${D}${sysconfdir}/modules-load.d
     install -m 0755 ${WORKDIR}/wlan_load.conf -D ${D}${sysconfdir}/modules-load.d/wlan_load.conf
-    if ["${BASEMACHINE}" = "sun"]; then
+    if [ "${BASEMACHINE}" = "sun" ]; then
         echo "peach_v2" > ${D}${sysconfdir}/modules-load.d/wlan_load.conf
     fi
 }
