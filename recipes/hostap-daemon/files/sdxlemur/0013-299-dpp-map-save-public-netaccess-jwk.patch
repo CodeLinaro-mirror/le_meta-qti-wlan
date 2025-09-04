@@ -1,0 +1,156 @@
+From ff64af2bf7a47a486f62cbe1d0d2fdefbaddcd20 Mon Sep 17 00:00:00 2001
+From: Xinyue Ling <xinyling@qti.qualcomm.com>
+Date: Tue, 30 Apr 2024 14:38:40 +0800
+Subject: [PATCH 13/40] 299-dpp-map-save-public-netaccess-jwk
+
+Change-Id: I833df4022e38f483e35a754cdb07f5d689b4aa18
+Signed-off-by: Chenming Huang <chenhuan@qti.qualcomm.com>
+---
+ src/ap/dpp_hostapd.c  | 23 ++++++++++++++++++++++-
+ src/common/dpp.c      | 31 +++++++++++++++++++++++++------
+ src/common/dpp.h      |  1 +
+ src/common/wpa_ctrl.h |  2 ++
+ 4 files changed, 50 insertions(+), 7 deletions(-)
+
+diff --git a/src/ap/dpp_hostapd.c b/src/ap/dpp_hostapd.c
+index 124ead0141..87d0a20199 100644
+--- a/src/ap/dpp_hostapd.c
++++ b/src/ap/dpp_hostapd.c
+@@ -1156,6 +1156,15 @@ static void hostapd_dpp_rx_auth_req(struct hostapd_data *hapd, const u8 *src,
+ 				wpabuf_len(hapd->dpp_auth->resp_msg));
+ }
+ 
++static void hostapd_map_handle_connector_config_obj(struct hostapd_data *hapd,
++						    struct dpp_authentication *auth,
++						    struct dpp_config_obj *conf)
++{
++	if (conf->connector) {
++		wpa_msg(hapd->msg_ctx, MSG_INFO, DPP_MAP_EVENT_CONNECTOR "%s",
++			conf->connector);
++	}
++}
+ 
+ static void hostapd_dpp_handle_config_obj(struct hostapd_data *hapd,
+ 					  struct dpp_authentication *auth,
+@@ -3237,6 +3246,7 @@ int hostapd_dpp_configurator_sign(struct hostapd_data *hapd, const char *cmd)
+ 	struct dpp_authentication *auth;
+ 	int ret = -1;
+ 	char *curve = NULL;
++	char *map_netaccess_jwk = NULL;
+ 
+ 	auth = dpp_alloc_auth(hapd->iface->interfaces->dpp, hapd->msg_ctx);
+ 	if (!auth)
+@@ -3246,10 +3256,16 @@ int hostapd_dpp_configurator_sign(struct hostapd_data *hapd, const char *cmd)
+ 		auth->dpp_map = hapd->conf->dpp_map;
+ 
+ 	curve = get_param(cmd, " curve=");
++	map_netaccess_jwk = get_param(cmd, " map_netaccess_jwk=");
++	if (map_netaccess_jwk) {
++		auth->map_netaccess_jwk = wpabuf_alloc_copy(map_netaccess_jwk,
++						os_strlen(map_netaccess_jwk));
++	}
+ 
+ 	hostapd_dpp_set_testing_options(hapd, auth);
+ 	if (dpp_set_configurator(auth, cmd) == 0 &&
+-	    dpp_configurator_own_config(auth, curve, 1) == 0) {
++	    dpp_configurator_own_config(auth, curve, 1) == 0 &&
++		!(auth->map_netaccess_jwk)) {
+ 		hostapd_dpp_handle_config_obj(hapd, auth, &auth->conf_obj[0]);
+ 
+ 		os_free(hapd->conf->dpp_1905_connector);
+@@ -3262,6 +3278,11 @@ int hostapd_dpp_configurator_sign(struct hostapd_data *hapd, const char *cmd)
+ 		ret = 0;
+ 	}
+ 
++	if (auth->map_netaccess_jwk) {
++		hostapd_map_handle_connector_config_obj(hapd, auth, &auth->conf_obj[0]);
++		ret = 0;
++	}
++
+ 	dpp_auth_deinit(auth);
+ 	os_free(curve);
+ 
+diff --git a/src/common/dpp.c b/src/common/dpp.c
+index 0152d3c4fd..99a78c537b 100644
+--- a/src/common/dpp.c
++++ b/src/common/dpp.c
+@@ -1815,7 +1815,9 @@ dpp_build_conf_obj_dpp(struct dpp_authentication *auth,
+ #ifdef CONFIG_TESTING_OPTIONS
+ skip_groups:
+ #endif /* CONFIG_TESTING_OPTIONS */
+-	if (!auth->peer_protocol_key) {
++	if (auth->map_netaccess_jwk) {
++		wpabuf_put_data(dppcon, wpabuf_head(auth->map_netaccess_jwk), wpabuf_len(auth->map_netaccess_jwk));
++	} else if (!auth->peer_protocol_key) {
+ 		wpa_printf(MSG_DEBUG,
+ 			   "DPP: No peer protocol key available to build netAccessKey JWK");
+ 		goto fail;
+@@ -1845,10 +1847,27 @@ skip_groups:
+ 		goto fail;
+ 	}
+ #endif /* CONFIG_DPP3 */
+-	if (dpp_build_jwk(dppcon, "netAccessKey", auth->peer_protocol_key, NULL,
+-			  nak_curve) < 0) {
+-		wpa_printf(MSG_DEBUG, "DPP: Failed to build netAccessKey JWK");
+-		goto fail;
++	if (netrole == DPP_NETROLE_MAP_AGENT) {
++		struct wpabuf *netaccess_jwk = NULL;
++		char jwk[200];
++
++		netaccess_jwk = wpabuf_alloc(200);
++		if (!netaccess_jwk)
++			goto fail;
++		dpp_build_jwk(netaccess_jwk, "netAccessKey", auth->peer_protocol_key, NULL,
++                          nak_curve);
++
++		os_memcpy(jwk, wpabuf_head(netaccess_jwk), wpabuf_len(netaccess_jwk));
++		jwk[wpabuf_len(netaccess_jwk)] = '\0';
++		wpa_msg(auth->msg_ctx, MSG_INFO, DPP_MAP_NETACCESSKEY_JWK "%s", jwk);
++		wpabuf_free(netaccess_jwk);
++	}
++	if (!auth->map_netaccess_jwk) {
++		if (dpp_build_jwk(dppcon, "netAccessKey", auth->peer_protocol_key, NULL,
++				  nak_curve) < 0) {
++			wpa_printf(MSG_DEBUG, "DPP: Failed to build netAccessKey JWK");
++			goto fail;
++		}
+ 	}
+ 	if (conf->netaccesskey_expiry) {
+ 		struct os_tm tm;
+@@ -2972,7 +2991,7 @@ skip_groups:
+ 		goto fail;
+ 	dpp_debug_print_key("DPP: Received netAccessKey", key);
+ 
+-	if (crypto_ec_key_cmp(key, auth->own_protocol_key)) {
++	if (!auth->map_netaccess_jwk && crypto_ec_key_cmp(key, auth->own_protocol_key)) {
+ 		wpa_printf(MSG_DEBUG,
+ 			   "DPP: netAccessKey in connector does not match own protocol key");
+ #ifdef CONFIG_TESTING_OPTIONS
+diff --git a/src/common/dpp.h b/src/common/dpp.h
+index 91d78f355e..746d2b3ea2 100644
+--- a/src/common/dpp.h
++++ b/src/common/dpp.h
+@@ -408,6 +408,7 @@ struct dpp_authentication {
+ 	char *dpp_1905_connector;
+ 	u8 is_bsta_1905;
+ 	enum dpp_akm akm_1905;
++	struct wpabuf *map_netaccess_jwk;
+ };
+ 
+ struct dpp_configurator {
+diff --git a/src/common/wpa_ctrl.h b/src/common/wpa_ctrl.h
+index 1c11ac430a..11d4acb2c4 100644
+--- a/src/common/wpa_ctrl.h
++++ b/src/common/wpa_ctrl.h
+@@ -233,6 +233,8 @@ extern "C" {
+ #define DPP_EVENT_DISC_CONF "DPP-DISC-CONF "
+ #define DPP_EVENT_PMK "DPP-PMK "
+ #define DPP_EVENT_PMKID "DPP-PMKID "
++#define DPP_MAP_EVENT_CONNECTOR "DPP-MAP-CONNECTOR "
++#define DPP_MAP_NETACCESSKEY_JWK "DPP-MAP-NETACCESSKEY-JWK "
+ #define DPP_EVENT_PB_STATUS "DPP-PB-STATUS "
+ #define DPP_EVENT_PB_RESULT "DPP-PB-RESULT "
+ #define DPP_EVENT_RELAY_NEEDS_CONTROLLER "DPP-RELAY-NEEDS-CONTROLLER "
+-- 
+2.34.1
+

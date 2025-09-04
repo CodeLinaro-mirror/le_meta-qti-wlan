@@ -1,0 +1,51 @@
+From b404cf8055ebab8a91c26afb378320ca98196efd Mon Sep 17 00:00:00 2001
+From: Xinyue Ling <xinyling@qti.qualcomm.com>
+Date: Tue, 30 Apr 2024 11:21:52 +0800
+Subject: [PATCH 08/40] 276-Process-DPP-STA-conf-objs-in-action-script
+
+Change-Id: Ibd83887da6c5e86d230c823796334b510eaf5818
+Signed-off-by: Chenming Huang <chenhuan@qti.qualcomm.com>
+---
+ wpa_supplicant/dpp_supplicant.c | 19 +++++++++++++++++--
+ 1 file changed, 17 insertions(+), 2 deletions(-)
+
+diff --git a/wpa_supplicant/dpp_supplicant.c b/wpa_supplicant/dpp_supplicant.c
+index 34514e064a..eb56d4dfe6 100644
+--- a/wpa_supplicant/dpp_supplicant.c
++++ b/wpa_supplicant/dpp_supplicant.c
+@@ -1689,8 +1689,9 @@ static int wpas_dpp_handle_config_obj(struct wpa_supplicant *wpa_s,
+ 				      struct dpp_config_obj *conf)
+ {
+ 	wpa_msg(wpa_s, MSG_INFO, DPP_EVENT_CONF_RECEIVED);
+-	wpa_msg(wpa_s, MSG_INFO, DPP_EVENT_CONFOBJ_AKM "%s",
+-		dpp_akm_str(conf->akm));
++	if (conf->akm)
++		wpa_msg(wpa_s, MSG_INFO, DPP_EVENT_CONFOBJ_AKM "%s",
++			dpp_akm_str(conf->akm));
+ 	if (conf->ssid_len)
+ 		wpa_msg(wpa_s, MSG_INFO, DPP_EVENT_CONFOBJ_SSID "%s",
+ 			wpa_ssid_txt(conf->ssid, conf->ssid_len));
+@@ -1705,6 +1706,20 @@ static int wpas_dpp_handle_config_obj(struct wpa_supplicant *wpa_s,
+ 		 * message. */
+ 		wpa_msg(wpa_s, MSG_INFO, DPP_EVENT_CONNECTOR "%s",
+ 			conf->connector);
++	} else if (conf->passphrase[0]) {
++		char hex[64 * 2 + 1];
++
++		wpa_snprintf_hex(hex, sizeof(hex),
++				 (const u8 *) conf->passphrase,
++				 os_strlen(conf->passphrase));
++		wpa_msg(wpa_s, MSG_INFO, DPP_EVENT_CONFOBJ_PASS "%s",
++			hex);
++	} else if (conf->psk_set) {
++		char hex[PMK_LEN * 2 + 1];
++
++		wpa_snprintf_hex(hex, sizeof(hex), conf->psk, PMK_LEN);
++		wpa_msg(wpa_s, MSG_INFO, DPP_EVENT_CONFOBJ_PSK "%s",
++			hex);
+ 	}
+ 	if (conf->passphrase[0]) {
+ 		char hex[64 * 2 + 1];
+-- 
+2.34.1
+

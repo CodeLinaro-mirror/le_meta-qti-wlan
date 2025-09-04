@@ -1,0 +1,30 @@
+From 4d093037ac68ea6f9e2fb18a6fa02c4ab0892eb4 Mon Sep 17 00:00:00 2001
+From: Xinyue Ling <xinyling@qti.qualcomm.com>
+Date: Tue, 21 May 2024 20:08:06 +0800
+Subject: [PATCH 39/40] dpp map: bug fix for dpp onboarding
+
+Change-Id: I9e843665538c12ef2a6d671e1194d2f6b36366f5
+Signed-off-by: Chenming Huang <chenhuan@qti.qualcomm.com>
+---
+ src/common/dpp.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/src/common/dpp.c b/src/common/dpp.c
+index 5bf64d950d..22fe03c257 100644
+--- a/src/common/dpp.c
++++ b/src/common/dpp.c
+@@ -1266,7 +1266,10 @@ static int dpp_configuration_parse_helper(struct dpp_authentication *auth,
+ 		    hexstr2bin(pos, conf->ssid, conf->ssid_len) < 0)
+ 			goto fail;
+ 	} else {
+-#ifdef CONFIG_TESTING_OPTIONS
++// CONFIG_TESTING_OPTIONS is not enabled on MCC
++// do not go to fail if ssid parameter is not set
++//#ifdef CONFIG_TESTING_OPTIONS
++#if 1
+ 		/* use a default SSID for legacy testing reasons */
+ 		os_memcpy(conf->ssid, "test", 4);
+ 		conf->ssid_len = 4;
+-- 
+2.34.1
+

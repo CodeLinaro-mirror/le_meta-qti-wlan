@@ -52,7 +52,9 @@ do_patch() {
         bbwarn "============================================================"
         bbwarn "picking ${WORKDIR}/${MACHINE}"
         bbwarn "============================================================"
-        patch -p1 < ${WORKDIR}/${MACHINE}/hostapd_driver_cmd.patch
+        for patch in ${WORKDIR}/${MACHINE}/*.patch; do
+            patch -p1 < "$patch"
+        done
     else
         bbwarn "============================================================"
         bbwarn "picking ${WORKDIR}/misc"
