@@ -99,7 +99,7 @@ else ifeq ($(BOARD),sdxecho)
 ifeq ($(TARGET_VARIANT),perf)
   WLAN_PROFILE := sdxecho_gki_fig
 else
-  WLAN_PROFILE := sdxecho_consolidate_fig
+  WLAN_PROFILE := "sdxecho_gki_fig sdxecho_consolidate_fig"
 endif
 
 TARGET_MAKEOPTS := WLAN_PROFILE=$(WLAN_PROFILE) \
