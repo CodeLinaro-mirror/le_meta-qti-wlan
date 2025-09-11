@@ -567,3 +567,7 @@ CONFIG_OCV=y
 
 # Enable wifi display to support P2P 6G connection
 CONFIG_WIFI_DISPLAY=y
+
+# DPP
+CONFIG_DPP=y
+CONFIG_DPP2=y
