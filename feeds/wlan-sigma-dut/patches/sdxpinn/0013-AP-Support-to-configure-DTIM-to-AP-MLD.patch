@@ -1,22 +1,37 @@
-From 7bd07e11803ddf2d36f3edd81b0387bcf1ee6e93 Mon Sep 17 00:00:00 2001
+From 3d51bb63aa2a4fbf2b14b9c9c7d969352abf026d Mon Sep 17 00:00:00 2001
 From: Chenming Huang <quic_chenhuan@quicinc.com>
 Date: Tue, 25 Feb 2025 14:37:49 +0530
-Subject: [PATCH 13/13] AP: Support to configure DTIM to AP MLD
+Subject: [PATCH] AP: Support to configure DTIM to AP MLD
 
 Add support to configure DTIM per link for AP MLD.
 
 Change-Id: I00a4a69c11301974fcfaf5d5c7a988df0e2addf6
 Signed-off-by: Chenming Huang <quic_chenhuan@quicinc.com>
 ---
- ap.c        | 14 +++++++++++++-
- sigma_dut.h |  1 +
- 2 files changed, 14 insertions(+), 1 deletion(-)
+ ap.c          | 29 +++++++++++++++++++++++++----
+ sigma_dut.h   |  2 ++
+ wpa_helpers.c |  9 +++++----
+ wpa_helpers.h |  2 +-
+ 4 files changed, 33 insertions(+), 9 deletions(-)
 
 diff --git a/ap.c b/ap.c
-index a452202..b0cf4e9 100644
+index 8f95fee..abb0654 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -1311,6 +1311,10 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+@@ -1071,6 +1071,12 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
+ 				dut->ap_mlo_links[AP_BAND_5GHz].configured = true;
+ 				dut->ap_interface_5g = 1;
+ 				mlo_config_band = AP_BAND_5GHz;
++				if (wlan_tag == 2) {
++					dut->ap_interface_6g = 1;
++					mlo_config_band = AP_BAND_6GHz;
++					dut->ap_mlo_links[AP_BAND_6GHz].configured = true;
++					dut->ap_mlo_links[AP_BAND_6GHz].treat_6GHz_as_5GHz_high = true;
++				}
+ 			} else if (strcasecmp(val, "6G") == 0) {
+ 				dut->ap_mlo_links[AP_BAND_6GHz].configured = true;
+ 				dut->ap_interface_6g = 1;
+@@ -1312,6 +1318,10 @@ static enum sigma_cmd_result cmd_ap_set_wireless(struct sigma_dut *dut,
  	if (val)
  		dut->ap_bcnint = atoi(val);
  
@@ -27,7 +42,21 @@ index a452202..b0cf4e9 100644
  	val = get_param(cmd, "RADIO");
  	if (val) {
  		enum driver_type drv = get_driver_type(dut);
-@@ -9548,6 +9552,12 @@ skip_key_mgmt:
+@@ -4192,11 +4202,11 @@ static void get_if_name(struct sigma_dut *dut, char *ifname_str,
+ 	ifname = get_hostapd_ifname(dut);
+ 	drv = get_driver_type(dut);
+ 
+-	if (drv == DRIVER_OPENWRT && wlan_tag > 1) {
++	if (drv == DRIVER_OPENWRT && wlan_tag > 1 && dut->ap_mode != AP_11be) {
+ 		/* Handle tagged-ifname only on OPENWRT for now */
+ 		snprintf(ifname_str, str_size, "%s%d", ifname, wlan_tag - 1);
+ 	} else if ((drv == DRIVER_MAC80211 || drv == DRIVER_LINUX_WCN) &&
+-		   wlan_tag == 2) {
++		   wlan_tag == 2 && dut->ap_mode != AP_11be) {
+ 		snprintf(ifname_str, str_size, "%s_1", ifname);
+ 	} else {
+ 		snprintf(ifname_str, str_size, "%s", ifname);
+@@ -9559,6 +9569,12 @@ skip_key_mgmt:
  	if (dut->ap_beacon_prot)
  		fprintf(f, "beacon_prot=1\n");
  
@@ -40,7 +69,16 @@ index a452202..b0cf4e9 100644
  	if (dut->ap_transition_disable)
  		fprintf(f, "transition_disable=0x%02x\n",
  			dut->ap_transition_disable);
-@@ -10878,8 +10888,10 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
+@@ -9857,6 +9873,8 @@ skip_key_mgmt:
+ 			chan = dut->ap_mlo_links[link_band].channel;
+ 			chwidth = dut->ap_mlo_links[link_band].chwidth;
+ 			band = link_band;
++			if (dut->ap_mlo_links[link_band].treat_6GHz_as_5GHz_high)
++				band = AP_BAND_5GHz;
+ 		} else {
+ 			chan = dut->ap_channel;
+ 			chwidth = dut->ap_chwidth;
+@@ -10889,8 +10907,11 @@ static enum sigma_cmd_result cmd_ap_reset_default(struct sigma_dut *dut,
  		dut->ap_tag_channel[i] = 0;
  	}
  
@@ -48,22 +86,79 @@ index a452202..b0cf4e9 100644
 +	for (i = 0; i < AP_BAND_MAX; i++) {
  		dut->ap_mlo_links[i].configured = false;
 +		dut->ap_mlo_links[i].dtim = 0;
++		dut->ap_mlo_links[i].treat_6GHz_as_5GHz_high = false;
 +	}
  
  	drv = get_driver_type(dut);
  
+@@ -12616,7 +12637,7 @@ static enum sigma_cmd_result cmd_ap_get_mac_address(struct sigma_dut *dut,
+ 
+ 	/* Get link mac address for MLO case */
+ 	if (dut->ap_mode == AP_11be && link_band >= 0) {
+-		if (ap_get_mlo_link_addr(dut, ifname, link_band, link_addr)) {
++		if (ap_get_mlo_link_addr(dut, ifname, link_band, link_addr, wlan_tag)) {
+ 			snprintf(resp, sizeof(resp),
+ 				 "errorCode,Could not get link addr");
+ 			send_resp(dut, conn, SIGMA_ERROR, resp);
 diff --git a/sigma_dut.h b/sigma_dut.h
-index beac284..a06c7cd 100644
+index 710c3f4..3eb28cb 100644
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
-@@ -531,6 +531,7 @@ struct ap_mlo_link {
+@@ -554,6 +554,8 @@ struct ap_mlo_link {
  	bool configured;
  	int chwidth;
  	int channel;
 +	int dtim;
++	bool treat_6GHz_as_5GHz_high;
  };
  
  enum ap_band {
+diff --git a/wpa_helpers.c b/wpa_helpers.c
+index 63e997e..347b0ce 100644
+--- a/wpa_helpers.c
++++ b/wpa_helpers.c
+@@ -748,15 +748,15 @@ int ap_get_mlo_link_id(struct sigma_dut *dut, const char *ifname)
+ }
+ 
+ int ap_get_mlo_link_addr(struct sigma_dut *dut, const char *ifname,
+-			 int link_band, char *link_addr)
++			 int link_band, char *link_addr, int tag)
+ {
+ 	char buf[4096];
+ 	int freq;
+ 	int freq_band;
+ 
+ 	if (get_hapd_status(ifname, "freq", buf, sizeof(buf)) < 0) {
+-		sigma_dut_print(dut, DUT_MSG_DEBUG, "%s: Failed to get link freq",
+-				__func__);
++		sigma_dut_print(dut, DUT_MSG_DEBUG, "%s: Failed to get link freq %s %s",
++				__func__, ifname, sigma_hapd_ctrl? sigma_hapd_ctrl : DEFAULT_HAPD_CTRL_PATH);
+ 		return -1;
+ 	}
+ 
+@@ -768,7 +768,8 @@ int ap_get_mlo_link_addr(struct sigma_dut *dut, const char *ifname,
+ 	else
+ 		freq_band = AP_BAND_5GHz;
+ 
+-	if (link_band == freq_band) {
++	/* tag is only used for 5GHz low + 5GHz high case */
++	if (link_band == freq_band && tag == 1) {
+ 		if (get_hapd_status(ifname, "link_addr", buf, sizeof(buf)) < 0) {
+ 			sigma_dut_print(dut, DUT_MSG_DEBUG, "%s: Failed to get link addr",
+ 					__func__);
+diff --git a/wpa_helpers.h b/wpa_helpers.h
+index 1a44bab..1f73ad0 100644
+--- a/wpa_helpers.h
++++ b/wpa_helpers.h
+@@ -38,7 +38,7 @@ int get_mlo_link_id_link_mac(struct sigma_dut *dut, const char *ifname,
+ 			     char *obuf, size_t obuf_size);
+ int ap_get_mlo_link_id(struct sigma_dut *dut, const char *ifname);
+ int ap_get_mlo_link_addr(struct sigma_dut *dut, const char *ifname,
+-			 int link_band, char *link_addr);
++			 int link_band, char *link_addr, int tag);
+ int get_connected_mlo_link_ids(struct sigma_dut *dut, const char *ifname);
+ struct wpa_ctrl * open_wpa_mon(const char *ifname);
+ struct wpa_ctrl * open_hapd_mon(const char *ifname);
 -- 
 2.17.1
 
