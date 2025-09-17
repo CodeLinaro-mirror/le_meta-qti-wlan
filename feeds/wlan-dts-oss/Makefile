@@ -8,6 +8,7 @@ PKG_FIXUP:=autoreconf
 PKG_LICENSE:=ISC
 
 LOCAL_SRC := $(TOPDIR)/src/vendor/qcom/opensource/wlan/wlan-devicetree
+TEACHPACK_DTBOS_PATH := $(TOPDIR)/build_dir/$(TARGET_DIR_NAME)/linux-$(BOARD)$(if $(SUBTARGET),_$(SUBTARGET))/techpack-dtbos
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -44,8 +45,8 @@ define Build/InstallDev
 endef
 
 define KernelPackage/$(PKG_NAME)/install
-	mkdir -p $(LINUX_DIR)/../techpack-dtbos
-	$(CP) $(PKG_BUILD_DIR)/*.dtbo $(LINUX_DIR)/../techpack-dtbos/
+	mkdir -p $(TEACHPACK_DTBOS_PATH)
+	$(CP) $(PKG_BUILD_DIR)/*.dtbo $(TEACHPACK_DTBOS_PATH)/
 endef
 
 $(eval $(call KernelPackage,$(PKG_NAME)))
