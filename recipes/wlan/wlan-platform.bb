@@ -82,3 +82,5 @@ addtask do_deploy after do_install
 
 FILES:${PN} += "${sysconfdir}/*"
 FILES:${PN} += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/*"
+FILES:${PN}:append:qcm2290-mtp-32 = " ${base_libdir}/modules/${KERNEL_VERSION}/cnsswlan-kernel/Module.symvers "
+FILES:${PN}:append:qcm4325-mtp-32 = " ${base_libdir}/modules/${KERNEL_VERSION}/cnsswlan-kernel/Module.symvers "
