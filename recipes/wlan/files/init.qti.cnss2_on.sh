@@ -70,7 +70,25 @@ else
             # For SA525/SA510 IDP board
             elif [ "$soc_hwplatform" == "IDP" ]; then
                 echo -n "IDP -> load cnss2 module" > /dev/kmsg
-                modprobe cnss2
+
+                # Run the command and extract the line containing "Subtype:"
+                subtype_line=$(cdt_tool.sh -r | grep "Subtype:")
+
+                # Extract the value after "Subtype:"
+                subtype_value=$(echo "$subtype_line" | awk -F'Subtype:' '{print $2}' | xargs)
+
+                # Check the value and load the corresponding cnss2 mode
+                case "$subtype_value" in
+                  "00")
+                    modprobe cnss2
+                    ;;
+                  "01")
+                    modprobe cnss2 sdio_mode=1
+                    ;;
+                  *)
+                    echo "Unknown subtype: $subtype_value"
+                    ;;
+                esac
             else
                 echo -n "Not supported platform from CDT, QCMAP_CLI will load cnss2 in needed" > /dev/kmsg
             fi
