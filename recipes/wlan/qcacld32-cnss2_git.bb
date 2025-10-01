@@ -16,9 +16,9 @@ SRC_URI = "file://init_qti_cnss2_auto.service \
 # Update for each machine
 S = "${WORKDIR}"
 
-FILES_${PN} += "/lib/systemd/system"
+FILES:${PN} += "/lib/systemd/system"
 
-do_install_append_auto() {
+do_install:append:auto() {
 	install -d ${D}${bindir}
 	install -D -m 0755 ${WORKDIR}/init.qti.cnss2_on.sh ${D}${bindir}/init.qti.cnss2_on.sh
 	install -D -m 0755 ${WORKDIR}/init.qti.cnss2_off.sh ${D}${bindir}/init.qti.cnss2_off.sh
@@ -29,7 +29,7 @@ do_install_append_auto() {
 	          ${D}${systemd_unitdir}/system/multi-user.target.wants/init_qti_cnss2_auto.service
 }
 
-do_install_append_sa515m() {
+do_install:append:sa515m() {
 	install -d ${D}${bindir}
 	install -D -m 0755 ${WORKDIR}/init.qti.cnss2_on.sh ${D}${bindir}/init.qti.cnss2_on.sh
 	install -D -m 0755 ${WORKDIR}/init.qti.cnss2_off.sh ${D}${bindir}/init.qti.cnss2_off.sh
@@ -40,7 +40,7 @@ do_install_append_sa515m() {
 	          ${D}${systemd_unitdir}/system/multi-user.target.wants/init_qti_cnss2_auto.service
 }
 
-do_install_append_sa415m() {
+do_install:append:sa415m() {
 	install -d ${D}${bindir}
 	install -D -m 0755 ${WORKDIR}/init.qti.cnss2_on.sh ${D}${bindir}/init.qti.cnss2_on.sh
 	install -D -m 0755 ${WORKDIR}/init.qti.cnss2_off.sh ${D}${bindir}/init.qti.cnss2_off.sh

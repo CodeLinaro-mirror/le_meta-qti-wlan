@@ -22,7 +22,7 @@ CFLAGS += "-Wall -Wno-error=deprecated-declarations -Wno-error=format-truncation
 
 EXTRA_OEMAKE = "HAVE_LIBNL3=1 all dsrc_config wlan_ts"
 
-do_compile_prepend() {
+do_compile:prepend() {
     cd ${S}/dsrc
 }
 

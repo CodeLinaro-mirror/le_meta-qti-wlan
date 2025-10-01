@@ -11,7 +11,7 @@ PACKAGES = "\
     packagegroup-qti-wlan \
     "
 
-RDEPENDS_${PN} += "\
+RDEPENDS:${PN} += "\
     rfkill \
     hostap-daemon-qcacld \
     wireless-tools \
