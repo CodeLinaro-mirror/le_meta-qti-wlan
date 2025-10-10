@@ -215,6 +215,9 @@ _WLAN_CFG_OVERRIDE_525 = "\
 						CONFIG_AUTO_PLATFORM=y \
 						"
 
+_WLAN_CFG_OVERRIDE_510 = "\
+						CONFIG_FEATURE_SET=y \
+						"
 EXTRA_OEMAKE:append:sa515m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_515}"
 EXTRA_OEMAKE:append:sa525m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_525}"
 
@@ -244,6 +247,19 @@ FILES:${PN}     += "${bindir}/init.qti.wlan_off.sh"
 
 EXT_MODULES = "${@os.path.relpath("${S}", "${KERNEL_PLATFORM_PATH}")}"
 
+do_compile:sa510m:prepend() {
+    CFG_FILE=${S}/configs/sa510m_gki_qca6490_defconfig
+    for cfg in ${_WLAN_CFG_OVERRIDE_510}
+    do
+        item="${cfg%=*}"
+        if (( `grep -c "$item" ${CFG_FILE}` )); then
+            sed -i "/$item/c\\$cfg" "${CFG_FILE}"
+        else
+            echo "$cfg" >> ${CFG_FILE}
+        fi
+    done
+}
+
 do_compile:prepend() {
     if ${@bb.utils.contains('PREFERRED_VERSION_linux-msm', '5.15', 'true', 'false', d)}; then
         CFG80211_FLAG="ccflags-y += -DCFG80211_SINGLE_NETDEV_MULTI_LINK_SUPPORT -D__ANDROID_COMMON_KERNEL__"
@@ -261,7 +277,7 @@ do_compile:sa510m() {
     EXT_MODULES=${EXT_MODULES} \
     ROOTDIR=${WORKDIR}/ \
     MODULE_OUT=${S} \
-    OUT_DIR=${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig \
+    OUT_DIR=${KERNEL_PREBUILT_PATH} \
     VARIANT=${variant}_defconfig \
     KERNEL_UAPI_HEADERS_DIR=${STAGING_KERNEL_BUILDDIR} \
     SUBTARGET_REGEX=${_MODNAME}_modules \
@@ -318,10 +334,10 @@ do_module_signing() {
             bbnote "${PN} module is not being signed"
         fi
     else
-        if [ -f ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/signing_key.pem ]; then
+        if [ -f ${KERNEL_PREBUILT_PATH}/dist/signing_key.pem ]; then
             WLAN_KO=${D}/${base_libdir}/modules/${KERNEL_VERSION}/extra
-            export LD_LIBRARY_PATH=${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist
-            ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/sign-file sha1 ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/signing_key.pem ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/signing_key.x509 ${WLAN_KO}/${_MODNAME}.ko
+            export LD_LIBRARY_PATH=${KERNEL_PREBUILT_PATH}/dist
+            ${KERNEL_PREBUILT_PATH}/dist/sign-file sha1 ${KERNEL_PREBUILT_PATH}/dist/signing_key.pem ${KERNEL_PREBUILT_PATH}/dist/signing_key.x509 ${WLAN_KO}/${_MODNAME}.ko
         fi
     fi
 }
