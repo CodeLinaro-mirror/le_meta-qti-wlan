@@ -75,10 +75,6 @@ TARGET_BOARD_PLATFORM ?= "sa510m"
 # If your MACHINE is named 'sa510m-1g', this maps the platform string to 'sa510m.1g'
 TARGET_BOARD_PLATFORM:sa510m-1g = "sa510m.1g"
 
-# Ensure artifacts are machine-specific (kernel modules depend on kernel/machine)
-# (Optional) Restrict this recipe to the intended machines only
-COMPATIBLE_MACHINE = "(sa510m|sa510m-1g)"
-
 do_compile:sa510m() {
     variant="${@bb.utils.contains('KERNEL_VARIANT', 'perf_', 'perf_defconfig', 'debug_defconfig', d)}"
     cd ${KERNEL_PLATFORM_PATH}
