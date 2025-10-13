@@ -94,7 +94,20 @@ TARGET_MAKEOPTS := CONFIG_CNSS_QCA6490=y \
 
 WLAN_PLATFORM_SYMBOLS = $(PKG_BUILD_DIR)/../wlan-cnss2/Module.symvers
 TARGET_MAKEOPTS += KBUILD_EXTRA_SYMBOLS=$(WLAN_PLATFORM_SYMBOLS)
+else ifeq ($(BOARD),sdxecho)
 
+ifeq ($(TARGET_VARIANT),perf)
+  WLAN_PROFILE := sdxecho_gki_fig
+else
+  WLAN_PROFILE := "sdxecho_gki_fig sdxecho_consolidate_fig"
+endif
+
+TARGET_MAKEOPTS := WLAN_PROFILE=$(WLAN_PROFILE) \
+		   CROSS_COMPILE=aarch64-openwrt-linux-musl- ARCH=arm64 \
+		   WLAN_ROOT=$(BUILD_DIR_CLD) \
+		   MODNAME=wlan
+WLAN_PLATFORM_SYMBOLS = $(PKG_BUILD_DIR)/../symvers/wlan-cnss.symvers
+TARGET_MAKEOPTS += KBUILD_EXTRA_SYMBOLS=$(WLAN_PLATFORM_SYMBOLS)
 else
 TARGET_MAKEOPTS := CONFIG_QCA_CLD_WLAN_PROFILE=default
 endif

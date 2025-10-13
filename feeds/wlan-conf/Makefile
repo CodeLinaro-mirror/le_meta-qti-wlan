@@ -32,6 +32,12 @@ else ifeq ($(BOARD),sdx85)
 	ifeq ($(TARGET_VARIANT),perf)
 		WLAN_INI_FILE := $(WLAN_INI_PERF)
 	endif
+else ifeq ($(BOARD),sdxecho)
+	CONFIGURE_ARGS += --enable-target-sdxecho=yes
+	WLAN_SUB_ADDR :=wlan_sdxecho
+	ifeq ($(TARGET_VARIANT),perf)
+		WLAN_INI_FILE := $(WLAN_INI_PERF)
+	endif
 else ifeq ($(BOARD),sdx35)
 	CONFIGURE_ARGS += --enable-target-sdxbaagha=yes
 	WLAN_SUB_ADDR :=wlan_sdxbaagha
@@ -83,6 +89,9 @@ define Package/$(PKG_NAME)/install
 	$(CP) $(CONF_ADDR)/wpa_supplicant.conf $(1)/$(MISC_WIFI_ADDR)/
 	$(CP) $(CONF_ADDR)/$(WLAN_INI_FILE) $(1)/$(MISC_WIFI_ADDR)/$(WLAN_INI_DEFAULT)
 ifeq ($(BOARD),sdx85)
+	chmod 0664 $(1)/$(MISC_WIFI_ADDR)/$(WLAN_INI_DEFAULT)
+endif
+ifeq ($(BOARD),sdxecho)
 	chmod 0664 $(1)/$(MISC_WIFI_ADDR)/$(WLAN_INI_DEFAULT)
 endif
 	$(CP) $(CONF_ADDR)/wlan $(1)/$(INIT_D_ADDR)/
