@@ -2,6 +2,7 @@
 inherit autotools-brokensep module qperf
 
 DESCRIPTION = "Build wlan platform drivers to kernel module"
+PACKAGE_ARCH = "${MACHINE_ARCH}"
 LICENSE = "${@bb.utils.contains('LAYERSERIES_COMPAT_core', 'dunfell',\
            'GPL-2.0','GPL-2.0-only', d)}"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=801f80980d171dd6425610833a22dbe6"
@@ -66,11 +67,23 @@ SYSTEMD_AUTO_ENABLE:${PN} = "disable"
 SRC_URI:append = " file://init.qti.cnss2_on.sh"
 SRC_URI:append = " file://init.qti.cnss2_off.sh"
 
+# ------------------------------
+# Board platform selection
+# ------------------------------
+# Default to sa510m; override per MACHINE or in local.conf as needed.
+TARGET_BOARD_PLATFORM ?= "sa510m"
+# If your MACHINE is named 'sa510m-1g', this maps the platform string to 'sa510m.1g'
+TARGET_BOARD_PLATFORM:sa510m-1g = "sa510m.1g"
+
+# Ensure artifacts are machine-specific (kernel modules depend on kernel/machine)
+# (Optional) Restrict this recipe to the intended machines only
+COMPATIBLE_MACHINE = "(sa510m|sa510m-1g)"
+
 do_compile:sa510m() {
     variant="${@bb.utils.contains('KERNEL_VARIANT', 'perf_', 'perf_defconfig', 'debug_defconfig', d)}"
     cd ${KERNEL_PLATFORM_PATH}
     ENABLE_DDK_BUILD=true \
-    TARGET_BOARD_PLATFORM=${BASEMACHINE} \
+    TARGET_BOARD_PLATFORM=${TARGET_BOARD_PLATFORM} \
     BUILD_CONFIG=${KERNEL_BUILD_CONFIG} \
     EXT_MODULES=${EXT_MODULES} \
     ROOTDIR=${WORKDIR}/ \

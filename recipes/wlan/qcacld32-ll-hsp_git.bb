@@ -8,6 +8,7 @@ DESCRIPTION = "Qualcomm Technologies, Inc. WLAN CLD3.0 low latency driver for th
                Application can use the wireless interfaces as STA or AP mode in need. \
                Usually, it bind to pcie0 slot by default if it loaded first. \"
 HOMEPAGE = "https://git.codelinaro.org/"
+PACKAGE_ARCH = "${MACHINE_ARCH}"
 LICENSE = "ISC"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=f3b90e78ea0cffb20bf5cca7947a896d"
 
@@ -216,6 +217,7 @@ _WLAN_CFG_OVERRIDE_525 = "\
 
 _WLAN_CFG_OVERRIDE_510 = "\
 						CONFIG_FEATURE_SET=y \
+						CONFIG_WLAN_WEXT_SUPPORT_ENABLE=y \
 						"
 EXTRA_OEMAKE:append:sa515m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_515}"
 EXTRA_OEMAKE:append:sa525m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_525}"
@@ -266,12 +268,24 @@ do_compile:prepend() {
     fi
 }
 
+# ------------------------------
+# Board platform selection
+# ------------------------------
+# Default to sa510m; override per MACHINE or in local.conf as needed.
+TARGET_BOARD_PLATFORM ?= "sa510m"
+# If your MACHINE is named 'sa510m-1g', this maps the platform string to 'sa510m.1g'
+TARGET_BOARD_PLATFORM:sa510m-1g = "sa510m.1g"
+
+# Ensure artifacts are machine-specific (kernel modules depend on kernel/machine)
+# (Optional) Restrict this recipe to the intended machines only
+COMPATIBLE_MACHINE = "(sa510m|sa510m-1g)"
+
 do_compile:sa510m() {
     variant="${@bb.utils.contains('DEBUG_BUILD','1', "debug", "perf", d)}"
     cd ${KERNEL_PLATFORM_PATH}
     ln -sf ../../wlan
     ENABLE_DDK_BUILD=true \
-    TARGET_BOARD_PLATFORM=sa510m \
+    TARGET_BOARD_PLATFORM=${TARGET_BOARD_PLATFORM} \
     BUILD_CONFIG=${KERNEL_BUILD_CONFIG} \
     EXT_MODULES=${EXT_MODULES} \
     ROOTDIR=${WORKDIR}/ \
