@@ -149,6 +149,7 @@ EXT_MODULES = "${@os.path.relpath("${S}", "${KERNEL_PLATFORM_PATH}")}"
 
 do_compile:sa510m:prepend() {
     CFG_FILE=${S}/configs/sa510m_gki_qca6574_defconfig
+    CFG_1g_FILE=${S}/configs/sa510m.1g_gki_qca6574_defconfig
     for cfg in ${_WLAN_CFG_OVERRIDE_510}
     do
         item="${cfg%=*}"
@@ -156,6 +157,11 @@ do_compile:sa510m:prepend() {
             sed -i "/$item/c\\$cfg" "${CFG_FILE}"
         else
             echo "$cfg" >> ${CFG_FILE}
+        fi
+        if (( `grep -c "$item" ${CFG_1g_FILE}` )); then
+            sed -i "/$item/c\\$cfg" "${CFG_1g_FILE}"
+        else
+            echo "$cfg" >> ${CFG_1g_FILE}
         fi
     done
 }
