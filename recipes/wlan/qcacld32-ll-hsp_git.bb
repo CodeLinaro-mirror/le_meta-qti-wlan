@@ -249,7 +249,7 @@ FILES:${PN}     += "${bindir}/init.qti.wlan_off.sh"
 EXT_MODULES = "${@os.path.relpath("${S}", "${KERNEL_PLATFORM_PATH}")}"
 
 do_compile:sa510m:prepend() {
-    CFG_FILE=${S}/configs/sa510m_gki_qca6490_defconfig
+    CFG_FILE=${S}/configs/sa510m.1g_gki_qca6490_defconfig
     for cfg in ${_WLAN_CFG_OVERRIDE_510}
     do
         item="${cfg%=*}"
