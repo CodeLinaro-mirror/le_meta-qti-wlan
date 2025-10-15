@@ -29,18 +29,19 @@
 #
 
 echo -n "start to unload cnss2 module" > /dev/kmsg
-if (lspci -k|grep cnss_pci);then
+LSPCI=`lspci -k`
+if (echo -n $LSPCI|grep cnss_pci);then
 	echo -n "start to unlaod wlan driver before unload cnss2" > /dev/kmsg
-	if (lspci -k|grep 1102);then
+	if (echo -n $LSPCI|grep 1102);then
 		echo -n "unload qca6595" > /dev/kmsg
 		rmmod qca6595
-	elif ((lspci -k|grep 003e) || (lspci -k|grep QCA6174));then
+	elif ((echo -n $LSPCI|grep 003e) || (echo -n $LSPCI|grep QCA6174));then
 		echo -n "unload qca6574" > /dev/kmsg
 		rmmod qca6574
-	elif (lspci -k|grep 1101);then
+	elif (echo -n $LSPCI|grep 1101);then
 		echo -n "unload qca6696" > /dev/kmsg
 		rmmod qca6696
-	elif (lspci -k|grep 1103);then
+	elif (echo -n $LSPCI|grep 1103);then
 		echo -n "unload qca6490" > /dev/kmsg
 		rmmod qca6490
 	else

@@ -33,36 +33,36 @@
 
 
 
-echo "##########Trying to load wlanhost driver ##########"
-
+echo "##########Trying to load wlanhost driver ##########" > /dev/kmsg
 if (lsmod|grep cnss2);then
-	echo "##########cnss2 already exist######"
+	echo "##########cnss2 already exist######" > /dev/kmsg
 else
-	echo "##########loading cnss2############"
+	echo "##########loading cnss2############" > /dev/kmsg
 	modprobe cnss2
 fi
-echo "##########load cnss2 done############"
+echo "##########load cnss2 done############" > /dev/kmsg
 
-if (lspci -k|grep cnss_pci);then
-	if (lspci -k|grep 1102);then
-		echo "##########load qca6595#############"
+LSPCI=`lspci -k`
+if (echo -n $LSPCI|grep cnss_pci);then
+	if (echo -n $LSPCI|grep 1102);then
+		echo "##########load qca6595#############" > /dev/kmsg
 		modprobe qca6595
-	elif ((lspci -k|grep 003e) || (lspci -k|grep QCA6174));then
-		echo "##########load qca6574#############"
+	elif ((echo -n $LSPCI|grep 003e) || (echo -n $LSPCI|grep QCA6174));then
+		echo "##########load qca6574#############" > /dev/kmsg
 		modprobe qca6574
-	elif (lspci -k|grep 1101);then
-		echo "##########load qca6696#############"
+	elif (echo -n $LSPCI|grep 1101);then
+		echo "##########load qca6696#############" > /dev/kmsg
 		modprobe qca6696
-	elif (lspci -k|grep 1103);then
-		echo "##########load qca6490#############"
+	elif (echo -n $LSPCI|grep 1103);then
+		echo "##########load qca6490#############" > /dev/kmsg
 		modprobe qca6490
-	elif (lspci -k|grep 1107);then
-		echo "##########load qca6797#############"
+	elif (echo -n $LSPCI|grep 1107);then
+		echo "##########load qca6797#############" > /dev/kmsg
 		modprobe qca6797
 	else
-		echo "##########load default wlan########"
+		echo "##########load default wlan########" > /dev/kmsg
 		modprobe wlan
 	fi
 fi
-echo "##########Load wlanhost driver done################"
+echo "##########Load wlanhost driver done################" > /dev/kmsg
 

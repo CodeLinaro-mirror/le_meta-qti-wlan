@@ -27,27 +27,28 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #
-echo "##########Trying to unload wlanhost driver ##########"
-if (lspci -k|grep cnss_pci);then
-	if (lspci -k|grep 1102);then
-		echo "##########unload qca6595#############"
+echo "##########Trying to unload wlanhost driver ##########" > /dev/kmsg
+LSPCI=`lspci -k`
+if (echo -n $LSPCI|grep cnss_pci);then
+	if (echo -n $LSPCI|grep 1102);then
+		echo "##########unload qca6595#############" > /dev/kmsg
 		rmmod qca6595
-	elif ((lspci -k|grep 003e) || (lspci -k|grep QCA6174));then
-		echo "##########unload qca6574#############"
+	elif ((echo -n $LSPCI|grep 003e) || (echo -n $LSPCI|grep QCA6174));then
+		echo "##########unload qca6574#############" > /dev/kmsg
 		rmmod qca6574
-	elif (lspci -k|grep 1101);then
-		echo "##########unload qca6696#############"
+	elif (echo -n $LSPCI|grep 1101);then
+		echo "##########unload qca6696#############" > /dev/kmsg
 		rmmod qca6696
-	elif (lspci -k|grep 1103);then
-		echo "##########unload qca6490#############"
+	elif (echo -n $LSPCI|grep 1103);then
+		echo "##########unload qca6490#############" > /dev/kmsg
 		rmmod qca6490
-	elif (lspci -k|grep 1107);then
-		echo "##########unload qca6797#############"
+	elif (echo -n $LSPCI|grep 1107);then
+		echo "##########unload qca6797#############" > /dev/kmsg
 		rmmod qca6797
 	else
-		echo "##########unload default wlan########"
+		echo "##########unload default wlan########" > /dev/kmsg
 		rmmod wlan
 	fi
 fi
-echo "##########Unload wlanhost driver done################"
+echo "##########Unload wlanhost driver done################" > /dev/kmsg
 
