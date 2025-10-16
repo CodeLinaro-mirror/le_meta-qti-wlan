@@ -102,8 +102,11 @@ else
   WLAN_PROFILE := "sdxecho_gki_fig sdxecho_consolidate_fig"
 endif
 
+EXTRA_CFLAGS += "-Wall -Werror"
+
 TARGET_MAKEOPTS := WLAN_PROFILE=$(WLAN_PROFILE) \
 		   CROSS_COMPILE=aarch64-openwrt-linux-musl- ARCH=arm64 \
+		   EXTRA_CFLAGS=$(EXTRA_CFLAGS) \
 		   WLAN_ROOT=$(BUILD_DIR_CLD) \
 		   MODNAME=wlan
 WLAN_PLATFORM_SYMBOLS = $(PKG_BUILD_DIR)/../symvers/wlan-cnss.symvers
