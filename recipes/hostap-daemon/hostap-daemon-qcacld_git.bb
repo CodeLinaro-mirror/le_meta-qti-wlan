@@ -14,11 +14,11 @@ FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://external/wpa_supplicant_8/"
 SRC_URI += "file://${MACHINE_CONFIG}/"
 SRC_URI += "file://misc/"
-SRC_URI:append:ar-sg1 += "file://${MACHINE}/"
+SRC_URI:append:ar-sg1 = " file://${MACHINE}/"
 DEPENDS = "pkgconfig libnl openssl wpa-supplicant-8-lib liblog"
 
 LDFLAGS +="-L${RECIPE_SYSROOT}/usr/lib -llog"
-CFLAGS:append:neo +="-DCONFIG_ANDROID_LOG"
+CFLAGS:append:neo =" -DCONFIG_ANDROID_LOG"
 
 S = "${WORKDIR}/external/wpa_supplicant_8/hostapd/"
 PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"

@@ -13,7 +13,7 @@ FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://external/wpa_supplicant_8/"
 SRC_URI += "file://${MACHINE_CONFIG}/"
 SRC_URI += "file://misc/"
-SRC_URI:append:neo += "file://${BASEMACHINE}/"
+SRC_URI:append:neo = " file://${BASEMACHINE}/"
 
 DEPENDS += "glib-2.0 wpa-supplicant-8-lib dbus liblog qmi-framework"
 DEPENDS:append:sdxlemur = "qmi"
@@ -28,7 +28,7 @@ PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"
 
 LDFLAGS:append:neo = " -Wl,--no-as-needed -L${RECIPE_SYSROOT}/usr/lib -llog"
 CFLAGS:append:neo =" -DCONFIG_ANDROID_LOG"
-EXTRA_OEMAKE:append:ar-sg1 += "CONFIG_OCV=y"
+EXTRA_OEMAKE:append:ar-sg1 = " CONFIG_OCV=y"
 
 do_configure() {
     if [ "$(ls -A "${WORKDIR}/${MACHINE_CONFIG}")" ]
