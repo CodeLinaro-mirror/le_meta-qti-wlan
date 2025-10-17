@@ -34,7 +34,7 @@ SRC_URI += "file://${BASEMACHINE}/wlan_load.conf"
 
 CLANG_BIN = "${WORKDIR}/recipe-sysroot-native/usr/bin/clang/bin"
 S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn/"
-S = "${WORKDIR}/wlan/qcacld-3.0/"
+S = "${WORKDIR}/wlan/qcacld-3.0"
 FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld/${TARGET_WLAN_CHIP}"
 
 BUILD_FLAGS = "CONFIG_QCA_CLD_WLAN_PROFILE=${TARGET_WLAN_CHIP} MODNAME=${WLAN_CHIP}_${TARGET_WLAN_CHIP}"

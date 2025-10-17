@@ -41,7 +41,7 @@ SRC_URI = "file://wlan/qcacld-3.0/"
 SRC_URI += "file://wlan/qca-wifi-host-cmn/"
 SRC_URI += "file://wlan/fw-api/"
 
-S = "${WORKDIR}/wlan/qcacld-3.0/"
+S = "${WORKDIR}/wlan/qcacld-3.0"
 
 # Append the chip name to firmware installation path
 CHIP_NAME_APPEND = "${@oe.utils.conditional('CHIP_NAME', '', '', '/${CHIP_NAME}', d)}"

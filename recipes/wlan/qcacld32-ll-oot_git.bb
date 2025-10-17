@@ -29,7 +29,7 @@ SRC_URI += "file://wlan_load.conf"
 
 CLANG_BIN = "${WORKDIR}/recipe-sysroot-native/usr/bin/clang/bin"
 S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn/"
-S = "${WORKDIR}/wlan/qcacld-3.0/"
+S = "${WORKDIR}/wlan/qcacld-3.0"
 
 FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld"
 

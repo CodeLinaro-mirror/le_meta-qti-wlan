@@ -20,7 +20,7 @@ SRC_URI = "file://wlan/qcacld-3.0/"
 SRC_URI += "file://wlan/qca-wifi-host-cmn/"
 SRC_URI += "file://wlan/fw-api/"
 
-S = "${WORKDIR}/wlan/qcacld-3.0/"
+S = "${WORKDIR}/wlan/qcacld-3.0"
 
 FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld"
 
