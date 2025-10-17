@@ -44,6 +44,7 @@ do_install:append:sa410m(){
 do_install:append:sa525m(){
 	install -d ${D}/etc/misc/wifi
 	install -m 0644 ${S}/qcom/wlan/sdx_auto/*.conf ${D}/etc/misc/wifi
+	install -m 0644 ${S}/qcom/wlan/sdx_auto/hostapd.eap_user_tls ${D}/etc/misc/wifi
 	install -m 0644 ${S}/qcom/wlan/msm_auto/hostapd_mlo*.conf ${D}/etc/misc/wifi
 	install -m 0644 ${S}/qcom/wlan/msm_auto/hostapd_11be*.conf ${D}/etc/misc/wifi
 	install -m 0644 ${S}/qcom/wlan/msm_auto/udhcpd.conf ${D}/etc/misc/wifi
