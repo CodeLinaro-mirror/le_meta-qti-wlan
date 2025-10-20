@@ -105,6 +105,9 @@ do_install:append:sa535m(){
 	install -m 0644 ${S}/qcom/wlan/sdx_auto/*.conf ${D}/etc/misc/wifi
 	chown -R radio:radio ${D}/etc/misc/wifi
 	install -d ${FIRMWARE_PATH_HMT}
+	install -d ${FIRMWARE_PATH_HSP}
         install -D -m 0644 ${S}/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6797.ini ${FIRMWARE_PATH_HMT}/WCNSS_qcom_cfg.ini
+        install -D -m 0644 ${S}/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6490.ini ${FIRMWARE_PATH_HSP}/WCNSS_qcom_cfg.ini
         chmod -R 0664 ${FIRMWARE_PATH_HMT}/WCNSS_qcom_cfg.ini
+        chmod -R 0664 ${FIRMWARE_PATH_HSP}/WCNSS_qcom_cfg.ini
 }

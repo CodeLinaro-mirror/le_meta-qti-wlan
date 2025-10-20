@@ -277,8 +277,10 @@ do_compile:prepend() {
         sed -i -e "/$(CONFIG_QCA_CLD_WLAN_PROFILE)_defconfig$/i${IPA_FLAG}" ${S}/Kbuild
     fi
 
-    cat ${WLAN_PLATFORM_PATH}/wlan-platform-dlkm/Module.symvers > ${WORKDIR}/Module.symvers
-    if [ "${BASEMACHINE}" == "sa535m" ] ; then
+    if ${@bb.utils.contains('PREFERRED_VERSION_linux-msm', '5.15', 'true', 'false', d)}; then
+        cat ${WLAN_PLATFORM_PATH}/wlan-platform-dlkm/Module.symvers > ${WORKDIR}/Module.symvers
+    elif [ "${BASEMACHINE}" == "sa535m" ] ; then
+        cat ${WLAN_PLATFORM_PATH}/wlan-platform-dlkm/Module.symvers > ${WORKDIR}/Module.symvers
         cat ${DATA_IPA_PATH}/ipa/Module.symvers >> ${WORKDIR}/Module.symvers
     fi
 }
