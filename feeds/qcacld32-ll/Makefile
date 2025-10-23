@@ -107,7 +107,7 @@ EXTRA_CFLAGS += "-Wall -Werror"
 TARGET_MAKEOPTS := WLAN_PROFILE=$(WLAN_PROFILE) \
 		   CROSS_COMPILE=aarch64-openwrt-linux-musl- ARCH=arm64 \
 		   EXTRA_CFLAGS=$(EXTRA_CFLAGS) \
-		   WLAN_ROOT=$(BUILD_DIR_CLD) \
+		   WLAN_ROOT=../../../../build_dir/target-aarch64_cortex-a53_musl/linux-sdxecho/qcacld32-ll-1.0/qcacld-3.0 \
 		   MODNAME=wlan
 WLAN_PLATFORM_SYMBOLS = $(PKG_BUILD_DIR)/../symvers/wlan-cnss.symvers
 TARGET_MAKEOPTS += KBUILD_EXTRA_SYMBOLS=$(WLAN_PLATFORM_SYMBOLS)
