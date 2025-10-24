@@ -191,9 +191,9 @@ do_install:append:sun(){
 FILES:${PN} += "${userfsdatadir}/misc/wifi/*"
 FILES:${PN} += "${base_libdir}/firmware/wlan/qca_cld/*"
 FILES:${PN} += "${sysconfdir}/init.d/* "
-FILES:${PN}:append:neo += "/usr/share/dbus-1/system-services/*"
-FILES:${PN}:append:neo += "/usr/share/dbus-1/system.d/*"
-FILES:${PN}:append:neo += "/etc/dbus-1/system.d/*"
+FILES:${PN}:append:neo = " /usr/share/dbus-1/system-services/*"
+FILES:${PN}:append:neo = " /usr/share/dbus-1/system.d/*"
+FILES:${PN}:append:neo = " /etc/dbus-1/system.d/*"
 
 BASEPRODUCT = "${@d.getVar('PRODUCT', False)}"
 
@@ -206,17 +206,17 @@ EXTRA_OECONF += "${ENABLE_TARGET_FLAG}"
 
 
 # Enable qsap-wlan in place of pronto-wlan for Drones
-EXTRA_OECONF:append:qsap += "--enable-snap-wlan=yes --enable-qsap-wlan=yes --enable-naples-wlan=yes"
+EXTRA_OECONF:append:qsap = " --enable-snap-wlan=yes --enable-qsap-wlan=yes --enable-naples-wlan=yes"
 
 # Enable drone-wlan in place of pronto-wlan for Drones
-EXTRA_OECONF:append:drone += "'--enable-drone-wlan=yes"
+EXTRA_OECONF:append:drone = " --enable-drone-wlan=yes"
 
 # Enable robot-wlan according to variants
-EXTRA_OECONF:append:robot-som += "--enable-robot-som-wlan=yes"
-EXTRA_OECONF:remove:robot-rome += "--enable-robot-som-wlan=yes"
-EXTRA_OECONF:append:robot-rome += "--enable-robot-wlan=yes"
-EXTRA_OECONF:remove:robot-pronto += "--enable-robot-som-wlan=yes"
-EXTRA_OECONF:append:robot-pronto += "--enable-pronto-wlan=yes"
+EXTRA_OECONF:append:robot-som = " --enable-robot-som-wlan=yes"
+EXTRA_OECONF:remove:robot-rome = "--enable-robot-som-wlan=yes"
+EXTRA_OECONF:append:robot-rome = " --enable-robot-wlan=yes"
+EXTRA_OECONF:remove:robot-pronto = "--enable-robot-som-wlan=yes"
+EXTRA_OECONF:append:robot-pronto = " --enable-pronto-wlan=yes"
 
 INITSCRIPT_NAME   = "wlan_daemon"
 INITSCRIPT_PARAMS = "remove"
