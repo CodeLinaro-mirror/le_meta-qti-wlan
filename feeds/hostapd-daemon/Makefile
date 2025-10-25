@@ -16,6 +16,12 @@ HOSTAPD_CONFIG_FILE := $(PKG_BUILD_DIR)/hostapd/.config
 ifeq ($(BOARD),sdx65)
 	TARGET_ADD_CONFIG += echo -e "\nCONFIG_WEP=y" >> $(HOSTAPD_CONFIG_FILE)
 	TARGET_LOCAL_NAME :=sdxlemur
+else ifeq ($(BOARD),sdxecho)
+	TARGET_ADD_CONFIG += echo -e "\nCONFIG_WEP=y" >> $(HOSTAPD_CONFIG_FILE)
+	TARGET_CFLAGS += -DCONFIG_CTRL_IFACE_DIR=\\\"/data/vendor/wifi/hostapd\\\"
+	# Reuse sdxpinn for now.
+	# To be revised if hostapd branch out later or divergency.
+	TARGET_LOCAL_NAME :=sdxpinn
 else ifeq ($(BOARD),sdx85)
 	TARGET_ADD_CONFIG += echo -e "\nCONFIG_WEP=y" >> $(HOSTAPD_CONFIG_FILE)
 	TARGET_CFLAGS += -DCONFIG_CTRL_IFACE_DIR=\\\"/data/vendor/wifi/hostapd\\\"

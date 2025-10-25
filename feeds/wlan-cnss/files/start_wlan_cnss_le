@@ -52,6 +52,10 @@ case "$1" in
 		fi
 	fi
         echo "done loading wlan cnss modules"
+
+        if [ $(cat /tmp/sysinfo/board_name | grep -c sdxkova) = 1 ]; then
+                chmod 0664 /etc/misc/wifi/WCNSS_qcom_cfg.ini
+        fi
         ;;
   stop)
         echo -n "Bypassing unloading of wlan modules"
