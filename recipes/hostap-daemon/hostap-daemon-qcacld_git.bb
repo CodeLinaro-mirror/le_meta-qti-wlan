@@ -21,7 +21,7 @@ DEPENDS = "pkgconfig libnl openssl wpa-supplicant-8-lib liblog"
 LDFLAGS +="-L${RECIPE_SYSROOT}/usr/lib -llog"
 CFLAGS:append:neo =" -DCONFIG_ANDROID_LOG"
 
-S = "${WORKDIR}/external/wpa_supplicant_8/hostapd/"
+S = "${WORKDIR}/external/wpa_supplicant_8/hostapd"
 PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"
 
 do_configure() {

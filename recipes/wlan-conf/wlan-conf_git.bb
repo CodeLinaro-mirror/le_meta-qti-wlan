@@ -18,7 +18,7 @@ SRC_URI = "file://mdm-init/ \
            file://neo"
 
 # Update for each machine
-S = "${WORKDIR}/mdm-init/"
+S = "${WORKDIR}/mdm-init"
 
 do_install:append:mdm(){
 	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
