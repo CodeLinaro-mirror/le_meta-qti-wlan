@@ -66,7 +66,11 @@ start_service() {
 		*)
 		;;
 	esac
-	[ "$log_folder_mode" = "1" ] && procd_append_param command -f $WPAD_VARRUN/hostapd-global.log
+	if [ "$log_folder_mode" = "1" ]; then
+		procd_append_param command -f $WPAD_VARRUN/hostapd-global.log
+		# enable timestamp
+		procd_append_param command -t
+	fi
 	# Debug end
 
 	[ -x /sbin/ujail -a -e /etc/capabilities/hostapd-daemon.json ] && {
