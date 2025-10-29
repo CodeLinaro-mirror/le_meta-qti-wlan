@@ -35,34 +35,50 @@
 
 echo "##########Trying to load wlanhost driver ##########"
 
-if (lsmod|grep cnss2);then
-	echo "##########cnss2 already exist######"
-else
-	echo "##########loading cnss2############"
-	modprobe cnss2
+if [ -f /sys/devices/soc0/hw_platform ]; then
+    soc_hwplatform=`cat /sys/devices/soc0/hw_platform`
+    soc_subtypeid=`cat /sys/devices/soc0/platform_subtype_id`
+    echo -n "hwplatform: $soc_hwplatform" > /dev/kmsg
+    echo -n "subtypeid: $soc_subtypeid" > /dev/kmsg
 fi
-echo "##########load cnss2 done############"
 
-if (lspci -k|grep cnss_pci);then
-	if (lspci -k|grep 1102);then
-		echo "##########load qca6595#############"
-		modprobe qca6595
-	elif ((lspci -k|grep 003e) || (lspci -k|grep QCA6174));then
-		echo "##########load qca6574#############"
-		modprobe qca6574
-	elif (lspci -k|grep 1101);then
-		echo "##########load qca6696#############"
-		modprobe qca6696
-	elif (lspci -k|grep 1103);then
-		echo "##########load qca6490#############"
-		modprobe qca6490
-	elif (lspci -k|grep 1107);then
-		echo "##########load qca6797#############"
-		modprobe qca6797
+if [ "$soc_hwplatform" == "IDP" ] && [ "$soc_subtypeid" == "1" ]; then
+	echo "##########loading cnss2############"
+	modprobe cnss2 sdio_mode=1
+	echo "##########loading wlan driver############"
+	modprobe qca6574au-3
+else
+	############################################
+	if (lsmod|grep cnss2);then
+		echo "##########cnss2 already exist######"
 	else
-		echo "##########load default wlan########"
-		modprobe wlan
+		echo "##########loading cnss2############"
+		modprobe cnss2
+	fi
+	echo "##########load cnss2 done############"
+
+	if (lspci -k|grep cnss_pci);then
+		if (lspci -k|grep 1102);then
+			echo "##########load qca6595#############"
+			modprobe qca6595
+		elif ((lspci -k|grep 003e) || (lspci -k|grep QCA6174));then
+			echo "##########load qca6574#############"
+			modprobe qca6574
+		elif (lspci -k|grep 1101);then
+			echo "##########load qca6696#############"
+			modprobe qca6696
+		elif (lspci -k|grep 1103);then
+			echo "##########load qca6490#############"
+			modprobe qca6490
+		elif (lspci -k|grep 1107);then
+			echo "##########load qca6797#############"
+			modprobe qca6797
+		else
+			echo "##########load default wlan########"
+			modprobe wlan
+		fi
 	fi
 fi
+
 echo "##########Load wlanhost driver done################"
 
