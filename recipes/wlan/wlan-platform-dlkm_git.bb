@@ -124,6 +124,11 @@ do_install:sa535m() {
     module_do_install
     install -d ${D}${includedir}
     install -m 0644 ${S}/inc/* ${D}${includedir}/
+
+    install -d ${DEPLOY_DIR_IMAGE}/kernel_modules/wlan/
+    install -D -m 0644 ${B}/cnss2/*.ko ${DEPLOY_DIR_IMAGE}/kernel_modules/wlan/
+    install -D -m 0644 ${B}/cnss_genl/*.ko ${DEPLOY_DIR_IMAGE}/kernel_modules/wlan/
+    install -D -m 0644 ${B}/cnss_utils/*.ko ${DEPLOY_DIR_IMAGE}/kernel_modules/wlan/
 }
 
 do_install:sa510m() {
