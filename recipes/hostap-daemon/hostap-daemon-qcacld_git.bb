@@ -27,24 +27,24 @@ PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"
 do_configure() {
     if [ "$(ls -A "${WORKDIR}/${MACHINE_CONFIG}")" ]
     then
-        bbwarn "============================================================"
-        bbwarn "picking ${WORKDIR}/${MACHINE_CONFIG}"
-        bbwarn "============================================================"
+        bbnote "============================================================"
+        bbnote "picking ${WORKDIR}/${MACHINE_CONFIG}"
+        bbnote "============================================================"
         install -m 0644 ${WORKDIR}/${MACHINE_CONFIG}/defconfig-qcacld .config
         echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
     else
-        bbwarn "============================================================"
-        bbwarn "picking ${WORKDIR}/misc"
-        bbwarn "============================================================"
+        bbnote "============================================================"
+        bbnote "picking ${WORKDIR}/misc"
+        bbnote "============================================================"
         install -m 0644 ${WORKDIR}/misc/defconfig-qcacld .config
         echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
     fi
 }
 
 do_configure:ar-sg1() {
-    bbwarn "============================================================"
-    bbwarn "picking ${WORKDIR}/${MACHINE}"
-    bbwarn "============================================================"
+    bbnote "============================================================"
+    bbnote "picking ${WORKDIR}/${MACHINE}"
+    bbnote "============================================================"
     install -m 0644 ${WORKDIR}/${MACHINE}/defconfig-qcacld .config
     echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
 }
@@ -63,14 +63,14 @@ do_patch() {
 
     if [ "$(ls -A "${WORKDIR}/${MACHINE_CONFIG}")" ]
     then
-        bbwarn "============================================================"
-        bbwarn "picking ${WORKDIR}/${MACHINE_CONFIG}"
-        bbwarn "============================================================"
+        bbnote "============================================================"
+        bbnote "picking ${WORKDIR}/${MACHINE_CONFIG}"
+        bbnote "============================================================"
         patch -p1 < ${WORKDIR}/${MACHINE_CONFIG}/hostapd_driver_cmd.patch
     else
-        bbwarn "============================================================"
-        bbwarn "picking ${WORKDIR}/misc"
-        bbwarn "============================================================"
+        bbnote "============================================================"
+        bbnote "picking ${WORKDIR}/misc"
+        bbnote "============================================================"
         patch -p1 < ${WORKDIR}/misc/hostapd_driver_cmd.patch
     fi
 }
@@ -78,8 +78,8 @@ do_patch() {
 do_patch:ar-sg1() {
     cd ${PATCH_DIR}
 
-    bbwarn "============================================================"
-    bbwarn "picking ${WORKDIR}/${MACHINE}"
-    bbwarn "============================================================"
+    bbnote "============================================================"
+    bbnote "picking ${WORKDIR}/${MACHINE}"
+    bbnote "============================================================"
     patch -p1 < ${WORKDIR}/${MACHINE}/hostapd_driver_cmd.patch
 }
