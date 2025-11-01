@@ -4,6 +4,9 @@ DESCRIPTION = "QTI WLAN platform driver"
 LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=801f80980d171dd6425610833a22dbe6"
 
+DDK_BUILD ?= "false"
+OVERRIDES:append = "${@':ddk_build' if d.getVar('DDK_BUILD') == 'true' else ''}"
+
 DEPENDS += "virtual/kernel qmi-framework"
 do_unpack[deptask] = "do_populate_sysroot"
 
@@ -19,12 +22,15 @@ do_configure[noexec] = "1"
 MODULE_NAME = "wlan-platform"
 
 MODULE_ICNSS = "cnss_prealloc.ko cnss_utils.ko cnss_nl.ko cnss_plat_ipc_qmi_svc.ko wlan_firmware_service.ko icnss2.ko"
+MODULE_ICNSS:remove:alor = "cnss_plat_ipc_qmi_svc.ko"
+
 MODULE_CNSS = "cnss_prealloc.ko cnss_utils.ko cnss_nl.ko cnss_plat_ipc_qmi_svc.ko wlan_firmware_service.ko cnss2.ko"
 
 MODULE_LIST = "${MODULE_CNSS}"
 MODULE_LIST:qcs40x = "${MODULE_ICNSS}"
 MODULE_LIST:qcm2290-mtp = "${MODULE_ICNSS}"
 MODULE_LIST:kera = "${MODULE_ICNSS}"
+MODULE_LIST:alor = "${MODULE_ICNSS}"
 
 WLAN_VAR = ""
 WLAN_VAR:qcs40x = "qcs40x"
@@ -58,9 +64,28 @@ do_compile() {
     WLAN_BASEMACHINE=${WLAN_VAR}
 }
 
+do_compile:ddk_build() {
+    cd ${KERNEL_PLATFORM_PATH}
+
+    if [ ! -L "${KERNEL_PLATFORM_PATH}/vendor/qcom/opensource/wlan" ]; then
+        ln -sf ${WORKSPACE}/wlan ${KERNEL_PLATFORM_PATH}/vendor/qcom/opensource/wlan
+    fi
+
+    ENABLE_DDK_BUILD=${DDK_BUILD} \
+    TARGET_BOARD_PLATFORM=${TARGET_BOARD_PLATFORM} \
+    BUILD_CONFIG=${KERNEL_BUILD_CONFIG} \
+    EXT_MODULES=${EXT_MODULES} \
+    KERNEL_KIT=${KERNEL_PREBUILT_PATH} \
+    MODULE_OUT=${S} \
+    OUT_DIR=${WORKDIR}/out/${KERNEL_DEFCONFIG} \
+    INPLACE_COMPILE=y \
+    KERNEL_UAPI_HEADERS_DIR=${STAGING_KERNEL_BUILDDIR} \
+    ./build/build_module.sh
+}
+
 do_install() {
     install -d ${S}/unstripped
-    install -m 0755 `find ${S} -name *.ko` -D ${S}/unstripped
+    install -m 0755 `find ${S} -name "*.ko"` -D ${S}/unstripped
 
     install -d ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}
 

@@ -9,6 +9,7 @@ MACHINE_CONFIG:pineapple = "kalama"
 MACHINE_CONFIG:qcm2290-mtp = "kalama"
 MACHINE_CONFIG:kera = "kalama"
 MACHINE_CONFIG:sun = "kalama"
+MACHINE_CONFIG:alor = "kalama"
 MACHINE_CONFIG:vienna = "kalama"
 
 FILESPATH =+ "${WORKSPACE}:"

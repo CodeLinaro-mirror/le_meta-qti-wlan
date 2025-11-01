@@ -6,11 +6,17 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/ISC;md5=f3b90e
                     file://${COREBASE}/meta/files/common-licenses/BSD-3-Clause;md5=550794465ba0ec5312d6919e203a55f9 \
                     file://${COREBASE}/meta/files/common-licenses/GPL-2.0-only;md5=801f80980d171dd6425610833a22dbe6"
 
+DDK_BUILD ?= "false"
+OVERRIDES:append = "${@':ddk_build' if d.getVar('DDK_BUILD') == 'true' else ''}"
+
 TARGET_WLAN_CHIP:kera = "wcn7750"
+TARGET_WLAN_CHIP:alor = "wcn7750"
 MODULE_NAME = "wlan"
+MODULE_NAME:ddk_build = "qca_cld3_${TARGET_WLAN_CHIP}"
 
 MACHINE_CONFIG = "${BASEMACHINE}"
 MACHINE_CONFIG:kera = "sun"
+MACHINE_CONFIG:alor = "sun"
 
 do_unpack[deptask] = "do_populate_sysroot"
 PR = "r8"
@@ -74,6 +80,19 @@ do_compile() {
     BUILD_DEBUG_VERSION=y \
     CONFIG_CNSS_GENL=m \
     KBUILD_EXTRA_SYMBOLS=${STAGING_DIR_HOST}/usr/lib/modules/${KERNEL_VERSION}/cnsswlan-kernel/Module.symvers
+}
+
+do_compile:ddk_build() {
+    cd ${KERNEL_PLATFORM_PATH}
+    ENABLE_DDK_BUILD=${DDK_BUILD} \
+    TARGET_BOARD_PLATFORM=${TARGET_BOARD_PLATFORM} \
+    BUILD_CONFIG=${KERNEL_BUILD_CONFIG} \
+    EXT_MODULES=${EXT_MODULES} \
+    ROOTDIR=${WORKDIR}/ \
+    MODULE_OUT=${S} \
+    OUT_DIR=../out/${KERNEL_DEFCONFIG} \
+    KERNEL_UAPI_HEADERS_DIR=${STAGING_KERNEL_BUILDDIR} \
+    ./build/build_module.sh
 }
 
 do_install() {
