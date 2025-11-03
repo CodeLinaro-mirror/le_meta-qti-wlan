@@ -405,6 +405,8 @@ do_compile:sa510m() {
 
 do_install:sa535m () {
     module_do_install
+    install -d ${DEPLOY_DIR_IMAGE}/kernel_modules/wlan/
+    install -m 0644 ${S}/${_MODNAME}.ko ${DEPLOY_DIR_IMAGE}/kernel_modules/wlan/
 }
 
 do_install () {
