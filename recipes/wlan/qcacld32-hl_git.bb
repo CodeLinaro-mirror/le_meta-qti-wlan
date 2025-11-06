@@ -55,6 +55,10 @@ RM_WORK_EXCLUDE += "${PN}"
 DEPENDS:append:sa510m = "wlan-platform-dlkm"
 LDFLAGS:aarch64 = "-O1 --hash-style=gnu --as-needed"
 
+_WLAN_CFG_OVERRIDE_510 = "\
+			CONFIG_SHUTDOWN_WLAN_IN_SYSTEM_SUSPEND=y \
+			CONFIG_WLAN_WEXT_SUPPORT_ENABLE=y \
+						"
 # Explicitly disable LL to enable HL as current WLAN driver is not having
 # simultaneous support of HL and LL.
 EXTRA_OEMAKE += "CONFIG_CLD_LL_CORE=n CONFIG_CLD_HL_SDIO_CORE=y CONFIG_CNSS_PCI=n MODNAME=${WLAN_MODULE_NAME} CHIP_NAME=${CHIP_NAME} CONFIG_QCA_CLD_WLAN_PROFILE=qca6174 CONFIG_WLAN_FEATURE_DSRC=n CONFIG_WLAN_NAPI=n"
@@ -69,6 +73,19 @@ do_compile:prepend() {
 TARGET_BOARD_PLATFORM ?= "sa510m"
 # If your MACHINE is named 'sa510m-1g', this maps the platform string to 'sa510m.1g'
 TARGET_BOARD_PLATFORM:sa510m-1g = "sa510m.1g"
+
+do_compile:sa510m:prepend() {
+    CFG_FILE=${S}/configs/sa510m_gki_qca6574au-3_defconfig
+    for cfg in ${_WLAN_CFG_OVERRIDE_510}
+    do
+        item="${cfg%=*}"
+        if (( `grep -c "$item" ${CFG_FILE}` )); then
+            sed -i "/$item/c\\$cfg" "${CFG_FILE}"
+        else
+            echo "$cfg" >> ${CFG_FILE}
+        fi
+    done
+}
 
 do_compile:sa510m() {
     variant="${@bb.utils.contains('DEBUG_BUILD','1', "debug", "perf", d)}"
