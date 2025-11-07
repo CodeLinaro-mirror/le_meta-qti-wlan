@@ -18,6 +18,13 @@ QCACLD32_LL:qcm2290-mtp="${@bb.utils.contains('DEBUG_BUILD', '1', "qcacld32-ll-d
 QCACLD32_LL:ar-sg1="qcacld32-ar-sg1"
 QCACLD32_LL:kera="qcacld32-ll-debug"
 QCACLD32_LL:sun="qcacld32-ll-peach"
+QCACLD32_LL:vienna="qcacld32-ll-vienna-le"
+
+WLAN_PLATFORM="wlan-platform"
+WLAN_PLATFORM:vienna="wlan-platform-vienna-le"
+
+WLAN_CONF="wlan-conf"
+WLAN_CONF:vienna=""
 
 # default WLAN and network software package
 RDEPENDS:packagegroup-qti-wifi:append = "iw rfkill dnsmasq iperf2 iperf3"
@@ -28,8 +35,8 @@ RDEPENDS:packagegroup-qti-wifi:remove:qcm2290-mtp = "dnsmasq"
 
 RDEPENDS:packagegroup-qti-wifi = " \
         ${QCACLD32_LL} \
-        wlan-platform \
-        wlan-conf \
+        ${WLAN_PLATFORM} \
+        ${WLAN_CONF} \
         wlan-sigma-dut \
         hostap-daemon-qcacld \
         wpa-supplicant-8-lib \
