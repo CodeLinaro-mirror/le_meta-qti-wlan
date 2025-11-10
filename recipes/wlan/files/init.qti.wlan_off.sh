@@ -49,5 +49,10 @@ if (lspci -k|grep cnss_pci);then
 		rmmod wlan
 	fi
 fi
+
+if (lsmod | grep qca6574au_3);then
+	echo "##########unload qca6574au-3#############"
+	rmmod qca6574au-3
+fi
 echo "##########Unload wlanhost driver done################"
 

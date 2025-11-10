@@ -242,10 +242,10 @@ WLAN_PLATFORM_CFG = " KBUILD_EXTRA=${WLAN_KBUILD_EXTRA} WLAN_PLATFORM_INC=${WLAN
 WLAN_IPA_CFG = " DATA_IPA_INC=${DATA_IPA_INC} DATA_IPA_UAPI_INC=${DATA_IPA_UAPI_INC}"
 
 EXTRA_OEMAKE:append = "${@bb.utils.contains('PREFERRED_VERSION_linux-msm', '5.15', '${WLAN_PLATFORM_CFG}', '', d)}"
-EXTRA_OEMAKE:append:sa535m = " ${WLAN_PLATFORM_CFG} ${WLAN_IPA_CFG}"
+EXTRA_OEMAKE:append:sa535m = "${@bb.utils.contains('_WLAN_CFG_OVERRIDE_535', 'CONFIG_IPA3=y', ' ${WLAN_PLATFORM_CFG} ${WLAN_IPA_CFG}', ' ${WLAN_PLATFORM_CFG}', d)}"
 
 DEPENDS:append = "wlan-platform-dlkm"
-DEPENDS:append:sa535m = " virtual/kernel linux-kernel-qcom-headers dataipa"
+DEPENDS:append:sa535m = "${@bb.utils.contains('_WLAN_CFG_OVERRIDE_535', 'CONFIG_IPA3=y', ' virtual/kernel linux-kernel-qcom-headers dataipa', '', d)}"
 
 LDFLAGS:aarch64 = "-O1 --hash-style=gnu --as-needed"
 
@@ -281,12 +281,16 @@ do_compile:prepend() {
         cat ${WLAN_PLATFORM_PATH}/wlan-platform-dlkm/Module.symvers > ${WORKDIR}/Module.symvers
     elif [ "${BASEMACHINE}" == "sa535m" ] ; then
         cat ${WLAN_PLATFORM_PATH}/wlan-platform-dlkm/Module.symvers > ${WORKDIR}/Module.symvers
-        cat ${DATA_IPA_PATH}/ipa/Module.symvers >> ${WORKDIR}/Module.symvers
+        if ${@bb.utils.contains('_WLAN_CFG_OVERRIDE_535', 'CONFIG_IPA3=y', 'true', 'false', d)}; then
+            cat ${DATA_IPA_PATH}/ipa/Module.symvers >> ${WORKDIR}/Module.symvers
+        fi
     fi
 }
 
 do_install:sa535m () {
     module_do_install
+    install -d ${DEPLOY_DIR_IMAGE}/kernel_modules/wlan/
+    install -m 0644 ${S}/${_MODNAME}.ko ${DEPLOY_DIR_IMAGE}/kernel_modules/wlan/
 }
 
 do_install () {
