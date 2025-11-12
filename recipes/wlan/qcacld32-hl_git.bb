@@ -57,6 +57,12 @@ _WLAN_CFG_OVERRIDE_510 = "\
 			CONFIG_SHUTDOWN_WLAN_IN_SYSTEM_SUSPEND=y \
 			CONFIG_WLAN_WEXT_SUPPORT_ENABLE=y \
 						"
+
+_KCONFIG_NEW_ITEM_510 = "\
+config TGT_NUM_MSDU_DESC\n\
+	int \"target msdu desc number\"\n\
+	default 0 \n\
+"
 # Explicitly disable LL to enable HL as current WLAN driver is not having
 # simultaneous support of HL and LL.
 EXTRA_OEMAKE += "CONFIG_CLD_LL_CORE=n CONFIG_CLD_HL_SDIO_CORE=y CONFIG_CNSS_PCI=n MODNAME=${WLAN_MODULE_NAME} CHIP_NAME=${CHIP_NAME} CONFIG_QCA_CLD_WLAN_PROFILE=qca6174 CONFIG_WLAN_FEATURE_DSRC=n CONFIG_WLAN_NAPI=n"
@@ -83,6 +89,19 @@ do_compile:sa510m:prepend() {
             echo "$cfg" >> ${CFG_FILE}
         fi
     done
+
+    # Add new defined items to Kconfig
+    KCONFIG_FILE="${S}/Kconfig"
+    if [[ ! -f "$KCONFIG_FILE" ]]; then
+        echo "Error: $KCONFIG_FILE not found!"
+        exit 1
+    fi
+    FIRST_LINE=$(echo "${_KCONFIG_NEW_ITEM_510}" | cut -d '\' -f 1)
+    if ((`grep -c "$FIRST_LINE" ${KCONFIG_FILE}`)); then
+        echo "Block already exists. No changes made."
+    else
+        sed -i "/endif # QCA_CLD_WLAN/i ${_KCONFIG_NEW_ITEM_510}" "$KCONFIG_FILE"
+    fi
 }
 
 do_compile:sa510m() {
@@ -111,17 +130,17 @@ do_install() {
     install -d ${D}${includedir}/qcacld/
     install -m 0644 ${S1}/utils/nlink/inc/wlan_nlink_common.h ${D}${includedir}/qcacld/
 
-	install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_sdio_qca6174.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
+    install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_sdio_qca6174.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
     chmod -R 0664 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
     install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/wlan_mac.bin ${FIRMWARE_PATH}/wlan_mac.bin
     chmod -R 0664 ${FIRMWARE_PATH}/wlan_mac.bin
 }
 
 do_module_signing() {
-	if [ -f ${KERNEL_PREBUILT_PATH} ]; then
-		WLAN_KO=${D}/${base_libdir}/modules/${KERNEL_VERSION}/extra
-		export LD_LIBRARY_PATH=${KERNEL_PREBUILT_PATH}/dist
-		${KERNEL_PREBUILT_PATH}/dist/sign-file sha1 ${KERNEL_PREBUILT_PATH}/dist/signing_key.pem ${KKERNEL_PREBUILT_PATH}/dist/signing_key.x509 ${WLAN_KO}/${_MODNAME}.ko
+    if [ -f ${KERNEL_PREBUILT_PATH} ]; then
+        WLAN_KO=${D}/${base_libdir}/modules/${KERNEL_VERSION}/extra
+        export LD_LIBRARY_PATH=${KERNEL_PREBUILT_PATH}/dist
+        ${KERNEL_PREBUILT_PATH}/dist/sign-file sha1 ${KERNEL_PREBUILT_PATH}/dist/signing_key.pem ${KKERNEL_PREBUILT_PATH}/dist/signing_key.x509 ${WLAN_KO}/${_MODNAME}.ko
     fi
 }
 
