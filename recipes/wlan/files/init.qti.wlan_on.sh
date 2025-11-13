@@ -57,20 +57,21 @@ else
 	fi
 	echo "##########load cnss2 done############"
 
-	if (lspci -k|grep cnss_pci);then
-		if (lspci -k|grep 1102);then
+	LSPCI=`lspci -k`
+	if (echo -n $LSPCI|grep cnss_pci);then
+		if (echo -n $LSPCI|grep 1102);then
 			echo "##########load qca6595#############"
 			modprobe qca6595
-		elif ((lspci -k|grep 003e) || (lspci -k|grep QCA6174));then
+		elif ((echo -n $LSPCI|grep 003e) || (echo -n $LSPCI|grep QCA6174));then
 			echo "##########load qca6574#############"
 			modprobe qca6574
-		elif (lspci -k|grep 1101);then
+		elif (echo -n $LSPCI|grep 1101);then
 			echo "##########load qca6696#############"
 			modprobe qca6696
-		elif (lspci -k|grep 1103);then
+		elif (echo -n $LSPCI|grep 1103);then
 			echo "##########load qca6490#############"
 			modprobe qca6490
-		elif (lspci -k|grep 1107);then
+		elif (echo -n $LSPCI|grep 1107);then
 			echo "##########load qca6797#############"
 			modprobe qca6797
 		else
