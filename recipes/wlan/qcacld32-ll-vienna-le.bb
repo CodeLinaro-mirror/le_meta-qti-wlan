@@ -28,6 +28,7 @@ SRC_URI += "file://wlan/qca-wifi-host-cmn/"
 SRC_URI += "file://wlan/fw-api/"
 SRC_URI += "file://device/qcom/wlan/${WLAN_VAR}/"
 SRC_URI += "file://${BASEMACHINE}/wlan_load.conf"
+SRC_URI += "file://${BASEMACHINE}/WCNSS_qcom_cfg.ini"
 SRC_URI += "file://wlan/platform/"
 SRC_URI += "file://qcacld-kbuild.patch"
 
@@ -35,7 +36,7 @@ S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn"
 S2 = "${WORKDIR}/wlan/platform/"
 S = "${WORKDIR}/wlan/qcacld-3.0"
 
-FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld/${TARGET_WLAN_CHIP}"
+FIRMWARE_PATH = "${base_libdir}/firmware/wlan/qca_cld"
 
 #WLAN_CONFIG = "${TARGET_WLAN_CHIP}"
 
@@ -99,6 +100,9 @@ do_install() {
     #auto load
     install -d ${D}${sysconfdir}/modules-load.d
     install -m 0755 ${WORKDIR}/${BASEMACHINE}/wlan_load.conf -D ${D}${sysconfdir}/modules-load.d/wlan_load.conf
+
+    install -d ${D}${FIRMWARE_PATH}
+    install -m 0644 ${WORKDIR}/${BASEMACHINE}/WCNSS_qcom_cfg.ini ${D}${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
 }
 
 do_deploy () {
@@ -108,5 +112,6 @@ do_deploy () {
 
 FILES:${PN} += "${sysconfdir}/*"
 FILES:${PN} += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/*"
+FILES:${PN} += "${base_libdir}/firmware/wlan/qca_cld/WCNSS_qcom_cfg.ini"
 
 addtask do_deploy after do_install
