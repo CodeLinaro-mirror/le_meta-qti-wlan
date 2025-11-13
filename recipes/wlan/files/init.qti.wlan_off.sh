@@ -28,20 +28,21 @@
 #
 #
 echo "##########Trying to unload wlanhost driver ##########"
-if (lspci -k|grep cnss_pci);then
-	if (lspci -k|grep 1102);then
+LSPCI=`lspci -k`
+if (echo -n $LSPCI|grep cnss_pci);then
+	if (echo -n $LSPCI|grep 1102);then
 		echo "##########unload qca6595#############"
 		rmmod qca6595
-	elif ((lspci -k|grep 003e) || (lspci -k|grep QCA6174));then
+	elif ((echo -n $LSPCI|grep 003e) || (echo -n $LSPCI|grep QCA6174));then
 		echo "##########unload qca6574#############"
 		rmmod qca6574
-	elif (lspci -k|grep 1101);then
+	elif (echo -n $LSPCI|grep 1101);then
 		echo "##########unload qca6696#############"
 		rmmod qca6696
-	elif (lspci -k|grep 1103);then
+	elif (echo -n $LSPCI|grep 1103);then
 		echo "##########unload qca6490#############"
 		rmmod qca6490
-	elif (lspci -k|grep 1107);then
+	elif (echo -n $LSPCI|grep 1107);then
 		echo "##########unload qca6797#############"
 		rmmod qca6797
 	else
