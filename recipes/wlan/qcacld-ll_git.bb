@@ -7,6 +7,8 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5
 python __anonymous () {
      if d.getVar('BASEMACHINE', True) == 'sdx20':
          d.setVar('WLAN_MODULE_TARGET_NAME', 'wlan_cld20')
+     if d.getVar('BASEMACHINE', True) == 'sdxprairie':
+         d.setVar('WLAN_MODULE_TARGET_NAME', 'wlan_rome')
      d.setVar('WLAN_MODULE_NAME', 'wlan')
 }
 
@@ -37,6 +39,12 @@ EXTRA_OEMAKE += "CONFIG_CLD_HL_SDIO_CORE=n CONFIG_CNSS_SDIO=n MODNAME=${WLAN_MOD
 # SSTATE_DUPWHITELIST.
 SSTATE_DUPWHITELIST += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wlan_nlink_common.h"
 
+do_configure_append_sdxprairie () {
+    echo "qcdbg, WLAN_MODULE_TARGET_NAME=${WLAN_MODULE_TARGET_NAME}"
+    wirelessdir=${WORKSPACE}/external/compat-wireless/net/wireless
+    awk -f $wirelessdir/genregdb.awk < $wirelessdir/db.txt > ${S}/CORE/VOSS/src/vos_regdb.c
+}
+
 do_install () {
     module_do_install
 
@@ -52,10 +60,16 @@ do_install_append_sdx20 () {
     fi
 }
 
+do_install_append_sdxprairie () {
+    if [ -e ${D}/${base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko ]; then
+        mv ${D}/${base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko ${D}/${base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_TARGET_NAME}.ko
+    fi
+}
+
 do_module_signing() {
     if [ -f ${STAGING_KERNEL_BUILDDIR}/signing_key.priv ]; then
         bbnote "Signing ${PN} module"
-        if [ ${BASEMACHINE} == "sdx20" ]; then
+        if [ ${BASEMACHINE} == "sdx20" ] || [ ${BASEMACHINE} == "sdxprairie" ]; then
             ${STAGING_KERNEL_DIR}/scripts/sign-file sha512 ${STAGING_KERNEL_BUILDDIR}/signing_key.priv ${STAGING_KERNEL_BUILDDIR}/signing_key.x509 ${PKGDEST}/${PROVIDES_NAME}/lib/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_TARGET_NAME}.ko
         else
             ${STAGING_KERNEL_DIR}/scripts/sign-file sha512 ${STAGING_KERNEL_BUILDDIR}/signing_key.priv ${STAGING_KERNEL_BUILDDIR}/signing_key.x509 ${PKGDEST}/${PROVIDES_NAME}/lib/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko
