@@ -14,7 +14,7 @@ DEPENDS = "openssl libnl"
 
 SRC_URI = "file://${WORKSPACE}/external/hostap/"
 
-S = "${WORKDIR}/external/hostap/hostapd/"
+S = "${WORKDIR}/external/hostap/hostapd"
 
 do_install() {
     if [ ${BASEMACHINE} == "sdxlemur" ]; then

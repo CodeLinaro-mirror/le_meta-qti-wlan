@@ -1,0 +1,76 @@
+inherit linux-kernel-base deploy
+
+DESCRIPTION = "QTI WLAN platform driver"
+LICENSE = "GPL-2.0-only"
+LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=801f80980d171dd6425610833a22dbe6"
+
+DEPENDS += "virtual/kernel qmi-framework"
+do_unpack[deptask] = "do_populate_sysroot"
+
+FILESPATH =+ "${WORKSPACE}:"
+SRC_URI = "file://wlan/platform/"
+
+S = "${WORKDIR}/wlan/platform"
+
+do_configure[depends] = "virtual/kernel:do_shared_workdir"
+
+do_configure[noexec] = "1"
+
+MODULE_NAME = "wlan-platform"
+
+MODULE_CNSS_SDIO = "cnss_prealloc.ko cnss_utils.ko cnss_nl.ko qti_sdio_client.ko qcn_sdio.ko cnss2_sdio.ko"
+
+MODULE_LIST = "${MODULE_CNSS}"
+MODULE_LIST:vienna = "${MODULE_CNSS_SDIO}"
+
+WLAN_VAR = ""
+WLAN_VAR:vienna = "vienna"
+
+KERNEL_VERSION = "${@get_kernelversion_file("${STAGING_KERNEL_BUILDDIR}")}"
+EXT_MODULES = "${@os.path.relpath("${S}", "${KERNEL_PLATFORM_PATH}")}"
+
+EXT_COMPILE_CONFIG = " "
+EXT_COMPILE_CONFIG:append:vienna = " CONFIG_PCI_MSM=m "
+
+do_compile[depends] += "virtual/kernel:do_shared_workdir"
+do_compile[cleandirs] += "${WORKDIR}/out/${KERNEL_DEFCONFIG}"
+do_compile() {
+    cd ${WORKSPACE}/kernel-${PREFERRED_VERSION_linux-msm}/kernel_platform
+    BUILD_CONFIG=${KERNEL_BUILD_CONFIG} \
+    EXT_MODULES=../../wlan/platform \
+    ENABLE_DDK_BUILD=${DDK_BUILD} \
+    TARGET_BOARD_PLATFORM=vienna-le \
+    VARIANT=${KERNEL_DEFCONFIG_VARIANT} \
+    MODULE_OUT=${WORKDIR}/wlan/platform \
+    OUT_DIR=${KERNEL_OUT_PATH}/ \
+    WLAN_BASEMACHINE=${WLAN_VAR} \
+    ./build/build_module.sh
+}
+
+do_install() {
+    install -d "${S}/unstripped"
+    for ko in $(find "${S}" -name "*.ko"); do
+        install -m 0755 "$ko" "${S}/unstripped/$(basename "$ko")"
+    done
+
+    install -d "${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}"
+
+    # strip debug symbols
+    for module in ${MODULE_LIST}; do
+        ${STAGING_DIR_NATIVE}/usr/bin/aarch64-oe-linux/aarch64-oe-linux-strip \
+            --strip-debug "${S}/unstripped/${module}" -o "${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/${module}"
+    done
+
+    #install ${WORKDIR}/wlan/platform/Module.symvers -D ${D}${base_libdir}/modules/${KERNEL_VERSION}/cnsswlan-kernel/Module.symvers
+
+}
+
+do_deploy() {
+    install -d ${DEPLOYDIR}/kernel_modules
+    install -m 0755 ${S}/unstripped/*.ko ${DEPLOYDIR}/kernel_modules
+}
+
+addtask do_deploy after do_install
+
+FILES:${PN} += "${sysconfdir}/*"
+FILES:${PN} += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/*"

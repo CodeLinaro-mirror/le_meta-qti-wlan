@@ -10,41 +10,42 @@ MACHINE_CONFIG:pineapple = "kalama"
 MACHINE_CONFIG:qcm2290-mtp = "kalama"
 MACHINE_CONFIG:kera = "kalama"
 MACHINE_CONFIG:sun = "kalama"
+MACHINE_CONFIG:vienna = "kalama"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://external/wpa_supplicant_8/"
 SRC_URI += "file://${MACHINE_CONFIG}/"
 SRC_URI += "file://misc/"
-SRC_URI:append:ar-sg1 += "file://${MACHINE}/"
+SRC_URI:append:ar-sg1 = " file://${MACHINE}/"
 DEPENDS = "pkgconfig libnl openssl wpa-supplicant-8-lib liblog"
 
 LDFLAGS +="-L${RECIPE_SYSROOT}/usr/lib -llog"
-CFLAGS:append:neo +="-DCONFIG_ANDROID_LOG"
+CFLAGS:append:neo =" -DCONFIG_ANDROID_LOG"
 
-S = "${WORKDIR}/external/wpa_supplicant_8/hostapd/"
+S = "${WORKDIR}/external/wpa_supplicant_8/hostapd"
 PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"
 
 do_configure() {
     if [ "$(ls -A "${WORKDIR}/${MACHINE_CONFIG}")" ]
     then
-        bbwarn "============================================================"
-        bbwarn "picking ${WORKDIR}/${MACHINE_CONFIG}"
-        bbwarn "============================================================"
+        bbnote "============================================================"
+        bbnote "picking ${WORKDIR}/${MACHINE_CONFIG}"
+        bbnote "============================================================"
         install -m 0644 ${WORKDIR}/${MACHINE_CONFIG}/defconfig-qcacld .config
         echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
     else
-        bbwarn "============================================================"
-        bbwarn "picking ${WORKDIR}/misc"
-        bbwarn "============================================================"
+        bbnote "============================================================"
+        bbnote "picking ${WORKDIR}/misc"
+        bbnote "============================================================"
         install -m 0644 ${WORKDIR}/misc/defconfig-qcacld .config
         echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
     fi
 }
 
 do_configure:ar-sg1() {
-    bbwarn "============================================================"
-    bbwarn "picking ${WORKDIR}/${MACHINE}"
-    bbwarn "============================================================"
+    bbnote "============================================================"
+    bbnote "picking ${WORKDIR}/${MACHINE}"
+    bbnote "============================================================"
     install -m 0644 ${WORKDIR}/${MACHINE}/defconfig-qcacld .config
     echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
 }
@@ -63,14 +64,14 @@ do_patch() {
 
     if [ "$(ls -A "${WORKDIR}/${MACHINE_CONFIG}")" ]
     then
-        bbwarn "============================================================"
-        bbwarn "picking ${WORKDIR}/${MACHINE_CONFIG}"
-        bbwarn "============================================================"
+        bbnote "============================================================"
+        bbnote "picking ${WORKDIR}/${MACHINE_CONFIG}"
+        bbnote "============================================================"
         patch -p1 < ${WORKDIR}/${MACHINE_CONFIG}/hostapd_driver_cmd.patch
     else
-        bbwarn "============================================================"
-        bbwarn "picking ${WORKDIR}/misc"
-        bbwarn "============================================================"
+        bbnote "============================================================"
+        bbnote "picking ${WORKDIR}/misc"
+        bbnote "============================================================"
         patch -p1 < ${WORKDIR}/misc/hostapd_driver_cmd.patch
     fi
 }
@@ -78,8 +79,8 @@ do_patch() {
 do_patch:ar-sg1() {
     cd ${PATCH_DIR}
 
-    bbwarn "============================================================"
-    bbwarn "picking ${WORKDIR}/${MACHINE}"
-    bbwarn "============================================================"
+    bbnote "============================================================"
+    bbnote "picking ${WORKDIR}/${MACHINE}"
+    bbnote "============================================================"
     patch -p1 < ${WORKDIR}/${MACHINE}/hostapd_driver_cmd.patch
 }

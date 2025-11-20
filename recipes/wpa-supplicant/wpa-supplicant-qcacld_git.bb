@@ -9,12 +9,13 @@ MACHINE_CONFIG:pineapple = "kalama"
 MACHINE_CONFIG:qcm2290-mtp = "kalama"
 MACHINE_CONFIG:kera = "kalama"
 MACHINE_CONFIG:sun = "kalama"
+MACHINE_CONFIG:vienna = "kalama"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://external/wpa_supplicant_8/"
 SRC_URI += "file://${MACHINE_CONFIG}/"
 SRC_URI += "file://misc/"
-SRC_URI:append:neo += "file://${BASEMACHINE}/"
+SRC_URI:append:neo = " file://${BASEMACHINE}/"
 
 DEPENDS += "glib-2.0 wpa-supplicant-8-lib dbus liblog qmi-framework"
 DEPENDS:append:sdxlemur = "qmi"
@@ -29,29 +30,29 @@ PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"
 
 LDFLAGS:append:neo = " -Wl,--no-as-needed -L${RECIPE_SYSROOT}/usr/lib -llog"
 CFLAGS:append:neo =" -DCONFIG_ANDROID_LOG"
-EXTRA_OEMAKE:append:ar-sg1 += "CONFIG_OCV=y"
+EXTRA_OEMAKE:append:ar-sg1 = " CONFIG_OCV=y"
 
 do_configure() {
     if [ "$(ls -A "${WORKDIR}/${MACHINE_CONFIG}")" ]
     then
-        bbwarn "============================================================"
-        bbwarn "picking ${WORKDIR}/${MACHINE_CONFIG}"
-        bbwarn "============================================================"
+        bbnote "============================================================"
+        bbnote "picking ${WORKDIR}/${MACHINE_CONFIG}"
+        bbnote "============================================================"
         install -m 0644 ${WORKDIR}/${MACHINE_CONFIG}/defconfig-qcacld .config
         echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
     else
-        bbwarn "============================================================"
-        bbwarn "picking ${WORKDIR}/misc"
-        bbwarn "============================================================"
+        bbnote "============================================================"
+        bbnote "picking ${WORKDIR}/misc"
+        bbnote "============================================================"
         install -m 0644 ${WORKDIR}/misc/defconfig-qcacld .config
         echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
     fi
 }
 
 do_configure:neo() {
-    bbwarn "============================================================"
-    bbwarn "picking ${WORKDIR}/${BASEMACHINE}"
-    bbwarn "============================================================"
+    bbnote "============================================================"
+    bbnote "picking ${WORKDIR}/${BASEMACHINE}"
+    bbnote "============================================================"
     install -m 0644 ${WORKDIR}/${BASEMACHINE}/defconfig-qcacld .config
     echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
     rm -rf ${STAGING_LIBDIR}/libwpa_supplicant_8_lib.so*
@@ -70,15 +71,15 @@ do_patch() {
     cd ${PATCH_DIR}
     if [ "$(ls -A "${WORKDIR}/${MACHINE_CONFIG}")" ]
     then
-        bbwarn "============================================================"
-        bbwarn "picking ${WORKDIR}/${MACHINE_CONFIG}"
-        bbwarn "============================================================"
+        bbnote "============================================================"
+        bbnote "picking ${WORKDIR}/${MACHINE_CONFIG}"
+        bbnote "============================================================"
         patch -p1 < ${WORKDIR}/${MACHINE_CONFIG}/p2p_tmp_config.patch
         patch -p1 < ${WORKDIR}/${MACHINE_CONFIG}/driver_cmd.patch
     else
-        bbwarn "============================================================"
-        bbwarn "picking ${WORKDIR}/misc"
-        bbwarn "============================================================"
+        bbnote "============================================================"
+        bbnote "picking ${WORKDIR}/misc"
+        bbnote "============================================================"
         patch -p1 < ${WORKDIR}/misc/p2p_tmp_config.patch
         patch -p1 < ${WORKDIR}/misc/driver_cmd.patch
     fi
@@ -88,9 +89,9 @@ do_patch:neo() {
     cd ${PATCH_DIR}
     if [ "$(ls -A "${WORKDIR}/${BASEMACHINE}")" ]
     then
-        bbwarn "============================================================"
-        bbwarn "picking ${WORKDIR}/${BASEMACHINE}"
-        bbwarn "============================================================"
+        bbnote "============================================================"
+        bbnote "picking ${WORKDIR}/${BASEMACHINE}"
+        bbnote "============================================================"
         patch -p1 < ${WORKDIR}/${BASEMACHINE}/driver_cmd.patch
     fi
 }
