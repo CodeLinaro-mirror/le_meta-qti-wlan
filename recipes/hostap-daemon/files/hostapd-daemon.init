@@ -57,7 +57,7 @@ start_service() {
 			uci set $SVC_NAME.$IFNAME=interface
 			uci commit $SVC_NAME
 			config_load "${SVC_NAME}"
-			config_get log_level log log_level "debug"
+			config_get log_level log log_level "info"
 			config_get log_folder_mode log log_folder_mode 0
 
 			if [ "$log_folder_mode" = "1" ];then
@@ -84,15 +84,28 @@ start_service() {
 				procd_set_param command $BIN_PATH -P $PID_PATH
 			else
 				procd_set_param command $BIN_PATH -P $PID_PATH -f $LOG_PATH
-			fi
-			# set log print level
-			if [ "$log_level" = "debug" ];then
-				procd_append_param command -d
-			elif [ "$log_level" = "info" ];then
-				echo "$PKG_NAME: log_level is $log_level, unnecessary to do any change"
-			else
-				echo "$PKG_NAME: unrecognized log level $log_level, set default log level debug"
-				procd_append_param command -dddd
+				# set log print level
+				case "$log_level" in
+					excessive)
+						procd_append_param command -ddd
+					;;
+					dump)
+						procd_append_param command -dd
+					;;
+					debug)
+						procd_append_param command -d
+					;;
+					warning)
+						procd_append_param command -q
+					;;
+					error)
+						procd_append_param command -qq
+					;;
+					*)
+					;;
+				esac
+				# enable timestamp
+				procd_append_param command -t
 			fi
 
 			# set the config file
