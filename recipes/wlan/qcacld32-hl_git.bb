@@ -1,4 +1,6 @@
-inherit autotools-brokensep module qperf
+WLAN_BB = 'autotools-brokensep module qperf'
+WLAN_BB:remove:sa535m = 'qperf'
+inherit ${WLAN_BB}
 
 DESCRIPTION = "WLAN CLD3.0 high latency driver"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
@@ -53,6 +55,16 @@ RM_WORK_EXCLUDE += "${PN}"
 DEPENDS:append:sa510m = "wlan-platform-dlkm"
 LDFLAGS:aarch64 = "-O1 --hash-style=gnu --as-needed"
 
+_WLAN_CFG_OVERRIDE_510 = "\
+			CONFIG_SHUTDOWN_WLAN_IN_SYSTEM_SUSPEND=y \
+			CONFIG_WLAN_WEXT_SUPPORT_ENABLE=y \
+						"
+
+_KCONFIG_NEW_ITEM_510 = "\
+config TGT_NUM_MSDU_DESC\n\
+	int \"target msdu desc number\"\n\
+	default 0 \n\
+"
 # Explicitly disable LL to enable HL as current WLAN driver is not having
 # simultaneous support of HL and LL.
 EXTRA_OEMAKE += "CONFIG_CLD_LL_CORE=n CONFIG_CLD_HL_SDIO_CORE=y CONFIG_CNSS_PCI=n MODNAME=${WLAN_MODULE_NAME} CHIP_NAME=${CHIP_NAME} CONFIG_QCA_CLD_WLAN_PROFILE=qca6174 CONFIG_WLAN_FEATURE_DSRC=n CONFIG_WLAN_NAPI=n"
@@ -68,9 +80,31 @@ TARGET_BOARD_PLATFORM ?= "sa510m"
 # If your MACHINE is named 'sa510m-1g', this maps the platform string to 'sa510m.1g'
 TARGET_BOARD_PLATFORM:sa510m-1g = "sa510m.1g"
 
-# Ensure artifacts are machine-specific (kernel modules depend on kernel/machine)
-# (Optional) Restrict this recipe to the intended machines only
-COMPATIBLE_MACHINE = "(sa510m|sa510m-1g)"
+do_compile:sa510m:prepend() {
+    CFG_FILE=${S}/configs/sa510m_gki_qca6574au-3_defconfig
+    for cfg in ${_WLAN_CFG_OVERRIDE_510}
+    do
+        item="${cfg%=*}"
+        if (( `grep -c "$item" ${CFG_FILE}` )); then
+            sed -i "/$item/c\\$cfg" "${CFG_FILE}"
+        else
+            echo "$cfg" >> ${CFG_FILE}
+        fi
+    done
+
+    # Add new defined items to Kconfig
+    KCONFIG_FILE="${S}/Kconfig"
+    if [[ ! -f "$KCONFIG_FILE" ]]; then
+        echo "Error: $KCONFIG_FILE not found!"
+        exit 1
+    fi
+    FIRST_LINE=$(echo "${_KCONFIG_NEW_ITEM_510}" | cut -d '\' -f 1)
+    if ((`grep -c "$FIRST_LINE" ${KCONFIG_FILE}`)); then
+        echo "Block already exists. No changes made."
+    else
+        sed -i "/endif # QCA_CLD_WLAN/i ${_KCONFIG_NEW_ITEM_510}" "$KCONFIG_FILE"
+    fi
+}
 
 do_compile:sa510m() {
     variant="${@bb.utils.contains('DEBUG_BUILD','1', "debug", "perf", d)}"
@@ -98,17 +132,17 @@ do_install() {
     install -d ${D}${includedir}/qcacld/
     install -m 0644 ${S1}/utils/nlink/inc/wlan_nlink_common.h ${D}${includedir}/qcacld/
 
-	install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_sdio_qca6174.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
+    install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_sdio_qca6174.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
     chmod -R 0664 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
     install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/wlan_mac.bin ${FIRMWARE_PATH}/wlan_mac.bin
     chmod -R 0664 ${FIRMWARE_PATH}/wlan_mac.bin
 }
 
 do_module_signing() {
-	if [ -f ${KERNEL_PREBUILT_PATH} ]; then
-		WLAN_KO=${D}/${base_libdir}/modules/${KERNEL_VERSION}/extra
-		export LD_LIBRARY_PATH=${KERNEL_PREBUILT_PATH}/dist
-		${KERNEL_PREBUILT_PATH}/dist/sign-file sha1 ${KERNEL_PREBUILT_PATH}/dist/signing_key.pem ${KKERNEL_PREBUILT_PATH}/dist/signing_key.x509 ${WLAN_KO}/${_MODNAME}.ko
+    if [ -f ${KERNEL_PREBUILT_PATH} ]; then
+        WLAN_KO=${D}/${base_libdir}/modules/${KERNEL_VERSION}/extra
+        export LD_LIBRARY_PATH=${KERNEL_PREBUILT_PATH}/dist
+        ${KERNEL_PREBUILT_PATH}/dist/sign-file sha1 ${KERNEL_PREBUILT_PATH}/dist/signing_key.pem ${KKERNEL_PREBUILT_PATH}/dist/signing_key.x509 ${WLAN_KO}/${_MODNAME}.ko
     fi
 }
 

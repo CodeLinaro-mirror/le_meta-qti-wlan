@@ -22,5 +22,6 @@ INCSUFFIX:automotive = "wpa-supplicant_auto"
 INCSUFFIX:auto = "wpa-supplicant_auto"
 INCSUFFIX:sa515m = "wpa-supplicant_auto"
 INCSUFFIX:sa525m = "wpa-supplicant_auto"
+INCSUFFIX:sa535m = "wpa-supplicant_auto"
 INCSUFFIX:sa510m = "wpa-supplicant_auto"
 include ${INCSUFFIX}.inc
