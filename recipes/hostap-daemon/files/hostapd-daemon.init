@@ -54,6 +54,13 @@ start_service() {
 			# CONF_PATH - config file used to start hostapd service
 			CONF_PATH=/data/vendor/wifi/$SVC_NAME-$IFNAME.conf
 
+			# Set user permissions
+			user_name=$(ls -ld /data/vendor/wifi/ | awk '{print $3}')
+			if [ $user_name != "wifi" ]; then
+				chown wifi:root /data/vendor/wifi/
+				chmod 0775 /data/vendor/wifi/
+			fi
+
 			uci set $SVC_NAME.$IFNAME=interface
 			uci commit $SVC_NAME
 			config_load "${SVC_NAME}"
