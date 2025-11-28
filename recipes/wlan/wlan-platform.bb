@@ -29,7 +29,7 @@ MODULE_LIST:qcm4325-mtp = "${MODULE_ICNSS}"
 WLAN_VAR = ""
 WLAN_VAR:qcs40x = "qcs40x"
 WLAN_VAR:qcm2290-mtp = "qcs40x"
-WLAN_VAR:qcm4325-mtp = "qcm4325-mtp"
+WLAN_VAR:qcm4325-mtp = "qcs40x"
 
 KERNEL_VERSION = "${@get_kernelversion_file("${STAGING_KERNEL_BUILDDIR}")}"
 EXT_MODULES = "${@os.path.relpath("${S}", "${KERNEL_PLATFORM_PATH}")}"
