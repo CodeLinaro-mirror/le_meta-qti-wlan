@@ -235,6 +235,25 @@ do_install:append:ar-sg1(){
 	fi
 }
 
+do_install:append:qcm4325-mtp(){
+        if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
+                #systemd-tmpfiles service for wlan-conf
+                install -d ${D}${sysconfdir}/tmpfiles.d
+                install -m 0644 ${WORKDIR}/neo/wlan-conf_systemd_tmpfiles.conf \
+                                -D ${D}${sysconfdir}/tmpfiles.d/wlan-conf_systemd_tmpfiles.conf
+                install -d ${D}/etc/initscripts
+                cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
+                install -d ${D}/etc/systemd/system/
+                install -m 0644 ${WORKDIR}/neo/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
+                install -d ${D}/etc/systemd/system/multi-user.target.wants/
+                ln -sf /etc/systemd/system/wlan_daemon.service \
+                        ${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
+                install -d ${D}/etc/systemd/network/
+                ln -sf /dev/null ${D}/etc/systemd/network/99-default.link
+                install -d ${D}/etc/misc/wifi/
+        fi
+}
+
 FILES:${PN} += "${userfsdatadir}/misc/wifi/*"
 FILES:${PN} += "${base_libdir}/firmware/wlan/qca_cld/*"
 FILES:${PN} += "/lib/firmware/wlan/qca_cld/* ${sysconfdir}/init.d/* "
