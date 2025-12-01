@@ -32,7 +32,7 @@ ENABLE_BAZEL := n
 
 ifeq ($(BOARD),sdx75)
   #Dependency when CONFIG_FEATURE_SMEM_MAILBOX=y
-  DATA_SMEM_MODULE := kmod-smem-mailbox
+  DATA_SMEM_MODULE := +kmod-smem-mailbox
   DATA_SMEM_MAKEOPTS := CONFIG_FEATURE_SMEM_MAILBOX=y
 
   #Hard-code SMEM module's include folder, when CONFIG_FEATURE_SMEM_MAILBOX=y
@@ -45,7 +45,7 @@ ifeq ($(BOARD),sdx75)
   DATA_SMEM_MAKEOPTS += KBUILD_EXTRA_SYMBOLS=$(DATA_SMEM_SYMBOLS)
 else ifeq ($(BOARD),sdx85)
   #Dependency when CONFIG_FEATURE_SMEM_MAILBOX=y
-  DATA_SMEM_MODULE := kmod-smem-mailbox
+  DATA_SMEM_MODULE := +kmod-smem-mailbox
   DATA_SMEM_MAKEOPTS := CONFIG_FEATURE_SMEM_MAILBOX=y
 
   #Hard-code SMEM module's include folder, when CONFIG_FEATURE_SMEM_MAILBOX=y
@@ -80,10 +80,31 @@ else ifeq ($(BOARD),sdx85)
     INSTALL_DIR_GENL = .
     INSTALL_DIR_PREALLOC = .
   endif
-
 else
   DATA_SMEM_MODULE :=
   DATA_SMEM_MAKEOPTS :=
+endif
+
+CNSS2_DEPENDS := $(DATA_SMEM_MODULE)
+CNSS2_MAKEOPTS := $(DATA_SMEM_MAKEOPTS)
+
+ifeq ($(BOARD),sdxecho)
+  CNSS2_DEPENDS += +kmod-mhi-bus
+  CNSS2_MAKEOPTS += USE_EXTERNAL_CONFIGS=y \
+		    CONFIG_CNSS2=m \
+		    CONFIG_CNSS2_QMI=y \
+		    CONFIG_CNSS2_DEBUG=y \
+		    CONFIG_CNSS_QMI_SVC=m \
+		    CONFIG_CNSS_PLAT_IPC_QMI_SVC=m \
+		    CONFIG_CNSS_GENL=m \
+		    CONFIG_WCNSS_MEM_PRE_ALLOC=m \
+		    CONFIG_CNSS_UTILS=m \
+		    CONFIG_CNSS2_SSR_DRIVER_DUMP=y \
+		    CONFIG_PCIE_QCOM_ECAM=y \
+		    CONFIG_PINCTRL_MSM_NO_EXT=y \
+		    CONFIG_QLI_MHI=y \
+		    WLAN_PLATFORM_ROOT=$(PKG_BUILD_DIR) \
+		    CROSS_COMPILE=aarch64-openwrt-linux-musl- ARCH=arm64
 endif
 
 define KernelPackage/wlan-cnss2
@@ -91,7 +112,7 @@ define KernelPackage/wlan-cnss2
   CATEGORY:=External Kernel Modules
   TITLE:=CNSS platform driver
   VARIANT:=cnss2
-  DEPENDS := +$(DATA_SMEM_MODULE)
+  DEPENDS := $(CNSS2_DEPENDS)
 endef
 
 define KernelPackage/wlan-cnss-legacy
@@ -110,13 +131,13 @@ define KernelPackage/wlan-cnss-legacy/Description
 endef
 
 ifeq ($(BUILD_VARIANT),cnss2)
-CNSS_MAKEOPTS = CONFIG_CNSS_OUT_OF_TREE=y \
+TARGET_MAKEOPTS = CONFIG_CNSS_OUT_OF_TREE=y \
 		CONFIG_MHI_BUS_MISC=y \
-		$(DATA_SMEM_MAKEOPTS) \
+		$(CNSS2_MAKEOPTS) \
 		M="$(PKG_BUILD_DIR)"
 
 else ifeq ($(BUILD_VARIANT),legacy)
-        CNSS_MAKEOPTS  = CONFIG_CNSS_OUT_OF_TREE=y \
+        TARGET_MAKEOPTS  = CONFIG_CNSS_OUT_OF_TREE=y \
 			 M="$(PKG_BUILD_DIR)" \
 			 WLAN_PLATFORM_ROOT="$(LOCAL_SRC)" \
 			 CONFIG_CNSS=m \
@@ -129,7 +150,7 @@ endif
 
 ifeq ($(BUILD_VARIANT),cnss2)
 ifeq ($(BOARD),sdx35)
-CNSS_MAKEOPTS = CONFIG_CNSS_OUT_OF_TREE=y \
+TARGET_MAKEOPTS = CONFIG_CNSS_OUT_OF_TREE=y \
 		CONFIG_MHI_BUS_MISC=y \
 		M="$(PKG_BUILD_DIR)" \
 		WLAN_PLATFORM_ROOT="$(LOCAL_SRC)" \
@@ -152,7 +173,7 @@ define Build/Prepare
 endef
 
 define Build/Compile
-	$(MAKE) -C "$(LINUX_DIR)" $(CNSS_MAKEOPTS) \
+	$(MAKE) -C "$(LINUX_DIR)" $(TARGET_MAKEOPTS) \
 	modules
 endef
 
