@@ -1,0 +1,29 @@
+commit a4d84cbee1e2272a6661633fbf7695cf1d71a2ab
+Author: Shailendra Singh <quic_shasing@quicinc.com>
+Date:   Mon Apr 7 14:50:10 2025 +0530
+
+    [PATCH] qcacld-kbuild
+    
+    Patch for qcacld Kbuild.
+    
+    Change-Id: If21b1e3d2751af7471581381dcdcbf59fd3be095
+    Signed-off-by: Shailendra Singh <quic_shasing@quicinc.com>
+
+diff --git a/Kbuild b/Kbuild
+index 9566beeb64..9ebea638eb 100644
+--- a/Kbuild
++++ b/Kbuild
+@@ -4975,6 +4975,12 @@ ccflags-y += -Wmissing-prototypes
+ ifeq ($(call cc-option-yn, -Wheader-guard), y)
+ ccflags-y += -Wheader-guard
+ endif
++
++ccflags_file := wlan_ccflags_opts
++ccflags_var := $(shell echo $(ccflags-y) > $(ccflags_file))
++ccvar := "@$(ccflags_file)"
++ccflags-y := $(ccvar)
++
+ # If the module name is not "wlan", then the define MULTI_IF_NAME to be the
+ # same a the QCA CHIP name. The host driver will then append MULTI_IF_NAME to
+ # any string that must be unique for all instances of the driver on the system.
+ 
