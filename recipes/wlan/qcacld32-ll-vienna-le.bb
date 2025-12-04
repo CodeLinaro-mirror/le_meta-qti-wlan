@@ -29,6 +29,7 @@ SRC_URI += "file://wlan/fw-api/"
 SRC_URI += "file://device/qcom/wlan/${WLAN_VAR}/"
 SRC_URI += "file://${BASEMACHINE}/wlan_load.conf"
 SRC_URI += "file://${BASEMACHINE}/WCNSS_qcom_cfg.ini"
+SRC_URI += "file://${BASEMACHINE}/wlan-conf_systemd_tmpfiles.conf"
 SRC_URI += "file://wlan/platform/"
 SRC_URI += "file://qcacld-kbuild.patch"
 
@@ -96,6 +97,10 @@ do_install() {
 
     ${STAGING_DIR_NATIVE}/usr/bin/aarch64-oe-linux/aarch64-oe-linux-strip \
              --strip-debug ${S}/unstripped/${MODULE_NAME}.ko -o ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/${MODULE_NAME}.ko
+
+    #setup misc & logging directories
+    install -d ${D}${sysconfdir}/tmpfiles.d
+    install -m 0644 ${WORKDIR}/${BASEMACHINE}/wlan-conf_systemd_tmpfiles.conf -D ${D}${sysconfdir}/tmpfiles.d/wlan-conf_systemd_tmpfiles.conf
 
     #auto load
     install -d ${D}${sysconfdir}/modules-load.d
