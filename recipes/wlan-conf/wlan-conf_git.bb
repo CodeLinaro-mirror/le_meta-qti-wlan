@@ -176,7 +176,8 @@ do_install:append:kera(){
 		do_install_common_service
 		install -d ${D}/etc/systemd/network/
 		ln -sf /dev/null ${D}/etc/systemd/network/99-default.link
-		install -d ${D}/etc/misc/wifi/
+		install -d ${D}/etc/misc
+		ln -sf ${userfsdatadir}/misc/wifi ${D}/etc/misc/wifi
 	fi
 }
 
