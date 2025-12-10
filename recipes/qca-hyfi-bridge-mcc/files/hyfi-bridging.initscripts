@@ -1,0 +1,34 @@
+#!/bin/sh
+#
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: ISC
+#
+# /etc/initscripts/start_hyfi-bridging-mcc
+
+. /lib/functions.sh
+
+start() {
+	/etc/initscripts/start_emesh-sp stop 2>/dev/null >/dev/null
+	/etc/initscripts/start_emesh-sp-mcc start 2>/dev/null >/dev/null
+	insmod /lib/modules/$(uname -r)/kernel/drivers/qca-hyfi-bridge-mcc/hyfi-bridging-mcc.ko 2>/dev/null >/dev/null
+	/etc/init.d/repacd-mcc repacd_set_map_dpp_config
+	/etc/init.d/hyfi-bridging-mcc start
+}
+
+stop() {
+	echo "do nothing for /etc/initscripts/start_hyfi-bridging-mcc stop"
+}
+
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	*)
+		echo "Usage: /etc/initscripts/start_hyfi-bridging-mcc start|stop"
+		;;
+esac
+
+exit 0
