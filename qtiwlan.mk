@@ -6,7 +6,6 @@ endif
 
 ifeq ($(BOARD),sdx85)
   QTIWLAN+=kmod-qcacld32-ll kmod-wlan-cnss2 cld80211-lib
-  QTIWLAN+=kmod-emesh-sp-mcc
 endif
 
 ifeq ($(BOARD),sdx75)

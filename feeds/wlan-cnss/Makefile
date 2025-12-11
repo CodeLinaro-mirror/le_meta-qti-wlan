@@ -101,14 +101,10 @@ ifeq ($(BOARD),sdxecho)
 		    CONFIG_CNSS_UTILS=m \
 		    CONFIG_CNSS2_SSR_DRIVER_DUMP=y \
 		    CONFIG_PCIE_QCOM_ECAM=y \
+		    CONFIG_PINCTRL_MSM_NO_EXT=y \
+		    CONFIG_QLI_MHI=y \
 		    WLAN_PLATFORM_ROOT=$(PKG_BUILD_DIR) \
 		    CROSS_COMPILE=aarch64-openwrt-linux-musl- ARCH=arm64
-
-  PINCTRL_MSM_EXT_H := $(LINUX_DIR)/include/linux/pinctrl/qcom-pinctrl.h
-  ifeq ($(shell test -f $(PINCTRL_MSM_EXT_H) || echo -n yes),yes)
-    # No qcom-pinctrl.h
-    CNSS2_MAKEOPTS += CONFIG_PINCTRL_MSM_NO_EXT=y
-  endif
 endif
 
 define KernelPackage/wlan-cnss2

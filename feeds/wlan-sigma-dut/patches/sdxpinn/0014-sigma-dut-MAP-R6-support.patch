@@ -1359,7 +1359,7 @@ index a7e5512..8683233 100644
 +					"uci set repacd.MAPConfig.MapVersionEnabled=6");
 +
 +			if (dut->program == PROGRAM_MAPR6) {
-+				run_system_wrapper(dut, "uci repacd.repacd.Ezmesh6GEnable=1");
++				run_system_wrapper(dut, "uci set repacd.repacd.Ezmesh6GEnable=0");
 +			}
  
  
@@ -1572,7 +1572,7 @@ index a7e5512..8683233 100644
 +					"uci set repacd.MAPConfig.MapVersionEnabled=6");
 +
 +			if (dut->program == PROGRAM_MAPR6) {
-+				run_system_wrapper(dut, "uci repacd.repacd.Ezmesh6GEnable=1");
++				run_system_wrapper(dut, "uci set repacd.repacd.Ezmesh6GEnable=0");
 +			}
  
  #ifdef CONFIG_BUILD_YOCTO
