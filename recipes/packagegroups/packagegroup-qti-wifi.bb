@@ -8,7 +8,7 @@ PROVIDES = "${PACKAGES}"
 
 PACKAGES = "packagegroup-qti-wifi"
 
-MCC_EASYMESH_VERSION = "R6"
+MCC_EASYMESH_VERSION = "R1"
 
 WLAN_IW_TOOL="${@oe.utils.conditional('BASEMACHINE', 'sdxlemur', 'iw-wifi6e', 'iw', d)}"
 QCACLD32_LL="${@oe.utils.conditional('BASEMACHINE', 'neo', 'qcacld32-ll-oot', 'qcacld32-ll', d)}"
