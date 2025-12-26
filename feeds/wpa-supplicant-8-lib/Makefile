@@ -38,6 +38,12 @@ ifeq ($(BOARD),sdx85)
 	TARGET_LOCAL_NAME :=sdxpinn
 endif
 
+ifeq ($(BOARD),qmb415)
+	# Reuse sdxpinn for now.
+	# To be revised if hostapd branch out later or divergency.
+	TARGET_LOCAL_NAME :=sdxpinn
+endif
+
 ifeq ($(BOARD),sdxecho)
 	# Reuse sdxpinn for now.
 	# To be revised if hostapd branch out later or divergency.

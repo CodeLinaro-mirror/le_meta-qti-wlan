@@ -9,6 +9,9 @@ PKG_BUILD_DIR :=$(KERNEL_BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/
 ifeq ($(BUILD_VARIANT),cnss2)
 PKG_BUILD_DIR :=$(KERNEL_BUILD_DIR)/wlan-$(BUILD_VARIANT)/
 endif
+ifeq ($(BUILD_VARIANT),icnss2)
+PKG_BUILD_DIR :=$(KERNEL_BUILD_DIR)/wlan-$(BUILD_VARIANT)/
+endif
 PKG_LICENSE:=ISC
 
 ifeq ($(TARGET_VARIANT),perf)
@@ -24,6 +27,8 @@ include $(INCLUDE_DIR)/package.mk
 
 #Default Module Install dir
 INSTALL_DIR_CNSS := ./cnss2
+INSTALL_DIR_ICNSS := ./icnss2
+
 INSTALL_DIR_UTIL := ./cnss_utils
 INSTALL_DIR_GENL := ./cnss_genl
 INSTALL_DIR_PREALLOC := ./cnss_prealloc
@@ -87,6 +92,7 @@ endif
 
 CNSS2_DEPENDS := $(DATA_SMEM_MODULE)
 CNSS2_MAKEOPTS := $(DATA_SMEM_MAKEOPTS)
+ICNSS2_MAKEOPTS := EXTRA_CFLAGS="-Wno-missing-prototypes"
 
 ifeq ($(BOARD),sdxecho)
   CNSS2_DEPENDS += +kmod-mhi-bus
@@ -115,6 +121,13 @@ define KernelPackage/wlan-cnss2
   DEPENDS := $(CNSS2_DEPENDS)
 endef
 
+define KernelPackage/wlan-icnss2
+  SECTION:=Kernel Modules
+  CATEGORY:=External Kernel Modules
+  TITLE:=ICNSS platform driver
+  VARIANT:=icnss2
+endef
+
 define KernelPackage/wlan-cnss-legacy
   SECTION:=Kernel Modules
   CATEGORY:=External Kernel Modules
@@ -126,6 +139,10 @@ define KernelPackage/wlan-cnss2/Description
 	CNSS2 platform driver
 endef
 
+define KernelPackage/wlan-icnss2/Description
+	ICNSS2 platform driver
+endef
+
 define KernelPackage/wlan-cnss-legacy/Description
 	CNSS platform driver
 endef
@@ -134,6 +151,16 @@ ifeq ($(BUILD_VARIANT),cnss2)
 TARGET_MAKEOPTS = CONFIG_CNSS_OUT_OF_TREE=y \
 		CONFIG_MHI_BUS_MISC=y \
 		$(CNSS2_MAKEOPTS) \
+		M="$(PKG_BUILD_DIR)"
+
+else ifeq ($(BUILD_VARIANT),icnss2)
+TARGET_MAKEOPTS = CONFIG_CNSS_OUT_OF_TREE=y \
+		CONFIG_ICNSS2=m \
+		CONFIG_ICNSS2_DEBUG=y \
+		CONFIG_ICNSS2_QMI=y \
+		CONFIG_CNSS_QMI_SVC=m \
+		CONFIG_WCNSS_MEM_PRE_ALLOC=m \
+		$(ICNSS2_MAKEOPTS) \
 		M="$(PKG_BUILD_DIR)"
 
 else ifeq ($(BUILD_VARIANT),legacy)
@@ -199,6 +226,22 @@ endif
 	$(INSTALL_BIN) ./files/start_wlan_cnss_le $(1)/etc/initscripts/
 endef
 
+define KernelPackage/wlan-icnss2/install
+	$(INSTALL_DIR) $(1)/$(EXTRA_ADDR)/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(INSTALL_DIR_ICNSS)/icnss2.ko $(1)/$(EXTRA_ADDR)/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(INSTALL_DIR_UTIL)/cnss_utils.ko $(1)/$(EXTRA_ADDR)/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(INSTALL_DIR_UTIL)/cnss_plat_ipc_qmi_svc.ko $(1)/$(EXTRA_ADDR)/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(INSTALL_DIR_UTIL)/wlan_firmware_service.ko $(1)/$(EXTRA_ADDR)/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(INSTALL_DIR_GENL)/cnss_nl.ko $(1)/$(EXTRA_ADDR)/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(INSTALL_DIR_PREALLOC)/cnss_prealloc.ko $(1)/$(EXTRA_ADDR)/
+	$(INSTALL_DIR) $(TOPDIR)/bin/targets/$(COMPILE_MODE)/modules
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(INSTALL_DIR_CNSS)/cnss2.ko $(TOPDIR)/bin/targets/$(COMPILE_MODE)/modules/
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_DIR) $(1)/etc/initscripts
+	$(INSTALL_BIN) ./files/wlan-cnss.init $(1)/etc/init.d/
+	$(INSTALL_BIN) ./files/start_wlan_cnss_le $(1)/etc/initscripts/
+endef
+
 define KernelPackage/wlan-cnss-legacy/install
 	$(INSTALL_DIR) $(1)/$(EXTRA_ADDR)/
 	$(INSTALL_DIR) $(TOPDIR)/bin/targets/$(COMPILE_MODE)/modules
@@ -210,3 +253,4 @@ endef
 
 $(eval $(call KernelPackage,wlan-cnss-legacy))
 $(eval $(call KernelPackage,wlan-cnss2))
+$(eval $(call KernelPackage,wlan-icnss2))

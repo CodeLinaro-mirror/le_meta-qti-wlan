@@ -41,6 +41,8 @@ else ifeq ($(BOARD),sdxecho)
 else ifeq ($(BOARD),sdx35)
 	CONFIGURE_ARGS += --enable-target-sdxbaagha=yes
 	WLAN_SUB_ADDR :=wlan_sdxbaagha
+else ifeq ($(BOARD),qmb415)
+	WLAN_SUB_ADDR :=wlan_taycan
 else
 	WLAN_SUB_ADDR :=wlan
 endif

@@ -28,6 +28,12 @@ else ifeq ($(BOARD),sdx85)
 	# Reuse sdxpinn for now.
 	# To be revised if hostapd branch out later or divergency.
 	TARGET_LOCAL_NAME :=sdxpinn
+else ifeq ($(BOARD),qmb415)
+	TARGET_ADD_CONFIG += echo -e "\nCONFIG_WEP=y" >> $(HOSTAPD_CONFIG_FILE)
+	TARGET_CFLAGS += -DCONFIG_CTRL_IFACE_DIR=\\\"/data/vendor/wifi/hostapd\\\"
+	# Reuse sdxpinn for now.
+	# To be revised if hostapd branch out later or divergency.
+	TARGET_LOCAL_NAME :=sdxpinn
 else ifeq ($(BOARD),sdx75)
 	TARGET_ADD_CONFIG += echo -e "\nCONFIG_WEP=y" >> $(HOSTAPD_CONFIG_FILE)
 	TARGET_CFLAGS += -DCONFIG_CTRL_IFACE_DIR=\\\"/data/vendor/wifi/hostapd\\\"

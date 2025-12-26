@@ -25,7 +25,11 @@ LOCAL_CLD_FOLDER := $(LOCAL_SRC)/qcacld-3.0
 LN_CMD := ln -sf $(PKG_BUILD_DIR)/qcacld-3.0 $(PKG_BUILD_DIR)/../qcacld-3.0
 #Default BAZEL DISABLED
 ENABLE_BAZEL := n
-CLD_DEPENDS := +kmod-wlan-cnss2
+ifeq ($(BOARD),qmb415)
+  CLD_DEPENDS := +kmod-wlan-icnss2
+else
+  CLD_DEPENDS := +kmod-wlan-cnss2
+endif
 
 COPY_HEADERS_FOR_EASYMESH:=n
 
@@ -79,6 +83,23 @@ ifeq ($(ENABLE_BAZEL), y)
   LN_CMD =
 endif
 CLD_DEPENDS += +kmod-dataipa
+
+else ifeq ($(BOARD),qmb415)
+
+TARGET_MAKEOPTS := CONFIG_QCA_CLD_WLAN_PROFILE=default \
+		   CONFIG_CNSS_OUT_OF_TREE=y \
+		   CONFIG_QCA_CLD_WLAN=m \
+		   WLAN_CTRL_NAME=wlan \
+		   CONFIG_ICNSS2=m \
+		   CONFIG_CNSS_QMI_SVC=m \
+		   CONFIG_CNSS_PLAT_IPC_QMI_SVC=m \
+		   CONFIG_WLAN_TX_MON_2_0=n \
+		   CONFIG_WLAN_DP_LOCAL_PKT_CAPTURE=n \
+		   KERNEL_SUPPORTS_NESTED_COMPOSITES=n \
+		   CONFIG_CNSS_GENL=m \
+
+WLAN_PLATFORM_SYMBOLS = $(PKG_BUILD_DIR)/../wlan-icnss2/Module.symvers
+TARGET_MAKEOPTS += KBUILD_EXTRA_SYMBOLS=$(WLAN_PLATFORM_SYMBOLS)
 
 else ifeq ($(BOARD),sdx35)
 TARGET_MAKEOPTS := CONFIG_CNSS_QCA6490=y \

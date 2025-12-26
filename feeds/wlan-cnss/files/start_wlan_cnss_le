@@ -12,8 +12,11 @@ case "$1" in
 
 	fullpath=$(find $MODULE_BASE -name cnss2.ko)
 	if [ -z "$fullpath" ]; then
-		echo -n "wlan cnss modules missing "
-		exit 0
+		fullpath=$(find $MODULE_BASE -name icnss2.ko)
+		if [ -z "$fullpath" ]; then
+			echo -n "wlan cnss modules missing "
+			exit 0
+		fi
 	fi
 
 	basepath=$(dirname $fullpath)
@@ -49,6 +52,12 @@ case "$1" in
 		fi
 		if [ -f $basepath/cnss2.ko ]; then
 			insmod $basepath/cnss2.ko
+		fi
+		if [ -f $basepath/icnss2.ko ]; then
+			insmod $basepath/icnss2.ko
+		fi
+		if [ -f $basepath/wlan.ko ]; then
+			insmod $basepath/wlan.ko
 		fi
 	fi
         echo "done loading wlan cnss modules"

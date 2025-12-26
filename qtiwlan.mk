@@ -16,3 +16,7 @@ endif
 ifeq ($(BOARD),sdx35)
   QTIWLAN+=kmod-qcacld32-ll kmod-qcacld-ll kmod-wlan-cnss2 kmod-wlan-cnss-legacy cld80211-lib
 endif
+
+ifeq ($(BOARD),qmb415)
+  QTIWLAN+=kmod-qcacld32-ll kmod-wlan-icnss2 cld80211-lib kmod-wlan-dts-oss
+endif
