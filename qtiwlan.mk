@@ -16,4 +16,6 @@ endif
 
 ifeq ($(BOARD),sdx35)
   QTIWLAN+=kmod-qcacld32-ll kmod-qcacld-ll kmod-wlan-cnss2 kmod-wlan-cnss-legacy cld80211-lib
+  #Enable WLAN SDIO for SDX35 IOT only
+  QTIWLANIOT+=kmod-wlan-cnss-sdio  kmod-qcacld-ll-sdio
 endif
