@@ -88,7 +88,7 @@ do_patch_sdxlemur() {
         bbwarn "============================================================"
         bbwarn "picking ${WORKDIR}/${BASEMACHINE}"
         bbwarn "============================================================"
-        for patch in ${WORKDIR}/${MACHINE}/*.patch; do
+        for patch in ${WORKDIR}/${BASEMACHINE}/*.patch; do
             patch -p1 < "$patch"
         done
     fi
