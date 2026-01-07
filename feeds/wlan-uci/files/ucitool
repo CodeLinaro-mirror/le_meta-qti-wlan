@@ -1,0 +1,295 @@
+#
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+#
+
+#!/bin/sh
+
+. /lib/functions.sh
+
+if [ -f /lib/wifi_mcc/qcacld32.sh ]; then
+	. /lib/wifi_mcc/qcacld32.sh
+else
+	. /lib/wifi/qcacld32.sh
+fi
+
+wlandev_prefix="wifi"
+wlandev_prefix_len=4
+wlanif_prefix="wlan"
+wlanif_prefix_len=4
+
+usage() {
+cat <<EOF
+Usage: ucitool [command]
+
+Commands:
+	get_iface <device>
+	get_fh_iface <2|5>
+	get_device <interface>
+	get_driver <device>
+	get_network <interface>
+	get_all_iface
+	is_child_iface <interface> <device>
+	assign_ifname
+	restore|restore_default_config [<file>]
+
+EOF
+
+exit 1
+}
+
+__scan_wifi() {
+	local cfgfile="$1"
+	DEVICES=
+	config_load "${cfgfile:-wireless}"
+
+	# Create a virtual interface list field for each wifi-device
+	#
+	# input: $1 section: section name of each wifi-device
+	create_vifs_list() {
+		local section="$1"
+		append DEVICES "$section"
+		config_set "$section" vifs ""
+	}
+	config_foreach create_vifs_list wifi-device
+
+	# Append each wifi-iface to the virtual interface list of its associated wifi-device
+	#
+	# input: $1 section: section name of each wifi-iface
+	append_vif() {
+		local section="$1"
+		config_get scan_device "$section" device
+		config_get vifs "$scan_device" vifs
+		append vifs "$section"
+		config_set "$scan_device" vifs "$vifs"
+		# For wifi-iface (VAP), record its index and section name in variable
+		# vifname_#. This will be used later when generating wsplcd config file
+		# to match the VAP with correct index.
+		eval "vifname_${TOTAL_NUM_VIFS}=$section"
+		TOTAL_NUM_VIFS=$(($TOTAL_NUM_VIFS + 1))
+	}
+	config_foreach append_vif wifi-iface
+}
+
+wireless_get_device() {
+	local input_ifname=$1
+	local if_prefix=${input_ifname:0:${wlanif_prefix_len}}
+
+	if [ ! "$if_prefix" = "$wlanif_prefix" ]; then
+		echo -n "$1"
+		return
+	fi
+
+	local vif_device=$(uci get wireless.$input_ifname.device)
+	echo -n "$vif_device"
+	return
+
+	for device in $DEVICES; do
+		config_get vifs "$device" vifs
+		for vif in $vifs; do
+			config_get_bool disabled "$vif" disabled 0
+			[ $disabled -eq 1 ] && continue
+
+			config_get vif_device "$vif" device
+			config_get vif_ifname "$vif" ifname
+			if [ "$vif_ifname" = "$input_ifname" ]; then
+				echo -n "$vif_device"
+				return
+			fi
+		done
+	done
+}
+
+# return the first iface found
+wireless_get_iface() {
+	local input_device=$1
+	local device_prefix=${input_device:0:${wlandev_prefix_len}}
+
+	if [ ! "$device_prefix" = "$wlandev_prefix" ]; then
+		echo -n "$1"
+		return
+	fi
+
+	config_get vifs "$input_device" vifs
+	for vif in $vifs; do
+		config_get_bool disabled "$vif" disabled 0
+		[ $disabled -eq 1 ] && continue
+
+		config_get vif_device "$vif" device
+		config_get vif_ifname "$vif" ifname
+		if [ "$vif_device" = "$input_device" ]; then
+			echo -n "$vif_ifname"
+			return
+		fi
+	done
+}
+
+wireless_get_driver() {
+	local input_device=$1
+	local device_prefix=${input_device:0:${wlandev_prefix_len}}
+
+	[ ! "$device_prefix" = "$wlandev_prefix" ] && return
+
+	config_load wireless
+	config_get type "$input_device" type
+	echo -n "$type"
+}
+
+wireless_is_child_iface() {
+	local input_iface=$1
+	local input_device=$2
+	local output_device
+
+	output_device=$(wireless_get_device $input_iface)
+	if [ "$output_device" = "$input_device" ]; then
+		echo -n "1"
+	else
+		echo -n "0"
+	fi
+}
+
+wireless_assign_ifname() {
+	local device
+	local ldevice=$DEVICES
+
+	for device in $ldevice; do
+		config_get disabled "$device" disabled 0
+		[ $disabled -gt 0 ] && continue
+
+		scan_qcacld32 $device
+		assign_vif_ifname $device
+	done
+}
+
+wireless_get_fh_iface() {
+	local band=$1
+
+	for device in $DEVICES; do
+		config_get_bool disabled "$device" disabled 0
+		[ $disabled -eq 1 ] && continue
+
+		config_get hwmode "$device" hwmode "any"
+		if ! ([ $band -eq 2 ] && echo "$hwmode" | grep -q "g" || [ $band -eq 5 ]); then
+			continue
+		fi
+
+		if ([ $band -eq 5 ] && echo "$hwmode" | grep -q "g"); then
+			continue
+		fi
+
+		config_get vifs "$device" vifs
+		for vif in $vifs; do
+			config_get_bool disabled "$vif" disabled 0
+			[ $disabled -eq 1 ] && continue
+
+			config_get vif_ifname "$vif" ifname
+			config_get MapBSSType "$vif" MapBSSType 0
+			if [ $MapBSSType -eq 32 ]; then
+				echo -n "$vif_ifname"
+				return
+			fi
+		done
+	done
+}
+
+wireless_get_all_iface() {
+	for device in $DEVICES; do
+		config_get hwmode "$device" hwmode "any"
+		config_get band "$device" band 0
+
+		if echo "$hwmode" | grep -q "g"; then
+			append device_2g "$device"
+		else
+			append device_5g "$device"
+		fi
+	done
+
+	ldevice="${device_2g:+$device_2g }${device_5g:+$device_5g }"
+
+	for device in $ldevice; do
+		config_get_bool disabled "$device" disabled 0
+		[ $disabled -eq 1 ] && continue
+
+		config_get vifs "$device" vifs
+		for vif in $vifs; do
+			config_get_bool disabled "$vif" disabled 0
+			[ $disabled -eq 1 ] && continue
+
+			config_get vif_ifname "$vif" ifname
+			append ifnames "$vif_ifname"
+		done
+	done
+
+	echo -n "$ifnames"
+}
+
+wireless_get_network() {
+	local input_ifname=$1
+	local if_prefix=${input_ifname:0:${wlanif_prefix_len}}
+
+	if [ ! "$if_prefix" = "$wlanif_prefix" ]; then
+		echo -n "$1"
+		return
+	fi
+
+	for device in $DEVICES; do
+		config_get vifs "$device" vifs
+		for vif in $vifs; do
+			config_get_bool disabled "$vif" disabled 0
+			[ $disabled -eq 1 ] && continue
+
+			config_get network "$vif" network
+			config_get vif_ifname "$vif" ifname
+			if [ "$vif_ifname" = "$input_ifname" ]; then
+				echo -n "$network"
+				return
+			fi
+		done
+	done
+}
+
+uci_restore_default_config() {
+	local file_name="${1:-*}"
+
+	if [ "$file_name" = "*" ] ||
+	   [ "$file_name" != "*" -a -f /data/vendor/wifi/default_config/${file_name} ]; then
+		if [ "$file_name" = "*" -o "$file_name" = "wireless" ]; then
+			local wifi0_channel wifi1_channel wds_ext
+			config_load wireless
+			config_get wifi0_channel wifi0 channel "auto"
+			config_get wifi1_channel wifi1 channel "auto"
+			config_get wds_ext qcacld32 wds_ext 0
+
+			cp -af /data/vendor/wifi/default_config/${file_name} /etc/config/
+
+			if [ "$wifi0_channel" != "auto" ]; then
+				uci set wireless.wifi0.channel=$wifi0_channel
+			fi
+			if [ "$wifi1_channel" != "auto" ]; then
+				uci set wireless.wifi1.channel=$wifi1_channel
+			fi
+			if [ -z "$(uci get wireless.qcacld32 | grep found)" -a \
+			     "$wds_ext" -eq 1 ]; then
+				uci set wireless.qcacld32.wds_ext=1
+			fi
+			uci commit wireless
+		else
+			cp -af /data/vendor/wifi/default_config/${file_name} /etc/config/
+		fi
+	fi
+}
+
+__scan_wifi
+
+case "$1" in
+	get_iface) wireless_get_iface $2;;
+	get_fh_iface) wireless_get_fh_iface $2;;
+	get_device) wireless_get_device $2;;
+	get_driver) wireless_get_driver $2;;
+	get_network) wireless_get_network $2;;
+	get_all_iface) wireless_get_all_iface;;
+	is_child_iface) wireless_is_child_iface $2 $3;;
+	assign_ifname) wireless_assign_ifname;;
+	restore|restore_default_config) uci_restore_default_config $2;;
+	*) usage;;
+esac
