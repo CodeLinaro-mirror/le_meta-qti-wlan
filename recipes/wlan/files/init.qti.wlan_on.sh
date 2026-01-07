@@ -54,6 +54,11 @@ else
 	else
 		echo "##########loading cnss2############"
 		modprobe cnss2
+		machine=`cat /sys/devices/soc0/machine` 2>/dev/null
+		if (echo -n $machine|grep SA535M);then
+			echo "trigger pcie rescan" > /dev/kmsg
+			echo 1 > /sys/bus/pci/rescan
+		fi
 	fi
 	echo "##########load cnss2 done############"
 	LSPCI=`lspci -kn`
