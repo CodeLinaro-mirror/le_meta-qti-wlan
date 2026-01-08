@@ -1,0 +1,30 @@
+From d404382dc80aedddba7ed5e0e2ed060deebd6c4b Mon Sep 17 00:00:00 2001
+From: Xinyue Ling <xinyling@qti.qualcomm.com>
+Date: Tue, 30 Apr 2024 14:50:00 +0800
+Subject: [PATCH 23/40] 309-dpp-curve-nullcheck-KW
+
+Change-Id: I7bcc24a18b9c141f6d08e9630d12e87da221c953
+Signed-off-by: Chenming Huang <chenhuan@qti.qualcomm.com>
+---
+ src/common/dpp.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/src/common/dpp.c b/src/common/dpp.c
+index 6b8dca7768..a2f3b7532c 100644
+--- a/src/common/dpp.c
++++ b/src/common/dpp.c
+@@ -4187,6 +4187,11 @@ dpp_keygen_configurator(const char *curve, const u8 *privkey,
+ 					      privkey_len);
+ 	else
+ 		conf->csign = dpp_gen_keypair(conf->curve);
++	if (!conf->curve) {
++		wpa_printf(MSG_INFO, "DPP: Unsupported curve: %s", curve);
++		os_free(conf);
++		return NULL;
++	}
+ 	if (pp_key)
+ 		conf->pp_key = dpp_set_keypair(&conf->curve, pp_key,
+ 					       pp_key_len);
+-- 
+2.34.1
+

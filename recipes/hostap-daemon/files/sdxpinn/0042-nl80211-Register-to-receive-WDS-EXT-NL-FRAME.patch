@@ -1,0 +1,45 @@
+This patch file is from Qualcomm Technologies, Inc. and is provided under the following license:
+
+Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+SPDX-License-Identifier: BSD-3-Clause-Clear
+
+From c281e44c0003b3eaec71db4473b24b082ba390ef Mon Sep 17 00:00:00 2001
+From: Will Huang <wilhuang@qti.qualcomm.com>
+Date: Thu, 30 Oct 2025 08:42:48 +0530
+Subject: [PATCH] nl80211: Register to receive WDS EXT NL FRAME
+
+To enable receiving NL80211_CMD_UNEXPECTED_4ADDR_FRAME for WDS EXT
+feature.
+Set wds peer address instead of bss address for AP VLAN create.
+
+Change-Id: Iaf8810aa8ed260967da9d512107a3fab4dee1686
+---
+ src/drivers/driver_nl80211.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/src/drivers/driver_nl80211.c b/src/drivers/driver_nl80211.c
+index ac2ae72e78..6a840e228b 100644
+--- a/src/drivers/driver_nl80211.c
++++ b/src/drivers/driver_nl80211.c
+@@ -2829,6 +2829,9 @@ static int nl80211_mgmt_subscribe_ap_dev_sme(struct i802_bss *bss)
+ 				   "nl80211: Failed to subscribe to handle Authentication frames - SAE offload may not work");
+ 	}
+ 
++	if (nl80211_register_spurious_class3(bss))
++		goto out_err;
++
+ 	nl80211_mgmt_handle_register_eloop(bss);
+ 	return 0;
+ 
+@@ -8428,7 +8431,7 @@ static int i802_set_wds_sta(void *priv, const u8 *addr, int aid, int val,
+ 		if (!if_nametoindex(name)) {
+ 			if (nl80211_create_iface(drv, name,
+ 						 NL80211_IFTYPE_AP_VLAN,
+-						 bss->addr, 1, NULL, NULL, 0) <
++						 addr, 1, NULL, NULL, 0) <
+ 			    0)
+ 				return -1;
+ 			if (bridge_ifname &&
+-- 
+2.34.1
+
