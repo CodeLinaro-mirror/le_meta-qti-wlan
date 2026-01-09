@@ -50,6 +50,8 @@ EXT_COMPILE_CONFIG:append:sun = " CONFIG_PCI_MSM=m CONFIG_EXCLUDE_ICNSS=y "
 
 do_compile[depends] += "virtual/kernel:do_shared_workdir"
 do_compile[cleandirs] += "${WORKDIR}/out/${KERNEL_DEFCONFIG}"
+do_compile[network] = "1"
+
 do_compile() {
     cd ${KERNEL_PLATFORM_PATH}
     BUILD_CONFIG=msm-kernel/${KERNEL_CONFIG} \
