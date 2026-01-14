@@ -9,6 +9,7 @@ DEPENDS += "virtual/kernel"
 FILESPATH =+ "${WORKSPACE}:"
 MACHINE_CONFIG = "${BASEMACHINE}"
 MACHINE_CONFIG:kera = "sun"
+MACHINE_CONFIG:alor = "sun"
 
 # Provide a baseline
 SRC_URI = "file://mdm-init/ \
@@ -175,7 +176,8 @@ do_install:append:kera(){
 		do_install_common_service
 		install -d ${D}/etc/systemd/network/
 		ln -sf /dev/null ${D}/etc/systemd/network/99-default.link
-		install -d ${D}/etc/misc/wifi/
+		install -d ${D}/etc/misc
+		ln -sf ${userfsdatadir}/misc/wifi ${D}/etc/misc/wifi
 	fi
 }
 
@@ -186,6 +188,15 @@ do_install:append:sun(){
 		ln -sf /dev/null ${D}/etc/systemd/network/99-default.link
 		install -d ${D}/etc/misc/wifi/
 	fi
+}
+
+do_install:append:alor(){
+        if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
+                do_install_common_service
+                install -d ${D}/etc/systemd/network/
+                ln -sf /dev/null ${D}/etc/systemd/network/99-default.link
+                install -d ${D}/etc/misc/wifi/
+        fi
 }
 
 FILES:${PN} += "${userfsdatadir}/misc/wifi/*"

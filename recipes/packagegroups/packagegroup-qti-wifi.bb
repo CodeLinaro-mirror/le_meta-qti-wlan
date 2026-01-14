@@ -18,6 +18,7 @@ QCACLD32_LL:qcm2290-mtp="${@bb.utils.contains('DEBUG_BUILD', '1', "qcacld32-ll-d
 QCACLD32_LL:ar-sg1="qcacld32-ar-sg1"
 QCACLD32_LL:kera="qcacld32-ll-debug"
 QCACLD32_LL:sun="qcacld32-ll-peach"
+QCACLD32_LL:alor="qcacld32-ll-debug"
 QCACLD32_LL:vienna="qcacld32-ll-vienna-le"
 
 WLAN_PLATFORM="wlan-platform"
