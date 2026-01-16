@@ -56,30 +56,28 @@ else
 		modprobe cnss2
 	fi
 	echo "##########load cnss2 done############"
-
-	LSPCI=`lspci -k`
+	LSPCI=`lspci -kn`
 	if (echo -n $LSPCI|grep cnss_pci);then
 		if (echo -n $LSPCI|grep 1102);then
-			echo "##########load qca6595#############"
+			echo "##########load qca6595#############" > /dev/kmsg
 			modprobe qca6595
 		elif ((echo -n $LSPCI|grep 003e) || (echo -n $LSPCI|grep QCA6174));then
-			echo "##########load qca6574#############"
+			echo "##########load qca6574#############" > /dev/kmsg
 			modprobe qca6574
 		elif (echo -n $LSPCI|grep 1101);then
-			echo "##########load qca6696#############"
+			echo "##########load qca6696#############" > /dev/kmsg
 			modprobe qca6696
 		elif (echo -n $LSPCI|grep 1103);then
-			echo "##########load qca6490#############"
+			echo "##########load qca6490#############" > /dev/kmsg
 			modprobe qca6490
 		elif (echo -n $LSPCI|grep 1107);then
-			echo "##########load qca6797#############"
+			echo "##########load qca6797#############" > /dev/kmsg
 			modprobe qca6797
 		else
-			echo "##########load default wlan########"
+			echo "##########load default wlan########" > /dev/kmsg
 			modprobe wlan
 		fi
 	fi
 fi
 
-echo "##########Load wlanhost driver done################"
-
+echo "##########Load wlanhost driver done################" > /dev/kmsg
