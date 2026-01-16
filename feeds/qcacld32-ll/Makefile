@@ -103,12 +103,18 @@ else
   WLAN_PROFILE := "sdxecho_gki_fig sdxecho_consolidate_fig"
 endif
 
+ifeq ($(LINUX_VERSION),6.6)
+    WLAN_ROOT := ../../../../build_dir/target-aarch64_cortex-a53_musl/linux-sdxecho/qcacld32-ll-1.0/qcacld-3.0
+else
+    WLAN_ROOT := ./
+endif
+
 EXTRA_CFLAGS += "-Wall -Werror"
 
 TARGET_MAKEOPTS := WLAN_PROFILE=$(WLAN_PROFILE) \
 		   CROSS_COMPILE=aarch64-openwrt-linux-musl- ARCH=arm64 \
 		   EXTRA_CFLAGS=$(EXTRA_CFLAGS) \
-		   WLAN_ROOT=../../../../build_dir/target-aarch64_cortex-a53_musl/linux-sdxecho/qcacld32-ll-1.0/qcacld-3.0 \
+		   WLAN_ROOT=$(WLAN_ROOT) \
 		   MODNAME=wlan
 WLAN_PLATFORM_SYMBOLS = $(PKG_BUILD_DIR)/../symvers/wlan-cnss.symvers
 DATAIPA_SYMBOLS = $(PKG_BUILD_DIR)/../symvers/dataipa.symvers
