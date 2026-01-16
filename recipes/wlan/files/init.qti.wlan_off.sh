@@ -27,8 +27,8 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #
-echo "##########Trying to unload wlanhost driver ##########"
-LSPCI=`lspci -k`
+echo "##########Trying to unload wlanhost driver ##########" > /dev/kmsg
+LSPCI=`lspci -kn`
 if (echo -n $LSPCI|grep cnss_pci);then
 	if (echo -n $LSPCI|grep 1102);then
 		echo "##########unload qca6595#############"
