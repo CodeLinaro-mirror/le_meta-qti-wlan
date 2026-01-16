@@ -29,7 +29,7 @@
 #
 
 echo -n "start to unload cnss2 module" > /dev/kmsg
-LSPCI=`lspci -k`
+LSPCI=`lspci -kn`
 if (echo -n $LSPCI|grep cnss_pci);then
 	echo -n "start to unlaod wlan driver before unload cnss2" > /dev/kmsg
 	if (echo -n $LSPCI|grep 1102);then

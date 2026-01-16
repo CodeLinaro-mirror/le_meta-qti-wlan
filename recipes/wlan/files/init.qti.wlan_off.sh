@@ -28,7 +28,7 @@
 #
 #
 echo "##########Trying to unload wlanhost driver ##########" > /dev/kmsg
-LSPCI=`lspci -k`
+LSPCI=`lspci -kn`
 if (echo -n $LSPCI|grep cnss_pci);then
 	if (echo -n $LSPCI|grep 1102);then
 		echo "##########unload qca6595#############" > /dev/kmsg
