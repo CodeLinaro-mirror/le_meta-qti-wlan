@@ -88,8 +88,9 @@ do_patch_sdxlemur() {
         bbwarn "============================================================"
         bbwarn "picking ${WORKDIR}/${BASEMACHINE}"
         bbwarn "============================================================"
-        patch -p1 < ${WORKDIR}/${BASEMACHINE}/p2p_tmp_config.patch
-        patch -p1 < ${WORKDIR}/${BASEMACHINE}/driver_cmd.patch
+        for patch in ${WORKDIR}/${MACHINE}/*.patch; do
+            patch -p1 < "$patch"
+        done
     fi
 }
 

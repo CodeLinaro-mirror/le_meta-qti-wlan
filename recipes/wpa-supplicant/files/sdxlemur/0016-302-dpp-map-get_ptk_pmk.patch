@@ -1,0 +1,296 @@
+From 7f0b89e038ea62e7aebfaeba06dfb08b37c03e6f Mon Sep 17 00:00:00 2001
+From: Xinyue Ling <xinyling@qti.qualcomm.com>
+Date: Tue, 30 Apr 2024 14:42:51 +0800
+Subject: [PATCH 16/40] 302-dpp-map-get_ptk_pmk
+
+Change-Id: Ifa8c4e1af24dacf06618d46d9a8bc1b621dd057c
+Signed-off-by: Chenming Huang <chenhuan@qti.qualcomm.com>
+---
+ hostapd/ctrl_iface.c        | 32 +++++++++++++++++++++++++
+ hostapd/hostapd_cli.c       |  7 ++++++
+ src/ap/wpa_auth.c           | 29 ++++++++++++++++++++++-
+ src/ap/wpa_auth.h           |  1 +
+ src/rsn_supp/wpa.c          | 18 ++++++++++++++
+ wpa_supplicant/ctrl_iface.c | 47 +++++++++++++++++++++++++++++++++++++
+ wpa_supplicant/wpa_cli.c    | 20 ++++++++++++++++
+ 7 files changed, 153 insertions(+), 1 deletion(-)
+
+diff --git a/hostapd/ctrl_iface.c b/hostapd/ctrl_iface.c
+index 15d91a50d1..cc444434e0 100644
+--- a/hostapd/ctrl_iface.c
++++ b/hostapd/ctrl_iface.c
+@@ -2454,6 +2454,35 @@ static int hostapd_ctrl_register_frame(struct hostapd_data *hapd,
+ 					  multicast);
+ }
+ 
++
++static int hostapd_ctrl_get_ptk(struct hostapd_data *hapd, const char *cmd,
++				char *buf, size_t buflen)
++{
++	struct sta_info *sta;
++	u8 addr[ETH_ALEN];
++	const u8 *ptk;
++	int ptk_len;
++
++	if (hwaddr_aton(cmd, addr))
++		return -1;
++
++	sta = ap_get_sta(hapd, addr);
++	if (!sta || !sta->wpa_sm) {
++		wpa_printf(MSG_DEBUG, "No STA WPA state machine for " MACSTR,
++		MAC2STR(addr));
++		return -1;
++	}
++	ptk = wpa_auth_get_ptk(sta->wpa_sm, &ptk_len);
++	if (!ptk) {
++		wpa_printf(MSG_DEBUG, "No PTK stored for " MACSTR,
++		MAC2STR(addr));
++		return -1;
++	}
++
++	return wpa_snprintf_hex(buf, buflen, ptk, ptk_len);
++}
++
++
+ #endif /* CONFIG_TESTING_OPTIONS */
+ 
+ 
+@@ -4151,6 +4180,9 @@ static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
+ 	} else if (os_strncmp(buf, "GET_PMK ", 8) == 0) {
+ 		reply_len = hostapd_ctrl_get_pmk(hapd, buf + 8, reply,
+ 						 reply_size);
++	} else if (os_strncmp(buf, "GET_PTK ", 8) == 0) {
++		reply_len = hostapd_ctrl_get_ptk(hapd, buf + 8, reply,
++						reply_size);
+ 	} else if (os_strncmp(buf, "REGISTER_FRAME ", 15) == 0) {
+ 		if (hostapd_ctrl_register_frame(hapd, buf + 16) < 0)
+ 			reply_len = -1;
+diff --git a/hostapd/hostapd_cli.c b/hostapd/hostapd_cli.c
+index ce60862745..82aa2f1f35 100644
+--- a/hostapd/hostapd_cli.c
++++ b/hostapd/hostapd_cli.c
+@@ -1167,6 +1167,11 @@ static int hostapd_cli_cmd_fst(struct wpa_ctrl *ctrl, int argc, char *argv[])
+ }
+ #endif /* CONFIG_FST */
+ 
++static int hostapd_cli_cmd_get_ptk(struct wpa_ctrl *ctrl,
++				   int argc, char *argv[])
++{
++	return hostapd_cli_cmd(ctrl, "GET_PTK", 1, argc, argv);
++}
+ 
+ static int hostapd_cli_cmd_chan_switch(struct wpa_ctrl *ctrl,
+ 				       int argc, char *argv[])
+@@ -1762,6 +1767,8 @@ static const struct hostapd_cli_cmd hostapd_cli_commands[] = {
+ 	{ "send_qos_map_conf", hostapd_cli_cmd_send_qos_map_conf,
+ 	  hostapd_complete_stations,
+ 	  "<addr> = send QoS Map Configure frame" },
++	{ "get_ptk", hostapd_cli_cmd_get_ptk, NULL,
++	  "<macaddr> = get STA PTK" },
+ 	{ "chan_switch", hostapd_cli_cmd_chan_switch, NULL,
+ 	  "<cs_count> <freq> [sec_channel_offset=] [center_freq1=]\n"
+ 	  "  [center_freq2=] [bandwidth=] [blocktx] [ht|vht]\n"
+diff --git a/src/ap/wpa_auth.c b/src/ap/wpa_auth.c
+index 76102dd97e..3265f3fcb3 100644
+--- a/src/ap/wpa_auth.c
++++ b/src/ap/wpa_auth.c
+@@ -4978,10 +4978,28 @@ SM_STATE(WPA_PTK, PTKINITDONE)
+ 			res = wpa_auth_set_key(sm->wpa_auth, 0, 0, sm->addr,
+ 					       sm->keyidx_active, NULL, 0,
+ 					       KEY_FLAG_PAIRWISE_RX_TX_MODIFY);
+-		else
++		else {
+ 			res = wpa_auth_set_key(sm->wpa_auth, 0, alg, sm->addr,
+ 					       0, sm->PTK.tk, klen,
+ 					       KEY_FLAG_PAIRWISE_RX_TX);
++			// Write PTK entries to file
++			FILE *fp = NULL;
++			int i = 0;
++			fp = fopen("/tmp/ptk.txt", "a");
++			if (!fp)
++				return;
++			for(i=0; i<klen; i++) fprintf(fp,"%02x", sm->PTK.tk[i]);
++			fprintf(fp,"_");
++			fclose(fp);
++
++			// Write PMK entries to file
++			fp = fopen("/tmp/pmk.txt", "a");
++			if (!fp)
++				return;
++			for(i=0; i<sm->pmk_len; i++) fprintf(fp,"%02x", sm->PMK[i]);
++			fprintf(fp,"_");
++			fclose(fp);
++		}
+ 		if (res) {
+ 			wpa_sta_disconnect(sm->wpa_auth, sm->addr,
+ 					   WLAN_REASON_PREV_AUTH_NOT_VALID);
+@@ -6180,6 +6198,15 @@ const u8 * wpa_auth_get_dpp_pkhash(struct wpa_state_machine *sm)
+ }
+ 
+ 
++const u8 * wpa_auth_get_ptk(struct wpa_state_machine *sm, int *len)
++{
++	if (!sm)
++		return NULL;
++	*len = sm->PTK.tk_len;
++	return sm->PTK.tk;
++}
++
++
+ int wpa_auth_sta_key_mgmt(struct wpa_state_machine *sm)
+ {
+ 	if (!sm)
+diff --git a/src/ap/wpa_auth.h b/src/ap/wpa_auth.h
+index 9af81dea99..8f2fd5cdb4 100644
+--- a/src/ap/wpa_auth.h
++++ b/src/ap/wpa_auth.h
+@@ -461,6 +461,7 @@ void wpa_auth_countermeasures_start(struct wpa_authenticator *wpa_auth);
+ int wpa_auth_pairwise_set(struct wpa_state_machine *sm);
+ int wpa_auth_get_pairwise(struct wpa_state_machine *sm);
+ const u8 * wpa_auth_get_pmk(struct wpa_state_machine *sm, int *len);
++const u8 * wpa_auth_get_ptk(struct wpa_state_machine *sm, int *len);
+ const u8 * wpa_auth_get_dpp_pkhash(struct wpa_state_machine *sm);
+ int wpa_auth_sta_key_mgmt(struct wpa_state_machine *sm);
+ int wpa_auth_sta_wpa_version(struct wpa_state_machine *sm);
+diff --git a/src/rsn_supp/wpa.c b/src/rsn_supp/wpa.c
+index 2ae57f15c7..74ece31f3f 100644
+--- a/src/rsn_supp/wpa.c
++++ b/src/rsn_supp/wpa.c
+@@ -1256,6 +1256,24 @@ static int wpa_supplicant_install_ptk(struct wpa_sm *sm,
+ 	wpa_sm_store_ptk(sm, sm->bssid, sm->pairwise_cipher,
+ 			 sm->dot11RSNAConfigPMKLifetime, &sm->ptk);
+ 
++	// Write PTK entries to file
++	FILE *fp = NULL;
++	int i = 0;
++	fp = fopen("/tmp/ptk.txt", "a");
++	if (!fp)
++		return -1;
++	for(i=0; i<sm->ptk.tk_len; i++) fprintf(fp,"%02x", sm->ptk.tk[i]);
++	fprintf(fp,"_");
++	fclose(fp);
++
++	// Write PMK entries to file
++	fp = fopen("/tmp/pmk.txt", "a");
++	if (!fp)
++		return -1;
++	for(i=0; i<sm->pmk_len; i++) fprintf(fp,"%02x", sm->pmk[i]);
++	fprintf(fp,"_");
++	fclose(fp);
++
+ 	/* TK is not needed anymore in supplicant */
+ 	os_memset(sm->ptk.tk, 0, WPA_TK_MAX_LEN);
+ 	sm->ptk.tk_len = 0;
+diff --git a/wpa_supplicant/ctrl_iface.c b/wpa_supplicant/ctrl_iface.c
+index 00dcf54077..5903d8fef2 100644
+--- a/wpa_supplicant/ctrl_iface.c
++++ b/wpa_supplicant/ctrl_iface.c
+@@ -60,6 +60,7 @@
+ #include "dpp_supplicant.h"
+ #include "sme.h"
+ #include "nan_usd.h"
++#include "rsn_supp/wpa_i.h"
+ 
+ #ifdef __NetBSD__
+ #include <net/if_ether.h>
+@@ -1367,6 +1368,46 @@ static int wpa_supplicant_ctrl_iface_ft_ds(
+ #endif /* CONFIG_IEEE80211R */
+ 
+ 
++const u8 * wpa_supp_get_pmk(struct wpa_supplicant *wpa_s, int *len)
++{
++	if (!wpa_s)
++		return NULL;
++	*len = wpa_s->wpa->pmk_len;
++	return wpa_s->wpa->pmk;
++}
++
++
++static int wpa_supplicant_ctrl_iface_wps_get_pmk(
++	struct wpa_supplicant *wpa_s, char *cmd, char *buf, size_t buflen)
++{
++	const u8 *pmk;
++	int pmk_len = 0;
++
++	pmk = wpa_supp_get_pmk(wpa_s, &pmk_len);
++	return wpa_snprintf_hex(buf, buflen, pmk, pmk_len);
++}
++
++
++const u8 * wpa_supp_get_ptk(struct wpa_supplicant *wpa_s, int *len)
++{
++	if (!wpa_s)
++		return NULL;
++	*len = wpa_s->wpa->ptk.tk_len;
++	return wpa_s->wpa->ptk.tk;
++}
++
++
++static int wpa_supplicant_ctrl_iface_wps_get_ptk(
++	struct wpa_supplicant *wpa_s, char *cmd, char *buf, size_t buflen)
++{
++	const u8 *tk;
++	int tk_len = 0;
++
++	tk = wpa_supp_get_ptk(wpa_s, &tk_len);
++	return wpa_snprintf_hex(buf, buflen, tk, tk_len);
++}
++
++
+ #ifdef CONFIG_WPS
+ static int wpa_supplicant_ctrl_iface_wps_pbc(struct wpa_supplicant *wpa_s,
+ 					     char *cmd)
+@@ -12618,6 +12659,12 @@ char * wpa_supplicant_ctrl_iface_process(struct wpa_supplicant *wpa_s,
+ 		if (wpa_supplicant_ctrl_iface_ft_ds(wpa_s, buf + 6))
+ 			reply_len = -1;
+ #endif /* CONFIG_IEEE80211R */
++	} else if (os_strncmp(buf, "GET_PMK", 7) == 0) {
++		reply_len = wpa_supplicant_ctrl_iface_wps_get_pmk(
++			wpa_s, buf + 8, reply, reply_size);
++	} else if (os_strncmp(buf, "GET_PTK", 7) == 0) {
++		reply_len = wpa_supplicant_ctrl_iface_wps_get_ptk(
++			wpa_s, buf + 8, reply, reply_size);
+ #ifdef CONFIG_WPS
+ 	} else if (os_strcmp(buf, "WPS_PBC") == 0) {
+ 		int res = wpa_supplicant_ctrl_iface_wps_pbc(wpa_s, NULL);
+diff --git a/wpa_supplicant/wpa_cli.c b/wpa_supplicant/wpa_cli.c
+index fda1188ea1..12252fae72 100644
+--- a/wpa_supplicant/wpa_cli.c
++++ b/wpa_supplicant/wpa_cli.c
+@@ -745,6 +745,20 @@ static int wpa_cli_cmd_ft_ds(struct wpa_ctrl *ctrl, int argc, char *argv[])
+ }
+ 
+ 
++static int wpa_cli_cmd_get_pmk(struct wpa_ctrl *ctrl,
++			       int argc, char *argv[])
++{
++	return wpa_cli_cmd(ctrl, "GET_PMK", 0, argc, argv);
++}
++
++
++static int wpa_cli_cmd_get_ptk(struct wpa_ctrl *ctrl,
++			       int argc, char *argv[])
++{
++	return wpa_cli_cmd(ctrl, "GET_PTK", 0, argc, argv);
++}
++
++
+ static int wpa_cli_cmd_wps_pbc(struct wpa_ctrl *ctrl, int argc, char *argv[])
+ {
+ 	return wpa_cli_cmd(ctrl, "WPS_PBC", 0, argc, argv);
+@@ -3629,6 +3643,12 @@ static const struct wpa_cli_cmd wpa_cli_commands[] = {
+ 	{ "ft_ds", wpa_cli_cmd_ft_ds, wpa_cli_complete_bss,
+ 	  cli_cmd_flag_none,
+ 	  "<addr> = request over-the-DS FT with <addr>" },
++	{ "get_pmk", wpa_cli_cmd_get_pmk, NULL,
++	  cli_cmd_flag_none,
++	  "get_pmk" },
++	{ "get_ptk", wpa_cli_cmd_get_ptk, NULL,
++	  cli_cmd_flag_none,
++	  "get_ptk" },
+ 	{ "wps_pbc", wpa_cli_cmd_wps_pbc, wpa_cli_complete_bss,
+ 	  cli_cmd_flag_none,
+ 	  "[BSSID] = start Wi-Fi Protected Setup: Push Button Configuration" },
+-- 
+2.34.1
+

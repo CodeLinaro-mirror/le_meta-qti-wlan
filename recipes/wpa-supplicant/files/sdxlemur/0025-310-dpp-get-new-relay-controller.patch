@@ -1,0 +1,42 @@
+From 2122f43081c8fcc093b5973798e38b698753a254 Mon Sep 17 00:00:00 2001
+From: Xinyue Ling <xinyling@qti.qualcomm.com>
+Date: Tue, 30 Apr 2024 14:51:53 +0800
+Subject: [PATCH 25/40] 310-dpp-get-new-relay-controller
+
+Change-Id: I8bc3ddbb92d0d7190a7e48be7801ac3a70860938
+Signed-off-by: Chenming Huang <chenhuan@qti.qualcomm.com>
+---
+ src/common/dpp_tcp.c | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+diff --git a/src/common/dpp_tcp.c b/src/common/dpp_tcp.c
+index a730e33fd6..f7003718f3 100644
+--- a/src/common/dpp_tcp.c
++++ b/src/common/dpp_tcp.c
+@@ -228,6 +228,23 @@ dpp_relay_controller_get_addr(struct dpp_global *dpp,
+ }
+ 
+ 
++static inline struct dpp_relay_controller *
++dpp_new_relay_controller_get(struct dpp_global *dpp, void *cb_ctx)
++{
++	struct dpp_relay_controller *ctrl;
++
++	if (!dpp)
++		return NULL;
++
++	dl_list_for_each(ctrl, &dpp->controllers, struct dpp_relay_controller,
++			 list) {
++		if (cb_ctx == ctrl->cb_ctx)
++			return ctrl;
++	}
++
++	return NULL;
++}
++
+ static void dpp_controller_gas_done(struct dpp_connection *conn)
+ {
+ 	struct dpp_authentication *auth = conn->auth;
+-- 
+2.34.1
+
