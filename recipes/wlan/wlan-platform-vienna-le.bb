@@ -40,7 +40,7 @@ do_compile() {
     EXT_MODULES=../../wlan/platform \
     ENABLE_DDK_BUILD=${DDK_BUILD} \
     TARGET_BOARD_PLATFORM=vienna-le \
-    VARIANT=${KERNEL_DEFCONFIG_VARIANT} \
+    VARIANT=${KERNEL_VARIANT} \
     MODULE_OUT=${WORKDIR}/wlan/platform \
     OUT_DIR=${KERNEL_OUT_PATH}/ \
     WLAN_BASEMACHINE=${WLAN_VAR} \
