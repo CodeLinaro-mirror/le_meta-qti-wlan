@@ -26,7 +26,10 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#
+# Changes from Qualcomm Technologies, Inc. are provided under the following license:
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
 echo "##########Trying to unload wlanhost driver ##########" > /dev/kmsg
 LSPCI=`lspci -kn`
 if (echo -n $LSPCI|grep cnss_pci);then
@@ -45,6 +48,9 @@ if (echo -n $LSPCI|grep cnss_pci);then
 	elif (echo -n $LSPCI|grep 1107);then
 		echo "##########unload qca6797#############"
 		rmmod qca6797
+	elif (echo -n $LSPCI|grep 1112);then
+		echo "##########unload wcn7760#############"
+		rmmod wcn7760
 	else
 		echo "##########unload default wlan########"
 		rmmod wlan

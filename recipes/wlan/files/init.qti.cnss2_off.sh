@@ -26,7 +26,9 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#
+# Changes from Qualcomm Technologies, Inc. are provided under the following license:
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
 
 echo -n "start to unload cnss2 module" > /dev/kmsg
 LSPCI=`lspci -kn`
@@ -44,6 +46,9 @@ if (echo -n $LSPCI|grep cnss_pci);then
 	elif (echo -n $LSPCI|grep 1103);then
 		echo -n "unload qca6490" > /dev/kmsg
 		rmmod qca6490
+	elif (echo -n $LSPCI|grep 1112);then
+		echo -n "unload wcn7760" > /dev/kmsg
+		rmmod wcn7760
 	else
 		echo -n "unload default wlan" > /dev/kmsg
 		rmmod wlan
