@@ -85,6 +85,17 @@ else ifeq ($(BOARD),sdx85)
     INSTALL_DIR_GENL = .
     INSTALL_DIR_PREALLOC = .
   endif
+else ifeq ($(BOARD),qmb415)
+  #ENABLE_BAZEL for qmb415
+  ENABLE_BAZEL = y
+  ifeq ($(ENABLE_BAZEL), y)
+    #Module Install dir for qmb415 with Bazel enabled
+    INSTALL_DIR_ICNSS = .
+    #INSTALL_DIR_ICNSS = .
+    INSTALL_DIR_UTIL = .
+    INSTALL_DIR_GENL = .
+    INSTALL_DIR_PREALLOC = .
+  endif
 else
   DATA_SMEM_MODULE :=
   DATA_SMEM_MAKEOPTS :=
@@ -230,12 +241,14 @@ define KernelPackage/wlan-icnss2/install
 	$(INSTALL_DIR) $(1)/$(EXTRA_ADDR)/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(INSTALL_DIR_ICNSS)/icnss2.ko $(1)/$(EXTRA_ADDR)/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(INSTALL_DIR_UTIL)/cnss_utils.ko $(1)/$(EXTRA_ADDR)/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(INSTALL_DIR_UTIL)/cnss_plat_ipc_qmi_svc.ko $(1)/$(EXTRA_ADDR)/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(INSTALL_DIR_UTIL)/wlan_firmware_service.ko $(1)/$(EXTRA_ADDR)/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(INSTALL_DIR_GENL)/cnss_nl.ko $(1)/$(EXTRA_ADDR)/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(INSTALL_DIR_PREALLOC)/cnss_prealloc.ko $(1)/$(EXTRA_ADDR)/
 	$(INSTALL_DIR) $(TOPDIR)/bin/targets/$(COMPILE_MODE)/modules
+ifneq ($(BOARD),qmb415)
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(INSTALL_DIR_UTIL)/cnss_plat_ipc_qmi_svc.ko $(1)/$(EXTRA_ADDR)/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(INSTALL_DIR_CNSS)/cnss2.ko $(TOPDIR)/bin/targets/$(COMPILE_MODE)/modules/
+endif
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_DIR) $(1)/etc/initscripts
 	$(INSTALL_BIN) ./files/wlan-cnss.init $(1)/etc/init.d/

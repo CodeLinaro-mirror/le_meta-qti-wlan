@@ -43,6 +43,10 @@ else ifeq ($(BOARD),sdx35)
 	WLAN_SUB_ADDR :=wlan_sdxbaagha
 else ifeq ($(BOARD),qmb415)
 	WLAN_SUB_ADDR :=wlan_taycan
+	WLAN_INI_ADRASTEA := WCNSS_qcom_cfg_adrastea.ini
+	WLAN_INI_QCA6750 := WCNSS_qcom_cfg_qca6750.ini
+	WLAN_PATH_ADRASTEA := adrastea
+	WLAN_PATH_QCA6750 := qca6750
 else
 	WLAN_SUB_ADDR :=wlan
 endif
@@ -80,6 +84,10 @@ define Package/$(PKG_NAME)/install
 	mkdir -p  $(1)/$(MISC_WIFI_ADDR)
 	mkdir -p  $(1)/$(INIT_D_ADDR)
 	mkdir -p  $(1)/$(FIRMWARE_ADDR)
+ifeq ($(BOARD),qmb415)
+	mkdir -p  $(1)/$(FIRMWARE_ADDR)/$(WLAN_PATH_ADRASTEA)
+	mkdir -p  $(1)/$(FIRMWARE_ADDR)/$(WLAN_PATH_QCA6750)
+endif
 	$(CP) $(CONF_ADDR)/cld-hostapd-wlan0.sh $(1)/$(ETC_DATA_ADDR)/
 	$(CP) $(CONF_ADDR)/cld-hostapd-wlan1.sh $(1)/$(ETC_DATA_ADDR)/
 	$(CP) $(CONF_ADDR)/cld-hostapd-wlan2.sh $(1)/$(ETC_DATA_ADDR)/
@@ -89,7 +97,12 @@ define Package/$(PKG_NAME)/install
 	$(CP) $(CONF_ADDR)/hostapd-wlan3.conf $(1)/$(MISC_WIFI_ADDR)/
 	$(CP) $(CONF_ADDR)/sta_mode_hostapd.conf $(1)/$(MISC_WIFI_ADDR)/
 	$(CP) $(CONF_ADDR)/wpa_supplicant.conf $(1)/$(MISC_WIFI_ADDR)/
+ifeq ($(BOARD),qmb415)
+	$(CP) $(CONF_ADDR)/$(WLAN_INI_ADRASTEA) $(1)/$(MISC_WIFI_ADDR)/$(WLAN_INI_ADRASTEA)
+	$(CP) $(CONF_ADDR)/$(WLAN_INI_QCA6750) $(1)/$(MISC_WIFI_ADDR)/$(WLAN_INI_QCA6750)
+else
 	$(CP) $(CONF_ADDR)/$(WLAN_INI_FILE) $(1)/$(MISC_WIFI_ADDR)/$(WLAN_INI_DEFAULT)
+endif
 ifeq ($(BOARD),sdx85)
 	chmod 0664 $(1)/$(MISC_WIFI_ADDR)/$(WLAN_INI_DEFAULT)
 endif
@@ -97,7 +110,12 @@ ifeq ($(BOARD),sdxecho)
 	chmod 0664 $(1)/$(MISC_WIFI_ADDR)/$(WLAN_INI_DEFAULT)
 endif
 	$(CP) $(CONF_ADDR)/wlan $(1)/$(INIT_D_ADDR)/
+ifeq ($(BOARD),qmb415)
+	$(LN) -rsf $(1)/$(MISC_WIFI_ADDR)/$(WLAN_INI_ADRASTEA) $(1)/$(FIRMWARE_ADDR)/$(WLAN_PATH_ADRASTEA)/$(WLAN_INI_DEFAULT)
+	$(LN) -rsf $(1)/$(MISC_WIFI_ADDR)/$(WLAN_INI_QCA6750) $(1)/$(FIRMWARE_ADDR)/$(WLAN_PATH_QCA6750)/$(WLAN_INI_DEFAULT)
+else
 	$(LN) -rsf $(1)/$(MISC_WIFI_ADDR)/$(WLAN_INI_DEFAULT) $(1)/$(FIRMWARE_ADDR)/$(WLAN_INI_DEFAULT)
+endif
 ifeq ($(BOARD),sdx35)
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_DIR) $(1)/etc/initscripts

@@ -97,9 +97,20 @@ TARGET_MAKEOPTS := CONFIG_QCA_CLD_WLAN_PROFILE=default \
 		   CONFIG_WLAN_DP_LOCAL_PKT_CAPTURE=n \
 		   KERNEL_SUPPORTS_NESTED_COMPOSITES=n \
 		   CONFIG_CNSS_GENL=m \
+		   SUBTARGET_REGEX="all.*"\
 
 WLAN_PLATFORM_SYMBOLS = $(PKG_BUILD_DIR)/../wlan-icnss2/Module.symvers
 TARGET_MAKEOPTS += KBUILD_EXTRA_SYMBOLS=$(WLAN_PLATFORM_SYMBOLS)
+
+ENABLE_BAZEL = y
+ifeq ($(ENABLE_BAZEL), y)
+   #Module dir for qmb415 with Bazel enabled
+   BUILD_DIR_CLD := $(PKG_BUILD_DIR)
+   BUILD_DIR_UPPER = $(PKG_BUILD_DIR)/..
+   LOCAL_CLD_FOLDER = $(LOCAL_SRC)/qcacld-3.0/*
+   LN_CMD =
+endif
+
 
 else ifeq ($(BOARD),sdx35)
 TARGET_MAKEOPTS := CONFIG_CNSS_QCA6490=y \
@@ -202,9 +213,16 @@ endef
 
 define  KernelPackage/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/$(EXTRA_ADDR)/
-	$(INSTALL_BIN) $(BUILD_DIR_CLD)/wlan.ko $(1)/$(EXTRA_ADDR)/
 	$(INSTALL_DIR) $(TOPDIR)/bin/targets/$(TARGET_VARIANT)/modules
+ifeq ($(BOARD),qmb415)
+	$(INSTALL_BIN) $(BUILD_DIR_CLD)/qca_cld3_adrastea.ko $(1)/$(EXTRA_ADDR)/
+	$(INSTALL_BIN) $(BUILD_DIR_CLD)/qca_cld3_adrastea.ko $(TOPDIR)/bin/targets/$(TARGET_VARIANT)/modules/
+	$(INSTALL_BIN) $(BUILD_DIR_CLD)/qca_cld3_qca6750.ko $(1)/$(EXTRA_ADDR)/
+	$(INSTALL_BIN) $(BUILD_DIR_CLD)/qca_cld3_qca6750.ko $(TOPDIR)/bin/targets/$(TARGET_VARIANT)/modules/
+else
+	$(INSTALL_BIN) $(BUILD_DIR_CLD)/wlan.ko $(1)/$(EXTRA_ADDR)/
 	$(INSTALL_BIN) $(BUILD_DIR_CLD)/wlan.ko $(TOPDIR)/bin/targets/$(TARGET_VARIANT)/modules/
+endif
 endef
 
 $(eval $(call KernelPackage,$(PKG_NAME)))
