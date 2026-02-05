@@ -104,7 +104,7 @@ ifeq ($(BOARD),sdxecho)
 		    CONFIG_CNSS2_SSR_DRIVER_DUMP=y \
 		    CONFIG_PCIE_QCOM_ECAM=y \
 		    CONFIG_PINCTRL_MSM_NO_EXT=y \
-		    CONFIG_QLI_MHI=y \
+		    CONFIG_QLI=y \
 		    WLAN_PLATFORM_ROOT=$(PKG_BUILD_DIR) \
 		    CROSS_COMPILE=aarch64-openwrt-linux-musl- ARCH=arm64
 endif
