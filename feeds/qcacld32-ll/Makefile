@@ -6,6 +6,7 @@ PKG_VERSION:=1.0
 PKG_RELEASE:=1
 PKG_FIXUP:=autoreconf
 PKG_LICENSE:=ISC
+PKG_BUILD_ID:=1
 
 ifeq ($(TARGET_VARIANT),perf)
   COMPILE_MODE :=perf
@@ -110,7 +111,10 @@ TARGET_MAKEOPTS := WLAN_PROFILE=$(WLAN_PROFILE) \
 		   WLAN_ROOT=../../../../build_dir/target-aarch64_cortex-a53_musl/linux-sdxecho/qcacld32-ll-1.0/qcacld-3.0 \
 		   MODNAME=wlan
 WLAN_PLATFORM_SYMBOLS = $(PKG_BUILD_DIR)/../symvers/wlan-cnss.symvers
+DATAIPA_SYMBOLS = $(PKG_BUILD_DIR)/../symvers/dataipa.symvers
 TARGET_MAKEOPTS += KBUILD_EXTRA_SYMBOLS=$(WLAN_PLATFORM_SYMBOLS)
+TARGET_MAKEOPTS += KBUILD_EXTRA_SYMBOLS+=$(DATAIPA_SYMBOLS)
+CLD_DEPENDS += +kmod-dataipa
 else
 TARGET_MAKEOPTS := CONFIG_QCA_CLD_WLAN_PROFILE=default
 endif

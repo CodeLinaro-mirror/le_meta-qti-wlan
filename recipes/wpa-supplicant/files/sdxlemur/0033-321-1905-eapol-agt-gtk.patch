@@ -1,0 +1,61 @@
+From c9616ade2e048ba8ea2adaba07f2f14fc7f65f00 Mon Sep 17 00:00:00 2001
+From: Xinyue Ling <xinyling@qti.qualcomm.com>
+Date: Tue, 30 Apr 2024 15:05:20 +0800
+Subject: [PATCH 33/40] 321-1905-eapol-agt-gtk
+
+Change-Id: I7d2c42607f7b07224f9600051078c0acf0fe1c80
+Signed-off-by: Chenming Huang <chenhuan@qti.qualcomm.com>
+---
+ src/ap/wpa_auth.c     | 2 +-
+ src/ap/wpa_auth.h     | 1 +
+ src/drivers/eap1905.c | 2 ++
+ 3 files changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/src/ap/wpa_auth.c b/src/ap/wpa_auth.c
+index 926c28bd9d..4ebdb45465 100644
+--- a/src/ap/wpa_auth.c
++++ b/src/ap/wpa_auth.c
+@@ -7112,7 +7112,7 @@ int wpa_auth_resend_m3(struct wpa_state_machine *sm,
+ 		pos = wpa_add_kde(pos, RSN_KEY_DATA_KEYID, hdr, 2, NULL, 0);
+ 	}
+ 
+-	if (gtk) {
++	if (gtk && !conf->is_agt) {
+ 		hdr[0] = gtkidx & 0x03;
+ 		pos = wpa_add_kde(pos, RSN_KEY_DATA_GROUPKEY, hdr, 2,
+ 				  gtk, gtk_len);
+diff --git a/src/ap/wpa_auth.h b/src/ap/wpa_auth.h
+index 7f3876fe0c..09fb1256b4 100644
+--- a/src/ap/wpa_auth.h
++++ b/src/ap/wpa_auth.h
+@@ -270,6 +270,7 @@ struct wpa_auth_config {
+ 	int owe_ptk_workaround;
+ 	int no_group_delay;
+ 	u8 transition_disable;
++	int is_agt;
+ #ifdef CONFIG_DPP2
+ 	int dpp_pfs;
+ #endif /* CONFIG_DPP2 */
+diff --git a/src/drivers/eap1905.c b/src/drivers/eap1905.c
+index 4e3158dc7e..8783b454ef 100644
+--- a/src/drivers/eap1905.c
++++ b/src/drivers/eap1905.c
+@@ -43,6 +43,7 @@ struct sec_config {
+ 	int wpa_proto;
+ 	int mgmt_group_cipher;
+ 	int ieee80211w;
++	int is_agt;
+ } STRUCT_PACKED;
+ 
+ struct assoc {
+@@ -225,6 +226,7 @@ static int ap_init(struct wpa_1905 *wpa, struct sec_config *sec_conf)
+ 	conf.ieee80211w = sec_conf->ieee80211w;
+ 	conf.group_mgmt_cipher = sec_conf->mgmt_group_cipher;
+ 	conf.no_group_delay = 1;
++	conf.is_agt = sec_conf->is_agt;
+ 
+ 	conf.eapol_version = 2;
+ 	conf.wpa_group_update_count = 4;
+-- 
+2.34.1
+
