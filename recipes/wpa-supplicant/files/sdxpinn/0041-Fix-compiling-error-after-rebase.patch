@@ -1,4 +1,4 @@
-From 52818adfb9ca556d90b1e886384ac61a5b923b3f Mon Sep 17 00:00:00 2001
+From ccfc3f6d708b4d53f21c02dc6440cfe51e21d78f Mon Sep 17 00:00:00 2001
 From: Chenming Huang <quic_chenhuan@quicinc.com>
 Date: Thu, 23 May 2024 14:38:53 +0530
 Subject: [PATCH 41/41] Fix compiling error after rebase
@@ -6,14 +6,15 @@ Subject: [PATCH 41/41] Fix compiling error after rebase
 Change-Id: Ic84d732fc2f2d96ea9f68a97ceba53893d34d3b4
 Signed-off-by: Chenming Huang <quic_chenhuan@quicinc.com>
 ---
- src/ap/gas_serv.c     | 13 +++++++------
- src/common/dpp.c      |  4 ++--
- src/drivers/eap1905.c |  6 +++---
- src/rsn_supp/wpa.c    |  1 +
- 4 files changed, 13 insertions(+), 11 deletions(-)
+ src/ap/gas_serv.c         | 13 +++++++------
+ src/common/dpp.c          |  4 ++--
+ src/drivers/eap1905.c     |  6 +++---
+ src/drivers/eap1905_sta.c |  6 +++---
+ src/rsn_supp/wpa.c        |  1 +
+ 5 files changed, 16 insertions(+), 14 deletions(-)
 
 diff --git a/src/ap/gas_serv.c b/src/ap/gas_serv.c
-index 6dc8904b1b..d3106f1b41 100644
+index 6dc8904b1..d3106f1b4 100644
 --- a/src/ap/gas_serv.c
 +++ b/src/ap/gas_serv.c
 @@ -1546,7 +1546,6 @@ void gas_serv_req_dpp_processing(struct hostapd_data *hapd,
@@ -44,7 +45,7 @@ index 6dc8904b1b..d3106f1b41 100644
  	hostapd_drv_send_action(hapd, freq, 1500, sa,
  				wpabuf_head(tx_buf),
 diff --git a/src/common/dpp.c b/src/common/dpp.c
-index 22fe03c257..ac1976229c 100644
+index 22fe03c25..ac1976229 100644
 --- a/src/common/dpp.c
 +++ b/src/common/dpp.c
 @@ -4689,7 +4689,7 @@ struct wpabuf * dpp_rx_peer_disc_req(struct dpp_authentication *auth,
@@ -66,7 +67,7 @@ index 22fe03c257..ac1976229c 100644
  		wpa_printf(MSG_INFO,
  			   "DPP: Network Introduction protocol resulted in failure");
 diff --git a/src/drivers/eap1905.c b/src/drivers/eap1905.c
-index 43bd5ef24a..ca1e3b3be1 100644
+index 43bd5ef24..ca1e3b3be 100644
 --- a/src/drivers/eap1905.c
 +++ b/src/drivers/eap1905.c
 @@ -180,7 +180,7 @@ static int assoc_init(struct wpa_1905 *wpa, int index)
@@ -95,8 +96,32 @@ index 43bd5ef24a..ca1e3b3be1 100644
  		wpa_printf(MSG_DEBUG, "AUTH: wpa_validate_wpa_ie() failed");
  		wpa_auth_sta_deinit(wpa->auth[i]);
  		wpa->sta_count--;
+diff --git a/src/drivers/eap1905_sta.c b/src/drivers/eap1905_sta.c
+index 3300481f9..cd7f39a68 100644
+--- a/src/drivers/eap1905_sta.c
++++ b/src/drivers/eap1905_sta.c
+@@ -161,7 +161,7 @@ static u8 * supp_alloc_eapol(void *ctx, u8 type, const void *data,
+ }
+ 
+ 
+-static int supp_set_key(void *ctx, enum wpa_alg alg,
++static int supp_set_key(void *ctx, int link_id, enum wpa_alg alg,
+ 			const u8 *addr, int key_idx, int set_tx,
+ 			const u8 *seq, size_t seq_len,
+ 			const u8 *key, size_t key_len,  enum key_flag key_flag)
+@@ -175,8 +175,8 @@ static int supp_set_key(void *ctx, enum wpa_alg alg,
+ 		return 0;
+ 	}
+ 
+-	wpa_printf(MSG_ERROR, "SUPP: %s(alg=%d addr=" MACSTR " key_idx=%d set_tx=%d)",
+-			   __func__, alg, MAC2STR(addr), key_idx, set_tx);
++	wpa_printf(MSG_ERROR, "SUPP: %s(link_id=%d alg=%d addr=" MACSTR " key_idx=%d set_tx=%d)",
++			   __func__, link_id, alg, MAC2STR(addr), key_idx, set_tx);
+ 	wpa_hexdump(MSG_ERROR, "SUPP: set_key - seq", seq, seq_len);
+ 	wpa_hexdump(MSG_ERROR, "SUPP: set_key - key", key, key_len);
+ 
 diff --git a/src/rsn_supp/wpa.c b/src/rsn_supp/wpa.c
-index 1bd1e33b99..4446a8c69a 100644
+index 1bd1e33b9..4446a8c69 100644
 --- a/src/rsn_supp/wpa.c
 +++ b/src/rsn_supp/wpa.c
 @@ -32,6 +32,7 @@
@@ -108,5 +133,5 @@ index 1bd1e33b99..4446a8c69a 100644
  
  static const u8 null_rsc[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 -- 
-2.17.1
+2.34.1
 
