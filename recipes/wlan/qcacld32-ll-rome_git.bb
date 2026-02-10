@@ -123,6 +123,7 @@ SSTATE_ALLOW_OVERLAP_FILES += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wla
 inherit systemd
 FILES:${PN}     += "${bindir}/init.qti.wlan_on.sh"
 FILES:${PN}     += "${bindir}/init.qti.wlan_off.sh"
+FILES:${PN}     += "${bindir}/wlan_sap_sta_setup.sh"
 
 SRC_URI:append = " file://init_qti_wlan_auto.service"
 SYSTEMD_SERVICE:${PN} = "init_qti_wlan_auto.service"
@@ -132,6 +133,7 @@ SYSTEMD_AUTO_ENABLE:${PN} = "disable"
 
 SRC_URI:append = " file://init.qti.wlan_on.sh"
 SRC_URI:append = " file://init.qti.wlan_off.sh"
+SRC_URI:append = " file://wlan_sap_sta_setup.sh"
 
 do_compile:prepend() {
     if ${@bb.utils.contains('PREFERRED_VERSION_linux-msm', '5.15', 'true', 'false', d)}; then
@@ -165,6 +167,7 @@ do_install:append() {
     install -d ${D}${bindir}
     install -D -m 0555 ${WORKDIR}/init.qti.wlan_on.sh ${D}${bindir}/init.qti.wlan_on.sh
     install -D -m 0555 ${WORKDIR}/init.qti.wlan_off.sh ${D}${bindir}/init.qti.wlan_off.sh
+    install -D -m 0555 ${WORKDIR}/wlan_sap_sta_setup.sh ${D}${bindir}/wlan_sap_sta_setup.sh
     install -d ${D}/lib/firmware/${_MODNAME}/
 
     ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan30.b00 ${D}/lib/firmware/${_MODNAME}/
