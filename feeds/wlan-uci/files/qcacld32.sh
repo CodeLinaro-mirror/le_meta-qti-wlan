@@ -1855,10 +1855,6 @@ pre_qcacld32() {
 		disable)
 			[ -f $WSPLCD_INIT ] && $WSPLCD_INIT stop
 			[ -f $EZMESH_INIT ] && $EZMESH_INIT stop
-			if [ $yocto_build -eq 1 -a -n "lsmod | grep hyfi_bridging" ]; then
-				rmmod hyfi_bridging_mcc
-				rmmod emesh_sp_mcc
-			fi
 		;;
 		*)
 		;;
