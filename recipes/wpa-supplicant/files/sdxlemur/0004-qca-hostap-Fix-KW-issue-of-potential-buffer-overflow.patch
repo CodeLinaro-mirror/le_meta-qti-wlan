@@ -1,0 +1,60 @@
+From 10a5129789d25b9fad094f7edb2d2490c4229f3e Mon Sep 17 00:00:00 2001
+From: Kani M <kanisumi@qti.qualcomm.com>
+Date: Wed, 25 Nov 2020 19:27:03 +0530
+Subject: [PATCH 04/40] qca-hostap: Fix KW issue of potential buffer overflow
+ in eap1905_sta.c
+
+Fix for Array Index Out of Bounds issue in eap1905_sta.c
+while calling wpa_sm_rx_eapol() in  eapol_1905_rx_receive().
+
+Change-Id: I2876dbefd3167a2aa3ca4dfa8a2a2ffbe402c094
+Signed-off-by: Chenming Huang <chenhuan@qti.qualcomm.com>
+---
+ src/drivers/eap1905_sta.c | 24 ++++++++++++++++--------
+ 1 file changed, 16 insertions(+), 8 deletions(-)
+
+diff --git a/src/drivers/eap1905_sta.c b/src/drivers/eap1905_sta.c
+index 9f81eae3f3..ddb519d407 100644
+--- a/src/drivers/eap1905_sta.c
++++ b/src/drivers/eap1905_sta.c
+@@ -356,7 +356,7 @@ static void eapol_1905_rx_receive(int sock, void *eloop_ctx, void *sock_ctx)
+ /* The first byte is type of info EAPOL / ASSOC. second byte is len of EAPOL or assoc info */
+ 
+ 	if (buf[0] == EVENT_1905_EAPOL) {
+-		int len = 0;
++		size_t len = 0;
+ 		char *msg;
+ 
+ 		if (!os_memcmp(wpa->sta_supp_addr, buf+9,  ETH_ALEN))
+@@ -364,13 +364,21 @@ static void eapol_1905_rx_receive(int sock, void *eloop_ctx, void *sock_ctx)
+ 
+ 		wpa_printf(MSG_ERROR, "eapol_len:%d ", WPA_GET_BE16(&buf[1]) - ETH_ALEN);
+ 
+-		len = WPA_GET_BE16(&buf[1]) - ETH_ALEN ;
+-		msg = os_malloc(len);
+-		if (msg) {
+-			os_memcpy(msg, buf+9, len);
+-			wpa_sm_rx_eapol(wpa->supp, wpa->auth_addr, msg, len);
+-			wpa_printf(MSG_ERROR, "wpa_sm_rx_eapol done ");
+-			os_free(msg);
++		if (WPA_GET_BE16(&buf[1]) > ETH_ALEN)
++			len = WPA_GET_BE16(&buf[1]) - ETH_ALEN ;
++		else {
++			wpa_printf(MSG_ERROR, "nl80211: eapol packet len is insufficent ");
++			return;
++		}
++
++		if ( len && ((len + ETH_ALEN + 3) <= res)) {
++			msg = os_malloc(len);
++			if (msg) {
++				os_memcpy(msg, buf+9, len);
++				wpa_sm_rx_eapol(wpa->supp, wpa->auth_addr, (u8 *) msg, len);
++				wpa_printf(MSG_ERROR, "wpa_sm_rx_eapol done ");
++				os_free(msg);
++			}
+ 		}
+ 
+ 	} else if (buf[0] == EVENT_STA_SEC_CONFIG) {
+-- 
+2.34.1
+

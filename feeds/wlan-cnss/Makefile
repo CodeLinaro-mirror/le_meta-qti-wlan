@@ -10,6 +10,7 @@ ifeq ($(BUILD_VARIANT),cnss2)
 PKG_BUILD_DIR :=$(KERNEL_BUILD_DIR)/wlan-$(BUILD_VARIANT)/
 endif
 PKG_LICENSE:=ISC
+PKG_BUILD_ID:=1
 
 ifeq ($(TARGET_VARIANT),perf)
   COMPILE_MODE :=perf
@@ -98,11 +99,12 @@ ifeq ($(BOARD),sdxecho)
 		    CONFIG_CNSS_PLAT_IPC_QMI_SVC=m \
 		    CONFIG_CNSS_GENL=m \
 		    CONFIG_WCNSS_MEM_PRE_ALLOC=m \
+		    CONFIG_CNSS_PREALLOC_DEBUG_LEAK=y \
 		    CONFIG_CNSS_UTILS=m \
 		    CONFIG_CNSS2_SSR_DRIVER_DUMP=y \
 		    CONFIG_PCIE_QCOM_ECAM=y \
 		    CONFIG_PINCTRL_MSM_NO_EXT=y \
-		    CONFIG_QLI_MHI=y \
+		    CONFIG_QLI=y \
 		    WLAN_PLATFORM_ROOT=$(PKG_BUILD_DIR) \
 		    CROSS_COMPILE=aarch64-openwrt-linux-musl- ARCH=arm64
 endif

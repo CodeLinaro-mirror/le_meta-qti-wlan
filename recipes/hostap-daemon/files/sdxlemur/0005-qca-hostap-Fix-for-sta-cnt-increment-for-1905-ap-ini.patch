@@ -1,0 +1,41 @@
+From 4674c3fc9c651821ee567f1416d12e1679ea860f Mon Sep 17 00:00:00 2001
+From: Disha Das <dishad@qti.qualcomm.com>
+Date: Mon, 22 Mar 2021 20:20:11 +0530
+Subject: [PATCH 05/40] qca-hostap: Fix for sta cnt increment for 1905 ap init
+
+Fix for sta count increment for 1905 EVENT_AP_SEC_CONFIG
+event.
+
+Change-Id: I0a3f77abade1248603fc7b095f0b91579c406bbe
+Signed-off-by: Disha Das <dishad@qti.qualcomm.com>
+---
+ src/drivers/eap1905.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/drivers/eap1905.c b/src/drivers/eap1905.c
+index f40502db10..9b745cc2d4 100644
+--- a/src/drivers/eap1905.c
++++ b/src/drivers/eap1905.c
+@@ -301,8 +301,8 @@ static void eapol_1905_rx_receive(int sock, void *eloop_ctx, void *sock_ctx)
+ 		if (wpa->sta_count > 0) {
+ 			for (i = 0; i < wpa->sta_count; ) {
+ 				if (wpa->auth[i]) {
+-					i++;
+ 					wpa_auth_sta_deinit(wpa->auth[i]);
++					i++;
+ 				}
+ 			}
+ 			wpa->sta_count = 0;
+@@ -384,8 +384,8 @@ void eapol_1905_deinit(void *priv)
+ 	if (wpa.sta_count > 0) {
+ 		for (i = 0; i < wpa.sta_count; ) {
+ 			if (wpa.auth[i]) {
+-				i++;
+ 				wpa_auth_sta_deinit(wpa.auth[i]);
++				i++;
+ 			}
+ 		}
+ 		wpa.sta_count = 0;
+-- 
+2.34.1
+

@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: ISC
+#
+# /etc/initscripts/start_emesh-sp-mcc
+
+. /lib/functions.sh
+
+start() {
+	insmod /lib/modules/$(uname -r)/kernel/drivers/emesh-sp-mcc/emesh-sp-mcc.ko
+}
+
+stop() {
+	rmmod /lib/modules/$(uname -r)/kernel/drivers/emesh-sp-mcc/emesh-sp-mcc.ko
+}
+
+case "$1" in
+	start)
+		start
+	;;
+	stop)
+		stop
+	;;
+	*)
+		echo "Usage : /etc/initscripts/start_emesh-sp-mcc start|stop"
+	;;
+esac
+
+exit 0
