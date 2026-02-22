@@ -12,7 +12,6 @@ SRC_URI = "file://wlan/utils/sigma-dut/"
 PACKAGE_ARCH ?= "${MACHINE_ARCH}"
 
 SRC_DIR = "${WORKSPACE}/wlan/utils/sigma-dut/"
-SRC_URI += "file://Makefile.patch"
 
 DEPENDS = "libnl"
 
@@ -23,7 +22,11 @@ S = "${WORKDIR}/wlan/utils/sigma-dut"
 
 do_patch() {
     cd ${S}
-    patch -p1 < ${WORKDIR}/Makefile.patch
+    mkdir ${WORKDIR}/files/
+    cp ${COREBASE}/meta-qti-wlan/recipes/wlan-sigma-dut/files/*.patch ${WORKDIR}/files/
+    for patch in ${WORKDIR}/files/*.patch; do
+        patch -p1 < "$patch"
+    done
 }
 
 do_install() {

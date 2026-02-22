@@ -1,0 +1,388 @@
+From 67227ce0db96fa116eb9a8700457401bc73c0e0a Mon Sep 17 00:00:00 2001
+From: Xinyue Ling <xinyling@qti.qualcomm.com>
+Date: Tue, 30 Apr 2024 15:15:04 +0800
+Subject: [PATCH 36/40] 532-daisy-wps-dpp-onboarding
+
+Change-Id: I5c0414f301e06879eb944c97a8d56768826f0e61
+Signed-off-by: Chenming Huang <chenhuan@qti.qualcomm.com>
+---
+ src/ap/dpp_hostapd.c              | 21 +++++++++++++++++-
+ src/ap/dpp_hostapd.h              |  1 +
+ src/ap/gas_serv.c                 | 37 +++++++++++++++++++++++++++++++
+ src/ap/wps_hostapd.c              |  9 +++++++-
+ src/common/defs.h                 |  6 +++++
+ src/common/dpp.h                  |  3 +++
+ src/common/dpp_i.h                |  1 +
+ src/common/dpp_tcp.c              | 12 ++++++++++
+ src/common/wpa_ctrl.h             |  1 +
+ src/wps/wps.h                     |  2 +-
+ src/wps/wps_registrar.c           |  2 +-
+ wpa_supplicant/ctrl_iface.c       |  8 +++++++
+ wpa_supplicant/dpp_supplicant.c   |  1 +
+ wpa_supplicant/wpa_supplicant.c   | 11 +++++++++
+ wpa_supplicant/wpa_supplicant_i.h |  2 ++
+ wpa_supplicant/wps_supplicant.c   |  4 +++-
+ 16 files changed, 116 insertions(+), 5 deletions(-)
+
+diff --git a/src/ap/dpp_hostapd.c b/src/ap/dpp_hostapd.c
+index 93f5e0e0ff..31059664a7 100644
+--- a/src/ap/dpp_hostapd.c
++++ b/src/ap/dpp_hostapd.c
+@@ -3378,11 +3378,12 @@ int hostapd_dpp_map_bss_conf_resp(struct hostapd_data *hapd, const char *cmd)
+ int hostapd_dpp_configurator_sign(struct hostapd_data *hapd, const char *cmd)
+ {
+ 	struct dpp_authentication *auth;
++	struct dpp_global *dpp = hapd->iface->interfaces->dpp;
+ 	int ret = -1;
+ 	char *curve = NULL;
+ 	char *map_netaccess_jwk = NULL;
+ 
+-	auth = dpp_alloc_auth(hapd->iface->interfaces->dpp, hapd->msg_ctx);
++	auth = dpp_alloc_auth(dpp, hapd->msg_ctx);
+ 	if (!auth)
+ 		return -1;
+ 
+@@ -3409,6 +3410,11 @@ int hostapd_dpp_configurator_sign(struct hostapd_data *hapd, const char *cmd)
+ 				auth->dpp_1905_connector);
+ 		}
+ 
++#ifdef CONFIG_DPP2
++               if(auth->conf_ap->netrole == DPP_NETROLE_MAP_CONTROLLER) {
++                       dpp_set_controller(dpp);
++               }
++#endif
+ 		ret = 0;
+ 	}
+ 
+@@ -4174,6 +4180,19 @@ hostapd_dpp_map_peer_disc_auth(struct dpp_global *dpp, void *ctx)
+ 
+ 	return auth;
+ }
++
++int hostapd_check_dpp_controller(struct hostapd_data *hapd, const char *uri, const u8* addr)
++{
++       if(dpp_check_controller(hapd->iface->interfaces->dpp)) {
++               wpa_printf(MSG_DEBUG, "DPP: Not controller, Forwarding the DPP URI"
++                               "to ezmesh to forward it to the controller\n");
++               wpa_msg(hapd->msg_ctx, MSG_INFO, DPP_URI_NOTIFY "dst=" MACSTR
++                               " src=" MACSTR " uri=%s", MAC2STR(hapd->own_addr), MAC2STR(addr), uri);
++               return -1;
++       }
++       return 0;
++}
++
+ #endif /* CONFIG_DPP2 */
+ 
+ 
+diff --git a/src/ap/dpp_hostapd.h b/src/ap/dpp_hostapd.h
+index 328351ef8f..06c57da332 100644
+--- a/src/ap/dpp_hostapd.h
++++ b/src/ap/dpp_hostapd.h
+@@ -60,4 +60,5 @@ void hostapd_dpp_remove_controller(struct hostapd_data *hapd, const char *cmd);
+ int hostapd_dpp_get_map_flag(void *ctx);
+ struct dpp_authentication *
+ hostapd_dpp_map_peer_disc_auth(struct dpp_global *dpp, void *ctx);
++int hostapd_check_dpp_controller(struct hostapd_data *hapd, const char *uri, const u8* addr);
+ #endif /* DPP_HOSTAPD_H */
+diff --git a/src/ap/gas_serv.c b/src/ap/gas_serv.c
+index 4642e49273..b33f9532f3 100644
+--- a/src/ap/gas_serv.c
++++ b/src/ap/gas_serv.c
+@@ -1522,6 +1522,25 @@ static void gas_serv_req_local_processing(struct hostapd_data *hapd,
+ 
+ 
+ #ifdef CONFIG_DPP
++static void gas_comeback_req_wait(void *eloop_ctx, void *timeout_ctx)
++{
++        struct hostapd_data *hapd = eloop_ctx;
++        struct dpp_authentication *auth = hapd->dpp_auth;
++	struct gas_dialog_info *dialog;
++        if(!auth)
++                return;
++
++        wpa_printf(MSG_INFO, "DPP: GAS comeback request timeout");
++	dialog = gas_serv_dialog_find(hapd, auth->peer_mac_addr, auth->diag_token);
++	if(dialog) {
++		gas_serv_dialog_clear(dialog);
++		gas_serv_free_dialogs(hapd, auth->peer_mac_addr);
++	}
++
++        dpp_auth_deinit(auth);
++        hapd->dpp_auth = NULL;
++}
++
+ void gas_serv_req_dpp_processing(struct hostapd_data *hapd,
+ 				 const u8 *sa, u8 dialog_token,
+ 				 int prot, struct wpabuf *buf, int freq)
+@@ -1563,6 +1582,11 @@ void gas_serv_req_dpp_processing(struct hostapd_data *hapd,
+ 				gas_serv_write_dpp_adv_proto(tx_buf);
+ 				wpabuf_put_le16(tx_buf, 0);
+ 			}
++			if(hapd->dpp_auth) {
++				hapd->dpp_auth->diag_token = dialog_token;
++			}
++			eloop_register_timeout(comeback_delay/1000 + 2, 0, gas_comeback_req_wait,
++					       hapd, NULL);
+ 		}
+ 	} else {
+ 		wpa_printf(MSG_DEBUG,
+@@ -1750,6 +1774,9 @@ static void gas_serv_rx_gas_comeback_req(struct hostapd_data *hapd,
+ 	wpa_msg(hapd->msg_ctx, MSG_DEBUG, "GAS: Dialog Token: %u",
+ 		dialog_token);
+ 
++#ifdef CONFIG_DPP
++	eloop_cancel_timeout(gas_comeback_req_wait, hapd, NULL);
++#endif
+ 	dialog = gas_serv_dialog_find(hapd, sa, dialog_token);
+ 	if (!dialog) {
+ 		wpa_msg(hapd->msg_ctx, MSG_DEBUG, "GAS: No pending SD "
+@@ -1810,6 +1837,16 @@ static void gas_serv_rx_gas_comeback_req(struct hostapd_data *hapd,
+ 	dialog->sd_resp_pos += frag_len;
+ 
+ 	if (more) {
++#ifdef CONFIG_DPP
++		u16 comeback_delay = 1;
++
++                if (hapd->conf->gas_comeback_delay) {
++			/* Testing - allow overriding of the delay value */
++			comeback_delay = hapd->conf->gas_comeback_delay;
++                }
++		eloop_register_timeout(comeback_delay/1000 + 2, 0, gas_comeback_req_wait,
++				       hapd, NULL);
++#endif
+ 		wpa_msg(hapd->msg_ctx, MSG_DEBUG, "GAS: %d more bytes remain "
+ 			"to be sent",
+ 			(int) (wpabuf_len(dialog->sd_resp) -
+diff --git a/src/ap/wps_hostapd.c b/src/ap/wps_hostapd.c
+index a147400f08..91c36ed0c4 100644
+--- a/src/ap/wps_hostapd.c
++++ b/src/ap/wps_hostapd.c
+@@ -955,10 +955,17 @@ static int hostapd_wps_rf_band_cb(void *ctx)
+ 
+ 
+ #ifdef CONFIG_DPP2
+-static int hostapd_wps_dpp_uri_cb(void *ctx, const char *uri)
++static int hostapd_wps_dpp_uri_cb(void *ctx, const char *uri, const u8* addr)
+ {
+ 	struct hostapd_data *hapd = ctx;
+ 
++       /*In easymesh if this is not controller forward the dpp uri to easymesh as event*/
++       if(hapd->conf->dpp_map) {
++               if(hostapd_check_dpp_controller(hapd, uri, addr)) {
++                       return 0;
++               }
++       }
++
+ 	return hostapd_dpp_qr_code(hapd, uri);
+ }
+ #endif
+diff --git a/src/common/defs.h b/src/common/defs.h
+index 8cca094e8f..b06397e129 100644
+--- a/src/common/defs.h
++++ b/src/common/defs.h
+@@ -532,4 +532,10 @@ enum sae_pwe {
+ 	SAE_PWE_NOT_SET = 4,
+ };
+ 
++enum onboarding_type {
++       NO_METHOD = 0,
++       WPS = 1,
++       DPP,
++};
++
+ #endif /* DEFS_H */
+diff --git a/src/common/dpp.h b/src/common/dpp.h
+index 9b1f9936e9..f97637fcf9 100644
+--- a/src/common/dpp.h
++++ b/src/common/dpp.h
+@@ -410,6 +410,7 @@ struct dpp_authentication {
+ 	enum dpp_akm akm_1905;
+ 	struct wpabuf *map_netaccess_jwk;
+ 	int map_bss_conf_resp;
++	u16 diag_token;
+ };
+ 
+ struct dpp_configurator {
+@@ -896,5 +897,7 @@ struct wpabuf * dpp_rx_peer_disc_req(struct dpp_authentication *auth,
+ void dpp_rx_peer_disc_resp(struct dpp_authentication *auth,
+ 			   const u8 *src,
+ 			   const u8 *buf, size_t len);
++int dpp_check_controller(struct dpp_global *dpp);
++void dpp_set_controller(struct dpp_global *dpp);
+ #endif /* CONFIG_DPP */
+ #endif /* DPP_H */
+diff --git a/src/common/dpp_i.h b/src/common/dpp_i.h
+index ba765cb861..4634400484 100644
+--- a/src/common/dpp_i.h
++++ b/src/common/dpp_i.h
+@@ -22,6 +22,7 @@ struct dpp_global {
+ 	struct dpp_relay_controller *tmp_controller;
+ 	struct dpp_controller *controller;
+ 	struct dl_list tcp_init; /* struct dpp_connection */
++	int is_controller;
+ 	int relay_sock;
+ 	void *relay_msg_ctx;
+ 	void *relay_cb_ctx;
+diff --git a/src/common/dpp_tcp.c b/src/common/dpp_tcp.c
+index bf95b0564c..ecfa0bfb46 100644
+--- a/src/common/dpp_tcp.c
++++ b/src/common/dpp_tcp.c
+@@ -2961,4 +2961,16 @@ void dpp_tcp_send_conn_status(struct dpp_global *dpp,
+ 	}
+ }
+ 
++int dpp_check_controller(struct dpp_global *dpp)
++{
++       if (dpp->is_controller)
++               return 0;
++       return -1;
++}
++
++void dpp_set_controller(struct dpp_global *dpp)
++{
++       dpp->is_controller = 1;
++}
++
+ #endif /* CONFIG_DPP2 */
+diff --git a/src/common/wpa_ctrl.h b/src/common/wpa_ctrl.h
+index a8f1db2a68..656e8e46be 100644
+--- a/src/common/wpa_ctrl.h
++++ b/src/common/wpa_ctrl.h
+@@ -239,6 +239,7 @@ extern "C" {
+ #define DPP_MAP_EVENT_C_SIGN_KEY "DPP-MAP-C-SIGN-KEY "
+ #define DPP_EVENT_CONFIGURATOR_CSIGN_KID "DPP-CONFIGURATOR-CSIGN-KID "
+ #define DPP_EVENT_CSIGN_KID "DPP-CSIGN-KID "
++#define DPP_URI_NOTIFY "DPP-URI-NOTIFY "
+ #define DPP_EVENT_PB_STATUS "DPP-PB-STATUS "
+ #define DPP_EVENT_PB_RESULT "DPP-PB-RESULT "
+ #define DPP_EVENT_RELAY_NEEDS_CONTROLLER "DPP-RELAY-NEEDS-CONTROLLER "
+diff --git a/src/wps/wps.h b/src/wps/wps.h
+index d5399a889d..fc189eda43 100644
+--- a/src/wps/wps.h
++++ b/src/wps/wps.h
+@@ -844,7 +844,7 @@ struct wps_context {
+ 
+ #ifdef CONFIG_DPP2
+ 	char *wps_dpp_uri;
+-	int (*wps_dpp_uri_cb)(void *ctx, const char *uri);
++	int (*wps_dpp_uri_cb)(void *ctx, const char *uri, const u8* addr);
+ 	bool dpp_wps;
+ #endif
+ 	u16 ap_nfc_dev_pw_id;
+diff --git a/src/wps/wps_registrar.c b/src/wps/wps_registrar.c
+index eefa467efc..3be7195c25 100644
+--- a/src/wps/wps_registrar.c
++++ b/src/wps/wps_registrar.c
+@@ -2398,7 +2398,7 @@ static int wps_process_dpp_uri(struct wps_data *wps, const u8 *wps_dpp_uri,
+ 		wpa_printf(MSG_DEBUG, "WPS: No WPS DPP URI saved");
+ 	}
+ 	if (wps->wps->wps_dpp_uri_cb)
+-		wps->wps->wps_dpp_uri_cb(wps->wps->cb_ctx, (const char *) wps_dpp_uri);
++		wps->wps->wps_dpp_uri_cb(wps->wps->cb_ctx, (const char *) wps_dpp_uri, wps->mac_addr_e);
+ 	return 0;
+ }
+ #endif
+diff --git a/wpa_supplicant/ctrl_iface.c b/wpa_supplicant/ctrl_iface.c
+index 443911bb8d..2b49371189 100644
+--- a/wpa_supplicant/ctrl_iface.c
++++ b/wpa_supplicant/ctrl_iface.c
+@@ -2600,6 +2600,14 @@ static int wpa_supplicant_ctrl_iface_status(struct wpa_supplicant *wpa_s,
+ 			return pos - buf;
+ 		pos += ret;
+ 	}
++        if(wpa_s->onboarding_type) {
++               ret = os_snprintf(pos, end - pos, "onboard_type=%s\n",
++                                 wpa_supplicant_onboarding_type_txt(wpa_s->onboarding_type));
++               if (os_snprintf_error(end - pos, ret))
++                       return pos - buf;
++               pos += ret;
++        }
++
+ 
+ #ifdef ANDROID
+ 	/*
+diff --git a/wpa_supplicant/dpp_supplicant.c b/wpa_supplicant/dpp_supplicant.c
+index a21b2db739..5514b2029f 100644
+--- a/wpa_supplicant/dpp_supplicant.c
++++ b/wpa_supplicant/dpp_supplicant.c
+@@ -2046,6 +2046,7 @@ fail:
+ 				       1000, wpas_dpp_tx_status, 0);
+ 		wpabuf_free(msg);
+ 
++		wpa_s->onboarding_type = DPP;
+ 		/* This exchange will be terminated in the TX status handler */
+ 		if (wpa_s->conf->dpp_config_processing < 2 ||
+ 		    wpa_s->dpp_conf_backup_received)
+diff --git a/wpa_supplicant/wpa_supplicant.c b/wpa_supplicant/wpa_supplicant.c
+index 6c5be61316..1e289d3a8e 100644
+--- a/wpa_supplicant/wpa_supplicant.c
++++ b/wpa_supplicant/wpa_supplicant.c
+@@ -839,6 +839,17 @@ const char * wpa_supplicant_state_txt(enum wpa_states state)
+ 	}
+ }
+ 
++const char *wpa_supplicant_onboarding_type_txt(enum onboarding_type type)
++{
++       switch (type) {
++       case WPS:
++               return "WPS";
++       case DPP:
++               return "DPP";
++       default:
++               return "NONE";
++       }
++}
+ 
+ #ifdef CONFIG_BGSCAN
+ 
+diff --git a/wpa_supplicant/wpa_supplicant_i.h b/wpa_supplicant/wpa_supplicant_i.h
+index 96b3147686..9f28c4964b 100644
+--- a/wpa_supplicant/wpa_supplicant_i.h
++++ b/wpa_supplicant/wpa_supplicant_i.h
+@@ -1577,6 +1577,7 @@ struct wpa_supplicant {
+ 	unsigned int enable_dscp_policy_capa:1;
+ 	unsigned int connection_dscp:1;
+ 	unsigned int wait_for_dscp_req:1;
++	u8  onboarding_type;
+ #ifdef CONFIG_TESTING_OPTIONS
+ 	unsigned int disable_scs_support:1;
+ 	unsigned int disable_mscs_support:1;
+@@ -2024,5 +2025,6 @@ bool wpas_is_6ghz_supported(struct wpa_supplicant *wpa_s, bool only_enabled);
+ 
+ bool wpa_is_non_eht_scs_traffic_desc_supported(struct wpa_bss *bss);
+ bool wpas_ap_link_address(struct wpa_supplicant *wpa_s, const u8 *addr);
++const char * wpa_supplicant_onboarding_type_txt(enum onboarding_type type);
+ 
+ #endif /* WPA_SUPPLICANT_I_H */
+diff --git a/wpa_supplicant/wps_supplicant.c b/wpa_supplicant/wps_supplicant.c
+index 0c33e5d1ae..a8c5305175 100644
+--- a/wpa_supplicant/wps_supplicant.c
++++ b/wpa_supplicant/wps_supplicant.c
+@@ -162,6 +162,7 @@ int wpas_wps_eapol_cb(struct wpa_supplicant *wpa_s)
+ 			wpa_s->wps->wps_dpp_uri = NULL;
+ 		}
+ 		wpa_s->wps->dpp_wps = 0;
++		wpa_s->onboarding_type = NO_METHOD;
+ 		wpa_printf(MSG_DEBUG, " WPS->DPP: CANCEL WPS\n");
+ 		wpas_wps_cancel(wpa_s);
+ 		wps_dpp_chirp(wpa_s);
+@@ -777,6 +778,7 @@ static void wpa_supplicant_wps_event_success(struct wpa_supplicant *wpa_s)
+ {
+ 	wpa_msg(wpa_s, MSG_INFO, WPS_EVENT_SUCCESS);
+ 	wpa_s->wps_success = 1;
++	wpa_s->onboarding_type = WPS;
+ 	wpas_notify_wps_event_success(wpa_s);
+ 	if (wpa_s->current_ssid)
+ 		wpas_clear_temp_disabled(wpa_s, wpa_s->current_ssid, 1);
+@@ -988,7 +990,7 @@ static int wpa_supplicant_wps_rf_band(void *ctx)
+ 
+ 
+ #ifdef CONFIG_DPP2
+-static int wpa_wps_dpp_uri(void *ctx, const char *uri)
++static int wpa_wps_dpp_uri(void *ctx, const char *uri, const u8* addr)
+ {
+ 	struct wpa_supplicant *wpa_s = ctx;
+ 
+-- 
+2.34.1
+

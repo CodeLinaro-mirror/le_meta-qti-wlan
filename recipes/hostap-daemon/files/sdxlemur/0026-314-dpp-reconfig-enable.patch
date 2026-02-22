@@ -1,0 +1,226 @@
+From 5c49f614d99e09bb9d3d580ff1fe05c587f58f10 Mon Sep 17 00:00:00 2001
+From: Xinyue Ling <xinyling@qti.qualcomm.com>
+Date: Tue, 30 Apr 2024 14:52:20 +0800
+Subject: [PATCH 26/40] 314-dpp-reconfig-enable
+
+Change-Id: I4a31ad848fe183c63e99531e4b70a0bc8b56a153
+Signed-off-by: Chenming Huang <chenhuan@qti.qualcomm.com>
+---
+ src/ap/dpp_hostapd.c            |  6 +++++-
+ src/common/dpp.h                |  4 ++--
+ src/common/dpp_reconfig.c       |  6 ++++--
+ src/common/dpp_tcp.c            |  8 +++++++-
+ wpa_supplicant/dpp_supplicant.c | 14 +++++++++++---
+ wpa_supplicant/wpa_cli.c        | 12 ++++++++++++
+ 6 files changed, 41 insertions(+), 9 deletions(-)
+
+diff --git a/src/ap/dpp_hostapd.c b/src/ap/dpp_hostapd.c
+index 1fd3c9a3ca..93f5e0e0ff 100644
+--- a/src/ap/dpp_hostapd.c
++++ b/src/ap/dpp_hostapd.c
+@@ -1910,6 +1910,7 @@ hostapd_dpp_rx_reconfig_announcement(struct hostapd_data *hapd, const u8 *src,
+ 	struct dpp_authentication *auth;
+ 	unsigned int wait_time, max_wait_time;
+ 	u16 group;
++	int dpp_map = 0;
+ 
+ 	if (hapd->dpp_auth) {
+ 		wpa_printf(MSG_DEBUG,
+@@ -1956,9 +1957,12 @@ hostapd_dpp_rx_reconfig_announcement(struct hostapd_data *hapd, const u8 *src,
+ 	a_nonce = dpp_get_attr(buf, len, DPP_ATTR_A_NONCE, &a_nonce_len);
+ 	e_id = dpp_get_attr(buf, len, DPP_ATTR_E_PRIME_ID, &e_id_len);
+ 
++	if (hapd->conf->dpp_map)
++		dpp_map = hapd->conf->dpp_map;
++
+ 	auth = dpp_reconfig_init(hapd->iface->interfaces->dpp, hapd->msg_ctx,
+ 				 conf, freq, group, a_nonce, a_nonce_len,
+-				 e_id, e_id_len);
++				 e_id, e_id_len, dpp_map);
+ 	if (!auth)
+ 		return;
+ 	hostapd_dpp_set_testing_options(hapd, auth);
+diff --git a/src/common/dpp.h b/src/common/dpp.h
+index 5acb7983bf..d37875c37b 100644
+--- a/src/common/dpp.h
++++ b/src/common/dpp.h
+@@ -853,14 +853,14 @@ struct dpp_authentication *
+ dpp_reconfig_init(struct dpp_global *dpp, void *msg_ctx,
+ 		  struct dpp_configurator *conf, unsigned int freq, u16 group,
+ 		  const u8 *a_nonce_attr, size_t a_nonce_len,
+-		  const u8 *e_id_attr, size_t e_id_len);
++		  const u8 *e_id_attr, size_t e_id_len, int dpp_map);
+ struct dpp_authentication *
+ dpp_reconfig_auth_req_rx(struct dpp_global *dpp, void *msg_ctx,
+ 			 const char *own_connector,
+ 			 const u8 *net_access_key, size_t net_access_key_len,
+ 			 const u8 *csign_key, size_t csign_key_len,
+ 			 unsigned int freq, const u8 *hdr,
+-			 const u8 *attr_start, size_t attr_len);
++			 const u8 *attr_start, size_t attr_len, int dpp_map);
+ struct wpabuf *
+ dpp_reconfig_auth_resp_rx(struct dpp_authentication *auth, const u8 *hdr,
+ 			  const u8 *attr_start, size_t attr_len);
+diff --git a/src/common/dpp_reconfig.c b/src/common/dpp_reconfig.c
+index 452c502475..ac07e8c2b7 100644
+--- a/src/common/dpp_reconfig.c
++++ b/src/common/dpp_reconfig.c
+@@ -238,7 +238,7 @@ struct dpp_authentication *
+ dpp_reconfig_init(struct dpp_global *dpp, void *msg_ctx,
+ 		  struct dpp_configurator *conf, unsigned int freq, u16 group,
+ 		  const u8 *a_nonce_attr, size_t a_nonce_len,
+-		  const u8 *e_id_attr, size_t e_id_len)
++		  const u8 *e_id_attr, size_t e_id_len, int dpp_map)
+ {
+ 	struct dpp_authentication *auth;
+ 	const struct dpp_curve_params *curve;
+@@ -301,6 +301,7 @@ dpp_reconfig_init(struct dpp_global *dpp, void *msg_ctx,
+ 	auth->configurator = 1;
+ 	auth->curve = curve;
+ 	auth->transaction_id = 1;
++	auth->dpp_map = dpp_map;
+ 	if (freq && dpp_prepare_channel_list(auth, freq, NULL, 0) < 0)
+ 		goto fail;
+ 
+@@ -440,7 +441,7 @@ dpp_reconfig_auth_req_rx(struct dpp_global *dpp, void *msg_ctx,
+ 			 const u8 *net_access_key, size_t net_access_key_len,
+ 			 const u8 *csign_key, size_t csign_key_len,
+ 			 unsigned int freq, const u8 *hdr,
+-			 const u8 *attr_start, size_t attr_len)
++			 const u8 *attr_start, size_t attr_len, int dpp_map)
+ {
+ 	struct dpp_authentication *auth = NULL;
+ 	const u8 *trans_id, *version, *i_connector, *c_nonce;
+@@ -529,6 +530,7 @@ dpp_reconfig_auth_req_rx(struct dpp_global *dpp, void *msg_ctx,
+ 	auth->transaction_id = trans_id[0];
+ 
+ 	auth->peer_version = version[0];
++	auth->dpp_map = dpp_map;
+ 	wpa_printf(MSG_DEBUG, "DPP: Peer protocol version %u",
+ 		   auth->peer_version);
+ 
+diff --git a/src/common/dpp_tcp.c b/src/common/dpp_tcp.c
+index f7003718f3..bf95b0564c 100644
+--- a/src/common/dpp_tcp.c
++++ b/src/common/dpp_tcp.c
+@@ -1041,6 +1041,7 @@ static int dpp_controller_rx_reconfig_announcement(struct dpp_connection *conn,
+ 	struct dpp_global *dpp = conn->ctrl->global;
+ 	struct dpp_authentication *auth;
+ 	u16 group;
++	int dpp_map = 0;
+ 
+ 	if (conn->auth) {
+ 		wpa_printf(MSG_DEBUG,
+@@ -1079,8 +1080,13 @@ static int dpp_controller_rx_reconfig_announcement(struct dpp_connection *conn,
+ 	a_nonce = dpp_get_attr(buf, len, DPP_ATTR_A_NONCE, &a_nonce_len);
+ 	e_id = dpp_get_attr(buf, len, DPP_ATTR_E_PRIME_ID, &e_id_len);
+ 
++	if (conn->global->get_dpp_map_flag) {
++		dpp_map = conn->global->get_dpp_map_flag(conn->cb_ctx);
++	}
++	wpa_printf(MSG_DEBUG, "DPP: map flag is %d in %s\n", dpp_map, __func__);
++
+ 	auth = dpp_reconfig_init(dpp, conn->msg_ctx, conf, 0, group,
+-				 a_nonce, a_nonce_len, e_id, e_id_len);
++				 a_nonce, a_nonce_len, e_id, e_id_len, dpp_map);
+ 	if (!auth)
+ 		return -1;
+ 	if (dpp_set_configurator(auth, conn->ctrl->configurator_params) < 0) {
+diff --git a/wpa_supplicant/dpp_supplicant.c b/wpa_supplicant/dpp_supplicant.c
+index bc1328afda..d6ede31495 100644
+--- a/wpa_supplicant/dpp_supplicant.c
++++ b/wpa_supplicant/dpp_supplicant.c
+@@ -2640,6 +2640,7 @@ wpas_dpp_rx_reconfig_announcement(struct wpa_supplicant *wpa_s, const u8 *src,
+ 	struct dpp_authentication *auth;
+ 	unsigned int wait_time, max_wait_time;
+ 	u16 group;
++	int dpp_map = 0;
+ 
+ 	if (!wpa_s->dpp)
+ 		return;
+@@ -2682,8 +2683,11 @@ wpas_dpp_rx_reconfig_announcement(struct wpa_supplicant *wpa_s, const u8 *src,
+ 	a_nonce = dpp_get_attr(buf, len, DPP_ATTR_A_NONCE, &a_nonce_len);
+ 	e_id = dpp_get_attr(buf, len, DPP_ATTR_E_PRIME_ID, &e_id_len);
+ 
++	if (wpa_s->conf->dpp_map)
++		dpp_map = wpa_s->conf->dpp_map;
++
+ 	auth = dpp_reconfig_init(wpa_s->dpp, wpa_s, conf, freq, group,
+-				 a_nonce, a_nonce_len, e_id, e_id_len);
++				 a_nonce, a_nonce_len, e_id, e_id_len, dpp_map);
+ 	if (!auth)
+ 		return;
+ 	wpas_dpp_set_testing_options(wpa_s, auth);
+@@ -2729,6 +2733,7 @@ wpas_dpp_rx_reconfig_auth_req(struct wpa_supplicant *wpa_s, const u8 *src,
+ {
+ 	struct wpa_ssid *ssid;
+ 	struct dpp_authentication *auth;
++	int dpp_map = 0;
+ 
+ 	wpa_printf(MSG_DEBUG, "DPP: Reconfig Authentication Request from "
+ 		   MACSTR, MAC2STR(src));
+@@ -2757,11 +2762,14 @@ wpas_dpp_rx_reconfig_auth_req(struct wpa_supplicant *wpa_s, const u8 *src,
+ 		return;
+ 	}
+ 
++	if (wpa_s->conf->dpp_map)
++		dpp_map = wpa_s->conf->dpp_map;
++
+ 	auth = dpp_reconfig_auth_req_rx(wpa_s->dpp, wpa_s, ssid->dpp_connector,
+ 					ssid->dpp_netaccesskey,
+ 					ssid->dpp_netaccesskey_len,
+ 					ssid->dpp_csign, ssid->dpp_csign_len,
+-					freq, hdr, buf, len);
++					freq, hdr, buf, len, dpp_map);
+ 	if (!auth)
+ 		return;
+ 	os_memcpy(auth->peer_mac_addr, src, ETH_ALEN);
+@@ -2774,7 +2782,7 @@ wpas_dpp_rx_reconfig_auth_req(struct wpa_supplicant *wpa_s, const u8 *src,
+ 	if (offchannel_send_action(wpa_s, freq, src, wpa_s->own_addr, broadcast,
+ 				   wpabuf_head(auth->reconfig_resp_msg),
+ 				   wpabuf_len(auth->reconfig_resp_msg),
+-				   500, wpas_dpp_tx_status, 0) < 0) {
++				   1500, wpas_dpp_tx_status, 0) < 0) {
+ 		dpp_auth_deinit(wpa_s->dpp_auth);
+ 		wpa_s->dpp_auth = NULL;
+ 	}
+diff --git a/wpa_supplicant/wpa_cli.c b/wpa_supplicant/wpa_cli.c
+index 12252fae72..caa206a7b1 100644
+--- a/wpa_supplicant/wpa_cli.c
++++ b/wpa_supplicant/wpa_cli.c
+@@ -3247,6 +3247,13 @@ static int wpa_cli_cmd_dpp_map_peer_disc_start(struct wpa_ctrl *ctrl,
+ 	return wpa_cli_cmd(ctrl, "DPP_MAP_PEER_DISC_START", 1, argc, argv);
+ }
+ 
++
++static int wpa_cli_cmd_dpp_reconfig(struct wpa_ctrl *ctrl, int argc,
++				      char *argv[])
++{
++	return wpa_cli_cmd(ctrl, "DPP_RECONFIG", 1, argc, argv);
++}
++
+ #endif /* CONFIG_DPP2 */
+ 
+ 
+@@ -4110,6 +4117,9 @@ static const struct wpa_cli_cmd wpa_cli_commands[] = {
+ 	  NULL,
+ 	  cli_cmd_flag_none,
+ 	  "= start map peer disc" },
++	{ "dpp_reconfig", wpa_cli_cmd_dpp_reconfig, NULL,
++	   cli_cmd_flag_none,
++           "= DPP reconfig" },
+ #endif /* CONFIG_DPP2 */
+ #ifdef CONFIG_DPP3
+ 	{ "dpp_push_button", wpa_cli_cmd_dpp_push_button, NULL,
+@@ -4513,6 +4523,8 @@ static void wpa_cli_action_process(const char *msg)
+ 		wpa_cli_exec(action_file, ifname, pos);
+ 	} else if (str_starts(pos, DPP_EVENT_C_SIGN_KEY)) {
+ 		wpa_cli_exec(action_file, ifname, pos);
++	} else if (str_starts(pos, DPP_EVENT_PP_KEY)) {
++		wpa_cli_exec(action_file, ifname, pos);
+ 	} else if (str_starts(pos, DPP_EVENT_NET_ACCESS_KEY)) {
+ 		wpa_cli_exec(action_file, ifname, pos);
+ 	} else if (str_starts(pos, WPA_EVENT_TERMINATING)) {
+-- 
+2.34.1
+

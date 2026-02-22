@@ -19,13 +19,17 @@ endif
 include $(INCLUDE_DIR)/package.mk
 
 EXTRA_ADDR :=lib/modules/$(LINUX_VERSION)-${COMPILE_MODE}/extra
-MSMKERNEL_PATH:=$(TOPDIR)/src/kernel-$(LINUX_VERSION)/kernel_platform/msm-kernel
+ifeq ($(BOARD),sdxecho)
+KERNEL_PATH:=$(TOPDIR)/src/kernel-$(LINUX_VERSION)/kernel_platform/kernel
+else
+KERNEL_PATH:=$(TOPDIR)/src/kernel-$(LINUX_VERSION)/kernel_platform/msm-kernel
+endif
 LOCAL_SRC:=$(TOPDIR)/src/ipq/qca-hyfi-bridge/*
 BAZEL_FILES:=
 EMESH_SP_HEADERS:=
 
 ENABLE_BAZEL:=n
-ifeq ($(BOARD),sdx85)
+ifneq (,$(filter sdx85 sdxecho,$(BOARD)))
 	ENABLE_BAZEL=y
 	BAZEL_FILES=$(TOPDIR)/owrt-qti-wlan/feeds/hyfi/qca-hyfi-bridging/qca-hyfi-bridge-mcc/files/*.b*z*l
 	EMESH_SP_HEADERS=$(TOPDIR)/src/ipq/emesh-sp/sp_api.h
@@ -115,8 +119,8 @@ endef
 #endif
 
 define Build/Compile
-	$(CP) $(MSMKERNEL_PATH)/net/bridge/br_private.h $(PKG_BUILD_DIR)/hyfi-netfilter/
-	$(CP) $(MSMKERNEL_PATH)/net/bridge/br_private.h $(PKG_BUILD_DIR)/hyfi-multicast/
+	$(CP) $(KERNEL_PATH)/net/bridge/br_private.h $(PKG_BUILD_DIR)/hyfi-netfilter/
+	$(CP) $(KERNEL_PATH)/net/bridge/br_private.h $(PKG_BUILD_DIR)/hyfi-multicast/
 	$(MAKE) -C $(LINUX_DIR) M=$(PKG_BUILD_DIR) $(strip $(QCAHYFI_BRIDGE_MAKE_OPTS)) \
 		KBUILD_EXTRA_SYMBOLS="${STAGING_DIR}/usr/include/emesh-sp/Module.symvers"
 endef

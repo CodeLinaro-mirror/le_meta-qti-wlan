@@ -1,0 +1,76 @@
+From 70685e51b966158fa8a85eec503716267cea378f Mon Sep 17 00:00:00 2001
+From: Xinyue Ling <xinyling@qti.qualcomm.com>
+Date: Tue, 30 Apr 2024 14:43:13 +0800
+Subject: [PATCH 17/40] 303-dpp-map-connector-info-to-file
+
+Change-Id: I8ab5621cce5695c5839a660b450b98cf4ea53ae9
+Signed-off-by: Chenming Huang <chenhuan@qti.qualcomm.com>
+---
+ src/ap/dpp_hostapd.c | 39 +++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 37 insertions(+), 2 deletions(-)
+
+diff --git a/src/ap/dpp_hostapd.c b/src/ap/dpp_hostapd.c
+index 059aa1002b..9db83d6468 100644
+--- a/src/ap/dpp_hostapd.c
++++ b/src/ap/dpp_hostapd.c
+@@ -1156,13 +1156,46 @@ static void hostapd_dpp_rx_auth_req(struct hostapd_data *hapd, const u8 *src,
+ 				wpabuf_len(hapd->dpp_auth->resp_msg));
+ }
+ 
++static void hostapd_dpp_store_map_agent_ap_info(enum dpp_netrole netrole,
++						const char *event,
++						const char *data)
++{
++	// Store Connector in file for BHBSS
++	if (netrole == DPP_NETROLE_MAP_BACKHAUL_BSS) {
++		FILE *fp = NULL;
++		fp = fopen("/tmp/map_bh_info.tmp", "a");
++		if (fp) {
++			fputs(event, fp);
++			fputs(":", fp);
++			fputs(data, fp);
++			fputs("@END\n", fp);
++			fclose(fp);
++		}
++	}
++
++	// Store Connector in file for FHBSS
++	if (netrole == DPP_NETROLE_AP) {
++		FILE *fp = NULL;
++		fp = fopen("/tmp/map_fh_info.tmp", "a");
++		if (fp) {
++			fputs(event, fp);
++			fputs(":", fp);
++			fputs(data, fp);
++			fputs("@END\n", fp);
++			fclose(fp);
++		}
++	}
++}
++
+ static void hostapd_map_handle_connector_config_obj(struct hostapd_data *hapd,
+ 						    struct dpp_authentication *auth,
+ 						    struct dpp_config_obj *conf)
+ {
+ 	if (conf->connector) {
+-		wpa_msg(hapd->msg_ctx, MSG_INFO, DPP_MAP_EVENT_CONNECTOR "%s",
+-			conf->connector);
++		wpa_msg(hapd->msg_ctx, MSG_INFO, DPP_MAP_EVENT_CONNECTOR "netrole=%s " "connector=%s",
++			dpp_netrole_str(auth->conf_ap->netrole), conf->connector);
++		hostapd_dpp_store_map_agent_ap_info(auth->conf_ap->netrole,
++						    DPP_MAP_EVENT_CONNECTOR, conf->connector);
+ 	}
+ }
+ 
+@@ -3347,6 +3380,8 @@ int hostapd_dpp_map_get_jwk_csign(struct hostapd_data *hapd, const char *cmd)
+ 		ret = 0;
+ 	}
+ 
++	hostapd_dpp_store_map_agent_ap_info(DPP_NETROLE_MAP_BACKHAUL_BSS, DPP_EVENT_JWK_CSIGN, jwk);
++
+ 	return ret;
+ }
+ 
+-- 
+2.34.1
+

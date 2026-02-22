@@ -1,0 +1,39 @@
+From aa54e909357887df4e5abcb574f667e247d8c434 Mon Sep 17 00:00:00 2001
+From: Xinyue Ling <xinyling@qti.qualcomm.com>
+Date: Tue, 30 Apr 2024 14:44:21 +0800
+Subject: [PATCH 20/40] 306-dpp-conn-close
+
+Change-Id: I7793875a24face35c9e605aaaf787aade12b9941
+Signed-off-by: Chenming Huang <chenhuan@qti.qualcomm.com>
+---
+ src/common/dpp_tcp.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/src/common/dpp_tcp.c b/src/common/dpp_tcp.c
+index 1ba6a6df25..a730e33fd6 100644
+--- a/src/common/dpp_tcp.c
++++ b/src/common/dpp_tcp.c
+@@ -101,6 +101,8 @@ static void dpp_relay_conn_timeout(void *eloop_ctx, void *timeout_ctx);
+ 
+ static void dpp_connection_free(struct dpp_connection *conn)
+ {
++	if (!conn)
++		return;
+ 	if (conn->sock >= 0) {
+ 		wpa_printf(MSG_DEBUG, "DPP: Close Controller socket %d",
+ 			   conn->sock);
+@@ -128,8 +130,11 @@ static void dpp_connection_free(struct dpp_connection *conn)
+ }
+ 
+ 
++
+ static void dpp_connection_remove(struct dpp_connection *conn)
+ {
++	if (!conn)
++		return;
+ 	dl_list_del(&conn->list);
+ 	dpp_connection_free(conn);
+ }
+-- 
+2.34.1
+
