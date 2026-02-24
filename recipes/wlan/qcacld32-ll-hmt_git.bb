@@ -263,8 +263,11 @@ SYSTEMD_AUTO_ENABLE:${PN} = "disable"
 
 SRC_URI:append = " file://init.qti.wlan_on.sh"
 SRC_URI:append = " file://init.qti.wlan_off.sh"
+SRC_URI:append = " file://wlan_sap_sta_setup.sh"
 FILES:${PN}     += "${bindir}/init.qti.wlan_on.sh"
 FILES:${PN}     += "${bindir}/init.qti.wlan_off.sh"
+FILES:${PN}     += "${bindir}/wlan_sap_sta_setup.sh"
+
 
 do_compile:prepend() {
     if ${@bb.utils.contains('PREFERRED_VERSION_linux-msm', '5.15', 'true', 'false', d)}; then
@@ -320,6 +323,7 @@ do_install:append() {
     install -d ${D}${bindir}
     install -D -m 0755 ${WORKDIR}/init.qti.wlan_on.sh ${D}${bindir}/init.qti.wlan_on.sh
     install -D -m 0755 ${WORKDIR}/init.qti.wlan_off.sh ${D}${bindir}/init.qti.wlan_off.sh
+    install -D -m 0755 ${WORKDIR}/wlan_sap_sta_setup.sh ${D}${bindir}/wlan_sap_sta_setup.sh
     # Install systemd service file
     if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}; then
         install -m 0644 ${WORKDIR}/init_qti_wlan_auto.service -D ${D}${systemd_unitdir}/system/init_qti_wlan_auto.service
