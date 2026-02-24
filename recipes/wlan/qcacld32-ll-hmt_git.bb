@@ -105,7 +105,7 @@ _WLAN_CFG_OVERRIDE_525 = "\
 						CONFIG_DEVICE_FORCE_WAKE_ENABLE=y \
 						CONFIG_HIF_CE_DEBUG_DATA_BUF=n  \
 						CONFIG_BAND_6GHZ=y \
-						CONFIG_IPA_WDI3_TX_TWO_PIPES=n \
+						CONFIG_IPA_WDI3_TX_TWO_PIPES=y \
 						CONFIG_HANDLE_RX_REROUTE_ERR=n \
 						CONFIG_WLAN_FEATURE_P2P_P2P_STA=n \
 						CONFIG_WLAN_FEATURE_DP_RX_RING_HISTORY=n \
@@ -209,8 +209,8 @@ _WLAN_CFG_OVERRIDE_535 = "\
 						CONFIG_CNSS_OUT_OF_TREE=y \
 						CONFIG_CNSS2=m \
 						CONFIG_QMI=y \
-						CONFIG_IPA3=n \
-						CONFIG_IPA_OFFLOAD=n \
+						CONFIG_IPA3=y \
+						CONFIG_IPA_OFFLOAD=y \
 						CONFIG_WLAN_CONV_SPECTRAL_ENABLE=n \
 						CONFIG_WLAN_CFR_ENABLE=n \
 						CONFIG_WLAN_CFR_ADRASTEA=n \
@@ -227,6 +227,8 @@ _WLAN_CFG_OVERRIDE_535 = "\
 						CONFIG_MORE_TX_DESC=n \
 						CONFIG_WIFI_MONITOR_SUPPORT=n \
 						CONFIG_IPA_OUT_OF_TREE=y \
+						CONFIG_DP_FEATURE_HW_COOKIE_CONVERSION=n \
+						CONFIG_DP_HW_COOKIE_CONVERT_EXCEPTION=n \
 						"
 
 EXTRA_OEMAKE:append:sa515m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_515}"
@@ -275,6 +277,8 @@ do_compile:prepend() {
     if [ "${BASEMACHINE}" == "sa535m" ] ; then
         IPA_FLAG="ccflags-$\(CONFIG_IPA_OFFLOAD\) += -DCONFIG_IPA3=1"
         sed -i -e "/$(CONFIG_QCA_CLD_WLAN_PROFILE)_defconfig$/i${IPA_FLAG}" ${S}/Kbuild
+        CONFIG_MOBILE_ROUTER="ccflags-y += -DMDM_PLATFORM"
+        sed -i -e "/$(CONFIG_QCA_CLD_WLAN_PROFILE)_defconfig$/i${CONFIG_MOBILE_ROUTER}" ${S}/Kbuild
     fi
 
     if ${@bb.utils.contains('PREFERRED_VERSION_linux-msm', '5.15', 'true', 'false', d)}; then
