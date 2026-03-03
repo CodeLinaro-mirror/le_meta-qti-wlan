@@ -1143,6 +1143,7 @@ multi_radio_wifi_updown() {
 								$fh_ifname &> /dev/null
 							wpa_cli -g ${wlan_module_path}/${hostapd_global_ctrl_interface} raw ADD \
 								bss_config=$fh_ifname:${wlan_module_path}/hostapd-$fh_ifname.conf &> /dev/null
+							retry_cmd vif_is_started "$fh_ifname"
 						fi
 						break
 					fi
