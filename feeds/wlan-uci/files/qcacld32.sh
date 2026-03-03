@@ -846,6 +846,7 @@ scan_qcacld32() {
 	local disabled mode ifname
 	local processed_vifs=""
 
+	config_load wireless
 	config_get vifs "$device" vifs
 	qlog_cmd "enter scan_qcacld32 device=$device, vifs=$vifs"
 
@@ -1260,6 +1261,7 @@ start_qcacld32() {
 		}
 		scan_qcacld32 $device
 		assign_vif_ifname $device
+		scan_qcacld32 $device
 		config_get vifs "$device" vifs
 
 		get_device_concurrency_mode "$vifs"
@@ -1372,6 +1374,7 @@ enable_qcacld32() {
 		}
 		scan_qcacld32 $device
 		assign_vif_ifname $device
+		scan_qcacld32 $device
 		config_get vifs "$device" vifs
 
 		for vif in $vifs; do
