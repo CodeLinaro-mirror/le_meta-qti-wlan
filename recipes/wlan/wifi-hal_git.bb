@@ -18,6 +18,15 @@ CXXFLAGS += " -std=gnu++17 -include bits/stdc++.h"
 
 DEPENDS = "diag libcutils glib-2.0 cld80211-lib"
 
+# Machine-specific changes for ar-sg1
+DEPENDS:append:ar-sg1 = " libbsd openssl"
+
+EXTRA_OEMAKE:append:ar-sg1 = " \
+    CFLAGS='${CFLAGS} -include stdint.h' \
+    CXXFLAGS='${CXXFLAGS} -include bsd/stdlib.h -include bsd/string.h' \
+    LDFLAGS='${LDFLAGS} -lbsd -lcutils -lcld80211 -lssl -lcrypto' \
+			     "
+
 FILESPATH =+ "${WORKSPACE}/hardware/qcom/:"
 
 SRC_URI = "file://wlan/qcwcn/wifi_hal"
