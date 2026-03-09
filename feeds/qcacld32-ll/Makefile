@@ -95,16 +95,16 @@ TARGET_MAKEOPTS := CONFIG_CNSS_QCA6490=y \
 
 WLAN_PLATFORM_SYMBOLS = $(PKG_BUILD_DIR)/../wlan-cnss2/Module.symvers
 TARGET_MAKEOPTS += KBUILD_EXTRA_SYMBOLS=$(WLAN_PLATFORM_SYMBOLS)
-else ifeq ($(BOARD),sdxecho)
+else ifeq ($(BOARD),echo)
 
 ifeq ($(TARGET_VARIANT),perf)
-  WLAN_PROFILE := sdxecho_gki_fig
+  WLAN_PROFILE := echo_gki_fig
 else
-  WLAN_PROFILE := "sdxecho_gki_fig sdxecho_consolidate_fig"
+  WLAN_PROFILE := "echo_gki_fig echo_consolidate_fig"
 endif
 
 ifeq ($(LINUX_VERSION),6.6)
-    WLAN_ROOT := ../../../../build_dir/target-aarch64_cortex-a53_musl/linux-sdxecho/qcacld32-ll-1.0/qcacld-3.0
+    WLAN_ROOT := ../../../../build_dir/target-aarch64_cortex-a53_musl/linux-echo/qcacld32-ll-1.0/qcacld-3.0
 else
     WLAN_ROOT := ./
 endif
