@@ -1,0 +1,42 @@
+config wifi-device wifiX
+	option type       qcacld32
+	option hwmode     11bea
+	option channel    auto
+	option band       3
+	# REMOVE THIS LINE TO ENABLE WIFI:
+	option disabled   1
+
+config wifi-iface wifiX_AP1
+	option device     wifiX
+	option network    lan
+	option mode       ap
+	option ssid       QSoftAP_6G
+	option encryption ccmp
+	option sae        1
+	option sae_pwe    1
+	list sae_password 1234567890
+	option disabled   1
+
+config wifi-iface wifiX_AP2
+	option device     wifiX
+	option network    lan
+	option mode       ap
+	option ssid       QSoftAP_6G_2
+	option encryption ccmp
+	option sae        1
+	option sae_pwe    1
+	list sae_password 1234567890
+	option disabled   1
+
+config wifi-iface wifiX_STA
+	option device     wifiX
+	option network    wan
+	option mode       sta
+	option wds        1
+	option extap      1
+	option encryption ccmp
+	option ssid       QSoftAP_6G
+	option sae        1
+	option sae_pwe    1
+	list sae_password 1234567890
+	option disabled   1

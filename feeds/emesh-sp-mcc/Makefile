@@ -23,7 +23,7 @@ LOCAL_SRC:=$(TOPDIR)/src/ipq/emesh-sp/*
 BAZEL_FILES:=
 
 ENABLE_BAZEL:=n
-ifeq ($(BOARD),sdx85)
+ifneq (,$(filter sdx85 sdxecho,$(BOARD)))
 	ENABLE_BAZEL=y
 	BAZEL_FILES=$(TOPDIR)/owrt-qti-wlan/feeds/emesh-sp-mcc/files/*.b*z*l
 endif
@@ -60,7 +60,11 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/emesh-sp
 	$(INSTALL_DIR) $(STAGING_DIR)/usr/include/emesh-sp
 	$(foreach header_file,$(EMESH_SP_HEADERS), $(CP) $(header_file) $(1)/usr/include/emesh-sp;)
+ifeq ($(BOARD),sdxecho)
+	$(CP) $(PKG_BUILD_DIR)/Module.symvers.tmp $(STAGING_DIR)/usr/include/emesh-sp/Module.symvers
+else
 	$(CP) $(PKG_BUILD_DIR)/Module.symvers $(STAGING_DIR)/usr/include/emesh-sp
+endif
 endef
 
 define Build/Compile
