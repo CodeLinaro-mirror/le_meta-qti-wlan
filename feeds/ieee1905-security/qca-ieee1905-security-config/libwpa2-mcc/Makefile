@@ -3,12 +3,19 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=libwpa2-mcc
 PKG_RELEASE:=1
 PKG_LICENSE:=BSD
+PKG_VERSION:=1.0
 
-include $(TOPDIR)/owrt-qti-wlan/include/local-development.mk
 ifeq ($(DUMP)$(PKG_VERSION),)
   PKG_REV:=$(shell git ls-remote $(PKG_SOURCE_URL) $(PKG_BRANCH) | cut -b -7)
   PKG_VERSION:=g$(PKG_REV)
 endif
+
+ifeq ($(BOARD),sdx85)
+	LOCAL_SRC:=$(TOPDIR)/src/wlan-proprietary/qca-ezmesh/libwpa2/*
+else
+	LOCAL_SRC:=$(TOPDIR)/src/ipq/libwpa2/*
+endif
+
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
@@ -17,8 +24,8 @@ QTI_SOFTWARE_CATEGORY:=QTI software
 
 LIBWPA2_MCC_MAKEOPTS:= \
         TOOLPREFIX=$(TARGET_CROSS) \
-	EXTRA_CFLAGS="$(TARGET_CFLAGS)" \
-	EXTRA_LDFLAGS="$(TARGET_LDFLAGS)" \
+        EXTRA_CFLAGS="$(TARGET_CFLAGS)" \
+        EXTRA_LDFLAGS="$(TARGET_LDFLAGS)" \
         INSTALL_ROOT=$(PKG_BUILD_DIR)/install
 
 LIBWPA2_MCC_DEPENDS+=+ENABLE_SON_MEMORY_DEBUG:qca-son-mem-debug
@@ -45,6 +52,11 @@ endef
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/lib/
 	$(CP) $(PKG_BUILD_DIR)/install/lib/libwpa2.so $(1)/usr/lib/
+endef
+
+define Build/Prepare
+	mkdir -p $(PKG_BUILD_DIR)/
+	$(CP) $(LOCAL_SRC) $(PKG_BUILD_DIR)/
 endef
 
 define Build/Compile
