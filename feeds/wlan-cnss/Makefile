@@ -89,7 +89,7 @@ endif
 CNSS2_DEPENDS := $(DATA_SMEM_MODULE)
 CNSS2_MAKEOPTS := $(DATA_SMEM_MAKEOPTS)
 
-ifeq ($(BOARD),sdxecho)
+ifeq ($(BOARD),echo)
   CNSS2_DEPENDS += +kmod-mhi-bus
   CNSS2_MAKEOPTS += USE_EXTERNAL_CONFIGS=y \
 		    CONFIG_CNSS2=m \

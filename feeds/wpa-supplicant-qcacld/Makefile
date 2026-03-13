@@ -41,7 +41,7 @@ else ifeq ($(BOARD),sdx85)
 		echo -e "\nCONFIG_EAP_PROXY_AKA_PRIME:=true" >> $(SUPPLICANT_CONFIG_FILE) && \
 		echo -e "\nCONFIG_WEP=y" >> $(SUPPLICANT_CONFIG_FILE)
 
-else ifeq ($(BOARD),sdxecho)
+else ifeq ($(BOARD),echo)
 	# Reuse sdxpinn for now.
 	# To be revised if hostapd branch out later or divergency.
 	TARGET_LOCAL_NAME :=sdxpinn
