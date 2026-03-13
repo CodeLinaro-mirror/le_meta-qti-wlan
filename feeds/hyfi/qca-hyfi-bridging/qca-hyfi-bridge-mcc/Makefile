@@ -19,7 +19,7 @@ endif
 include $(INCLUDE_DIR)/package.mk
 
 EXTRA_ADDR :=lib/modules/$(LINUX_VERSION)-${COMPILE_MODE}/extra
-ifeq ($(BOARD),sdxecho)
+ifeq ($(BOARD),echo)
 KERNEL_PATH:=$(TOPDIR)/src/kernel-$(LINUX_VERSION)/kernel_platform/kernel
 else
 KERNEL_PATH:=$(TOPDIR)/src/kernel-$(LINUX_VERSION)/kernel_platform/msm-kernel

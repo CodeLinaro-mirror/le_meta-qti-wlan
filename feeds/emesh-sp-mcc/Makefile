@@ -61,7 +61,7 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/emesh-sp
 	$(INSTALL_DIR) $(STAGING_DIR)/usr/include/emesh-sp
 	$(foreach header_file,$(EMESH_SP_HEADERS), $(CP) $(header_file) $(1)/usr/include/emesh-sp;)
-ifeq ($(BOARD),sdxecho)
+ifeq ($(BOARD),echo)
 	$(CP) $(PKG_BUILD_DIR)/Module.symvers.tmp $(STAGING_DIR)/usr/include/emesh-sp/Module.symvers
 else
 	$(CP) $(PKG_BUILD_DIR)/Module.symvers $(STAGING_DIR)/usr/include/emesh-sp
