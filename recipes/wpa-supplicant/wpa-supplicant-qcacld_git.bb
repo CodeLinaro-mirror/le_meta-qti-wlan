@@ -1,6 +1,7 @@
 inherit pkgconfig ${@'logging' if d.getVar('DISTRO_CODENAME') in ['kirkstone', 'langdale', 'mickledore', 'nanbield'] else ''}
 include wpa-supplicant.inc
 
+PACKAGES:prepend:ar-sg1 = "${PN}-libpasn "
 PR = "${INC_PR}.2"
 PV = "6.0"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
@@ -23,6 +24,7 @@ DEPENDS:append:pineapple = " qmi-framework "
 DEPENDS:append:qcm2290-mtp = " qmi-framework "
 
 FILES:${PN} += "/usr/include/*"
+FILES:${PN}-libpasn:ar-sg1 = "${libdir}/libpasn.so*"
 
 S = "${WORKDIR}/external/wpa_supplicant_8/wpa_supplicant"
 PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"
@@ -71,6 +73,11 @@ do_configure:seraph() {
     rm -rf ${STAGING_LIBDIR}/libwpa_supplicant_8_lib.so*
     echo "EXTRALIBS +=\"-llog\"" >> .config
     echo "LIBS +=\"-llog\"" >> .config
+}
+
+do_configure:append:ar-sg1() {
+    echo "CONFIG_PASN=y" >> .config
+    echo "CONFIG_BUILD_PASN_SO=y" >> .config
 }
 
 do_configure:append:sdxlemur() {
