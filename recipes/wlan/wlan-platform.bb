@@ -29,13 +29,12 @@ MODULE_CNSS = "cnss_prealloc.ko cnss_utils.ko cnss_nl.ko cnss_plat_ipc_qmi_svc.k
 MODULE_LIST = "${MODULE_CNSS}"
 MODULE_LIST:qcs40x = "${MODULE_ICNSS}"
 MODULE_LIST:qcm2290-mtp = "${MODULE_ICNSS}"
-MODULE_LIST:kera = "${MODULE_ICNSS}"
+MODULE_LIST:kera = "${MODULE_CNSS} icnss2.ko"
 MODULE_LIST:alor = "${MODULE_ICNSS}"
 
 WLAN_VAR = ""
 WLAN_VAR:qcs40x = "qcs40x"
 WLAN_VAR:qcm2290-mtp = "qcs40x"
-WLAN_VAR:kera = "qcs40x"
 
 KERNEL_VERSION = "${@get_kernelversion_file("${STAGING_KERNEL_BUILDDIR}")}"
 EXT_MODULES = "${@os.path.relpath("${S}", "${KERNEL_PLATFORM_PATH}")}"
