@@ -62,3 +62,17 @@ do_patch() {
         patch -p1 < ${WORKDIR}/misc/hostapd_driver_cmd.patch
     fi
 }
+
+do_patch_sdxlemur() {
+    cd ${PATCH_DIR}
+    if [ "$(ls -A "${WORKDIR}/${BASEMACHINE}")" ]
+    then
+        bbwarn "============================================================"
+        bbwarn "picking ${WORKDIR}/${BASEMACHINE}"
+        bbwarn "============================================================"
+        for patch in ${WORKDIR}/${BASEMACHINE}/*.patch; do
+            patch -p1 < "$patch"
+        done
+    fi
+}
+

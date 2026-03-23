@@ -8,7 +8,7 @@ PROVIDES = "${PACKAGES}"
 
 PACKAGES = "packagegroup-qti-wifi"
 
-MCC_EASYMESH_VERSION = "R1"
+MCC_EASYMESH_VERSION = "R6"
 
 WLAN_IW_TOOL="${@oe.utils.conditional('BASEMACHINE', 'sdxlemur', 'iw-wifi6e', 'iw', d)}"
 QCACLD32_LL="${@oe.utils.conditional('BASEMACHINE', 'neo', 'qcacld32-ll-oot', 'qcacld32-ll', d)}"
@@ -19,6 +19,7 @@ EMESH_SP_MCC="${@oe.utils.conditional('BASEMACHINE', 'sdxlemur', \
 QCA_HYFI_BRIDGE_MCC="${@oe.utils.conditional('BASEMACHINE', 'sdxlemur', \
                     oe.utils.conditional('MCC_EASYMESH_VERSION', 'R6', \
                     'qca-hyfi-bridge-mcc', '', d), '' ,d)}"
+WLAN_UCI="${@oe.utils.conditional('BASEMACHINE', 'sdxlemur', 'wlan-uci', '' ,d)}"
 
 RDEPENDS_packagegroup-qti-wifi_append_sxrneo = "tcpdump rfkill dnsmasq dhcpcd iperf2 iperf3"
 
@@ -33,4 +34,5 @@ RDEPENDS_packagegroup-qti-wifi = " \
         wpa-supplicant-qcacld \
         ${EMESH_SP_MCC} \
         ${QCA_HYFI_BRIDGE_MCC} \
+        ${WLAN_UCI} \
         "
