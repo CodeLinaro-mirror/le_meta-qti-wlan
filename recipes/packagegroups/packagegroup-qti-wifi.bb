@@ -25,7 +25,7 @@ WLAN_PLATFORM="wlan-platform"
 WLAN_PLATFORM:vienna="wlan-platform-vienna-le"
 
 WLAN_CONF="wlan-conf"
-WLAN_CONF:vienna=""
+WLAN_CONF:vienna="wlan-conf-vienna"
 
 WLAN_DEVICETREE_BB="wlan-devicetree"
 WLAN_DEVICETREE_BB:ar-sg1="wlan-devicetree-ar-sg1"
