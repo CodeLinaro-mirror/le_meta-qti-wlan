@@ -1,0 +1,35 @@
+config wifi-device wifiX
+	option type       qcacld32
+	option hwmode     11axa
+	option channel    auto
+	# REMOVE THIS LINE TO ENABLE WIFI:
+	option disabled   1
+
+config wifi-iface wifiX_AP1
+	option device     wifiX
+	option network    lan
+	option mode       ap
+	option ssid       QSoftAP_5G
+	option encryption psk2+ccmp
+	option key        1234567890
+	option disabled   1
+
+config wifi-iface wifiX_AP2
+	option device     wifiX
+	option network    lan
+	option mode       ap
+	option ssid       QSoftAP_5G_2
+	option encryption psk2+ccmp
+	option key        1234567890
+	option disabled   1
+
+config wifi-iface wifiX_STA
+	option device     wifiX
+	option network    wan
+	option mode       sta
+	option wds        1
+	option extap      1
+	option encryption psk2+ccmp
+	option ssid       QSoftAP_5G
+	option key        1234567890
+	option disabled   1

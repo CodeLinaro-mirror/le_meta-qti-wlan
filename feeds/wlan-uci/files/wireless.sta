@@ -1,0 +1,12 @@
+config wifi-device 'pdev0'
+	option type 'qcacld32'
+	option hwmode 'a'
+
+config wifi-iface 'wlan0'
+	option device 'pdev0'
+	option ifname 'wlan0'
+	option mode 'sta'
+	option extap 1
+	option encryption psk2+ccmp+tkip
+	option ssid "Hydra"
+	option key "K5x48Vz3"

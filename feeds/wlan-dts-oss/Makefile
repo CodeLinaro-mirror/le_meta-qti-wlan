@@ -5,7 +5,7 @@ PKG_NAME:=wlan-dts-oss
 PKG_VERSION:=1.0
 PKG_RELEASE:=1
 PKG_FIXUP:=autoreconf
-PKG_LICENSE:=ISC
+PKG_LICENSE:=BSD-3-Clause
 
 LOCAL_SRC := $(TOPDIR)/src/vendor/qcom/opensource/wlan/wlan-devicetree
 TEACHPACK_DTBOS_PATH := $(TOPDIR)/build_dir/$(TARGET_DIR_NAME)/linux-$(BOARD)$(if $(SUBTARGET),_$(SUBTARGET))/techpack-dtbos
