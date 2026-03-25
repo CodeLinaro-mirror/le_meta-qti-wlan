@@ -708,6 +708,9 @@ action_vif() {
 					;;
 					*) ;;
 				esac
+				if [ $yocto_build -eq 1 ]; then
+					ifconfig "$ifname" down
+				fi
 			fi
 		;;
 		*) ;;
@@ -1075,7 +1078,8 @@ multi_radio_wifi_updown() {
 	local is_last_vif=0
 	local arg_vif post_arg_vif
 	local ezmesh_enable="$(get_ezmesh_enable)"
-	local update_fronthual_config=0 MapBSSType fh_ifname
+	local start_fronthaul=0
+	local MapBSSType fh_ifname bh_ifname
 
 	config_load wireless
 
@@ -1118,11 +1122,13 @@ multi_radio_wifi_updown() {
 					action_vif $action $device $vif
 
 					config_get MapBSSType "$vif" MapBSSType
-					if [ "$action" = "start" -a \
-						$(($((MapBSSType&64)) >> 6)) -eq 1 ]; then
+					if [ $(($((MapBSSType&64)) >> 6)) -eq 1 ]; then
 						# ucitool get_iface will return fronthual ifname
 						fh_ifname=$(ucitool get_iface $device)
-						update_fronthual_config=1
+						bh_ifname=$ifname
+						if [ "$action" = "start" ]; then
+							start_fronthaul=1
+						fi
 					fi
 					break
 				fi
@@ -1131,20 +1137,22 @@ multi_radio_wifi_updown() {
 			# update multi_ap_backhaul_ssid and
 			# multi_ap_backhaul_wpa_passphrase in fronthual
 			# hostapd conf
-			if [ $update_fronthual_config -eq 1 ]; then
+			if [ $start_fronthaul -eq 1 ]; then
 				config_get vifs "$device" vifs
 				for vif in $vifs; do
 					config_get ifname "$vif" ifname
 					if [ "$fh_ifname" = "$ifname" ]; then
-						action_vif $action $device $vif
-						update_fronthual_config=0
+						action_vif "start" $device $vif
 						if [ $yocto_build -eq 1 ]; then
-							wpa_cli -g ${wlan_module_path}/${hostapd_global_ctrl_interface} raw REMOVE \
-								$fh_ifname &> /dev/null
+							hostapd_teardown_vif $fh_ifname
 							wpa_cli -g ${wlan_module_path}/${hostapd_global_ctrl_interface} raw ADD \
 								bss_config=$fh_ifname:${wlan_module_path}/hostapd-$fh_ifname.conf &> /dev/null
 							retry_cmd vif_is_started "$fh_ifname"
+							wpa_cli -g ${wlan_module_path}/${hostapd_global_ctrl_interface} raw ADD \
+								bss_config=$bh_ifname:${wlan_module_path}/hostapd-$bh_ifname.conf &> /dev/null
+							retry_cmd vif_is_started "$bh_ifname"
 						fi
+						start_fronthaul=0
 						break
 					fi
 				done
