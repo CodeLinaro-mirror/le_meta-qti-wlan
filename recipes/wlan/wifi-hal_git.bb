@@ -16,10 +16,15 @@ CFLAGS += "-I ${WORKSPACE}/hardware/qcom/wlan/qcwcn/wifi_hal/wifi_hal_ctrl"
 CFLAGS  += "-include stdint.h"
 CXXFLAGS += " -std=gnu++17 -include bits/stdc++.h"
 
+CPPFLAGS:append:ar-sg1 = " -I ${WORKSPACE}/external/wpa_supplicant_8/src/ \
+                           -I ${WORKSPACE}/external/wpa_supplicant_8/src/utils"
 DEPENDS = "diag libcutils glib-2.0 cld80211-lib"
 
 # Machine-specific changes for ar-sg1
 DEPENDS:append:ar-sg1 = " libbsd openssl"
+
+DEPENDS:append:ar-sg1 += "wpa-supplicant-qcacld"
+RDEPENDS:${PN}:append:ar-sg1 += "wpa-supplicant-qcacld-libpasn"
 
 EXTRA_OEMAKE:append:ar-sg1 = " \
     CFLAGS='${CFLAGS} -include stdint.h' \
@@ -42,4 +47,5 @@ EXTRA_OECONF = " \
 		--with-system-core-includes=${WORKSPACE}/system/core/include \
 		--with-vendor-nan-includes=${WORKSPACE}/hardware/qcom/wlan/qcwcn/wifi_hal/vendor_nan \
 		--with-wifi-hal-ctrl-includes=${WORKSPACE}/hardware/qcom/wlan/qcwcn/wifi_hal/wifi_hal_ctrl \
+		--with-pasn-lib-includes=${WORKSPACE}/external/wpa_supplicant_8/src/pasn \
 		"
