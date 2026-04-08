@@ -31,7 +31,7 @@ WLAN_DEVICETREE_BB="wlan-devicetree"
 WLAN_DEVICETREE_BB:ar-sg1="wlan-devicetree-ar-sg1"
 
 # default WLAN and network software package
-RDEPENDS:packagegroup-qti-wifi:append = "iw rfkill dnsmasq iperf2 iperf3"
+RDEPENDS:packagegroup-qti-wifi:append = "iw rfkill dnsmasq iperf2 iperf3 tcpdump"
 
 RDEPENDS:packagegroup-qti-wifi:append:neo = "tcpdump dhcpcd"
 RDEPENDS:packagegroup-qti-wifi:remove:qcs40x = "dnsmasq"
