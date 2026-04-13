@@ -11,6 +11,7 @@ do_unpack[deptask] = "do_populate_sysroot"
 PR = "r8"
 PV = "2.0"
 DEPENDS += "wlan-platform"
+DEPENDS:append:sun:linux = " cfg80211w"
 
 do_configure[depends] += "virtual/kernel:do_shared_workdir"
 
@@ -30,11 +31,16 @@ S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn"
 S = "${WORKDIR}/wlan/qcacld-3.0"
 FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld/${MODNAME}"
 
-
 KERNEL_VERSION = "${@get_kernelversion_file("${STAGING_KERNEL_BUILDDIR}")}"
 EXT_MODULES = "${@os.path.relpath("${S}", "${KERNEL_PLATFORM_PATH}")}"
-
+SYMVERS = "KBUILD_EXTRA_SYMBOLS=${STAGING_DIR_HOST}/usr/lib/modules/${KERNEL_VERSION}/cnsswlan-kernel/Module.symvers"
+SYMVERS:append:sun:linux = " KBUILD_EXTRA_SYMBOLS+=${STAGING_DIR_HOST}/${nonarch_base_libdir}/modules/${KERNEL_VERSION}/cfg80211w/cfg80211w.symvers"
 ADDITIONAL_CONFIGS = ""
+ADDITIONAL_CONFIGS:append:sun:linux = " CONFIG_CFG80211_PROP_MULTI_LINK_SUPPORT=y CONFIG_NL80211_TESTMODE=y"
+NOSTDINC1 = ""
+NOSTDINC1:sun:linux = " NOSTDINC_FLAGS+=-I${STAGING_INCDIR}/msm-kernel/include"
+NOSTDINC2 = ""
+NOSTDINC2:sun:linux = " NOSTDINC_FLAGS+=-I${STAGING_INCDIR}/msm-kernel/include/uapi"
 ADDITIONAL_CONFIGS:append:sun = " CONFIG_IPA_OFFLOAD=n "
 
 do_compile[depends] += "virtual/kernel:do_shared_workdir"
@@ -47,6 +53,8 @@ do_compile() {
     ROOTDIR=${WORKDIR}/ \
     OUT_DIR=${WORKDIR}/out/${KERNEL_DEFCONFIG} \
     KERNEL_UAPI_HEADERS_DIR=${STAGING_KERNEL_BUILDDIR} \
+    KBUILD_OPTIONS+="${NOSTDINC1}" \
+    KBUILD_OPTIONS+="${NOSTDINC2}" \
     ./build/build_module.sh \
     DYNAMIC_SINGLE_CHIP= \
     MODNAME=${MODULE_NAME}\
@@ -69,7 +77,7 @@ do_compile() {
     KERNEL_SUPPORTS_NESTED_COMPOSITES=n \
     BUILD_DEBUG_VERSION=y \
     ${ADDITIONAL_CONFIGS} \
-    KBUILD_EXTRA_SYMBOLS=${STAGING_DIR_HOST}/usr/lib/modules/${KERNEL_VERSION}/cnsswlan-kernel/Module.symvers
+    ${SYMVERS}
 }
 
 do_install() {
