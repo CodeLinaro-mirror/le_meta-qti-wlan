@@ -47,6 +47,7 @@ start_service() {
 	config_load hostapd
 	config_get log_level log log_level "info"
 	config_get log_folder_mode log log_folder_mode 0
+	config_get show_keys log show_keys 0
 	case "$log_level" in
 		excessive)
 			procd_append_param command -ddd
@@ -70,6 +71,10 @@ start_service() {
 		procd_append_param command -f $WPAD_VARRUN/hostapd-global.log
 		# enable timestamp
 		procd_append_param command -t
+		# show keys
+		if [ $show_keys -eq 1 ]; then
+			procd_append_param command -K
+		fi
 	fi
 	# Debug end
 
