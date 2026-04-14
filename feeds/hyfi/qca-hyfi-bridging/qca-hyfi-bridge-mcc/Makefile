@@ -4,6 +4,7 @@ include $(INCLUDE_DIR)/kernel.mk
 PKG_NAME:=qca-hyfi-bridge-mcc
 PKG_RELEASE:=1
 PKG_LICENSE:=ISC & GPL-2.0
+PKG_VERSION:=1.0
 
 ifeq ($(TARGET_VARIANT),perf)
   COMPILE_MODE :=perf
@@ -11,7 +12,6 @@ else
   COMPILE_MODE :=debug
 endif
 
-include $(TOPDIR)/owrt-qti-wlan/include/local-development.mk
 ifeq ($(DUMP)$(PKG_VERSION),)
   PKG_VERSION:=$(shell git ls-remote $(PKG_SOURCE_URL) $(PKG_BRANCH) | cut -b -7)
 endif
@@ -19,20 +19,22 @@ endif
 include $(INCLUDE_DIR)/package.mk
 
 EXTRA_ADDR :=lib/modules/$(LINUX_VERSION)-${COMPILE_MODE}/extra
-ifeq ($(BOARD),sdxecho)
+ifeq ($(BOARD),echo)
 KERNEL_PATH:=$(TOPDIR)/src/kernel-$(LINUX_VERSION)/kernel_platform/kernel
 else
 KERNEL_PATH:=$(TOPDIR)/src/kernel-$(LINUX_VERSION)/kernel_platform/msm-kernel
 endif
-LOCAL_SRC:=$(TOPDIR)/src/ipq/qca-hyfi-bridge/*
-BAZEL_FILES:=
-EMESH_SP_HEADERS:=
 
-ENABLE_BAZEL:=n
-ifneq (,$(filter sdx85 sdxecho,$(BOARD)))
+ifeq ($(BOARD),sdx85)
+	LOCAL_SRC:=$(TOPDIR)/src/wlan/qca-ezmesh/qca-hyfi-bridge/*
 	ENABLE_BAZEL=y
 	BAZEL_FILES=$(TOPDIR)/owrt-qti-wlan/feeds/hyfi/qca-hyfi-bridging/qca-hyfi-bridge-mcc/files/*.b*z*l
-	EMESH_SP_HEADERS=$(TOPDIR)/src/ipq/emesh-sp/sp_api.h
+	EMESH_SP_HEADERS=$(TOPDIR)/src/wlan/qca-ezmesh/emesh-sp/sp_api.h
+else
+	LOCAL_SRC:=$(TOPDIR)/src/ipq/qca-hyfi-bridge/*
+	ENABLE_BAZEL:=n
+	BAZEL_FILES:=
+	EMESH_SP_HEADERS:=
 endif
 
 QTI_SOFTWARE_CATEGORY:=QTI software
@@ -111,12 +113,10 @@ ifeq ($(ENABLE_BAZEL),y)
 endif
 endef
 
-#ifneq ($(CONFIG_PACKAGE_kmod-qca-hyfi-bridge-mcc),)
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/hyfibr
 	$(foreach header_file,$(QCA_HYFI_BRIDGE_HEADERS), $(CP) $(header_file) $(1)/usr/include/hyfibr;)
 endef
-#endif
 
 define Build/Compile
 	$(CP) $(KERNEL_PATH)/net/bridge/br_private.h $(PKG_BUILD_DIR)/hyfi-netfilter/

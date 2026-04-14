@@ -89,7 +89,7 @@ endif
 CNSS2_DEPENDS := $(DATA_SMEM_MODULE)
 CNSS2_MAKEOPTS := $(DATA_SMEM_MAKEOPTS)
 
-ifeq ($(BOARD),sdxecho)
+ifeq ($(BOARD),echo)
   CNSS2_DEPENDS += +kmod-mhi-bus
   CNSS2_MAKEOPTS += USE_EXTERNAL_CONFIGS=y \
 		    CONFIG_CNSS2=m \
@@ -104,7 +104,7 @@ ifeq ($(BOARD),sdxecho)
 		    CONFIG_CNSS2_SSR_DRIVER_DUMP=y \
 		    CONFIG_PCIE_QCOM_ECAM=y \
 		    CONFIG_PINCTRL_MSM_NO_EXT=y \
-		    CONFIG_QLI_MHI=y \
+		    CONFIG_QLI=y \
 		    WLAN_PLATFORM_ROOT=$(PKG_BUILD_DIR) \
 		    CROSS_COMPILE=aarch64-openwrt-linux-musl- ARCH=arm64
 endif

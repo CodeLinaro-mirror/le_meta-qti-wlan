@@ -1,13 +1,14 @@
-From efcd03446caa9c087e2ef73308dcbb5e2b992fcc Mon Sep 17 00:00:00 2001
+From 197d3c646d3a16692ac26c513b4d7f068e71c940 Mon Sep 17 00:00:00 2001
 From: Chenming Huang <quic_chenhuan@quicinc.com>
 Date: Thu, 1 Aug 2024 13:56:15 +0530
-Subject: [PATCH 09/10] sigma-dut: Add MAP support in cmd_dev_exec_action
+Subject: [PATCH] sigma-dut: Add MAP support in cmd_dev_exec_action
 
 Add MAP support in cmd_dev_exec_action.
 
 CRs-Fixed: 3893701
 Change-Id: Ic11daea558f854fedd2da576582eaf67357e4a8c
 Signed-off-by: Chenming Huang <quic_chenhuan@quicinc.com>
+Signed-off-by: Xin Deng <deng@qti.qualcomm.com>
 ---
  ap.c        |  2 +-
  dev.c       |  5 ++++-
@@ -19,10 +20,10 @@ Signed-off-by: Chenming Huang <quic_chenhuan@quicinc.com>
  7 files changed, 79 insertions(+), 28 deletions(-)
 
 diff --git a/ap.c b/ap.c
-index 1d6f75a..0eb9721 100644
+index f0f42c93..47a5c55c 100644
 --- a/ap.c
 +++ b/ap.c
-@@ -612,7 +612,7 @@ static enum ap_mode get_mode(const char *str)
+@@ -618,7 +618,7 @@ static enum ap_mode get_mode(const char *str)
  }
  
  
@@ -32,10 +33,10 @@ index 1d6f75a..0eb9721 100644
  	char command[1000];
  	const char *bin;
 diff --git a/dev.c b/dev.c
-index 984e9c6..b9859dc 100644
+index bb09c9a7..8928f0fc 100644
 --- a/dev.c
 +++ b/dev.c
-@@ -360,7 +360,10 @@ static enum sigma_cmd_result cmd_dev_exec_action(struct sigma_dut *dut,
+@@ -363,7 +363,10 @@ static enum sigma_cmd_result cmd_dev_exec_action(struct sigma_dut *dut,
  	}
  #endif /* MIRACAST */
  
@@ -48,7 +49,7 @@ index 984e9c6..b9859dc 100644
  
  	val = get_param(cmd, "ServerCertTrust");
 diff --git a/dpp.c b/dpp.c
-index 6ba88b0..d3c3985 100644
+index 6ba88b04..d3c39851 100644
 --- a/dpp.c
 +++ b/dpp.c
 @@ -646,11 +646,16 @@ dpp_get_local_bootstrap(struct sigma_dut *dut, struct sigma_conn *conn,
@@ -84,7 +85,7 @@ index 6ba88b0..d3c3985 100644
  }
  
 diff --git a/map.c b/map.c
-index 8d071f9..0ef27b6 100644
+index 8d071f96..0ef27b6b 100644
 --- a/map.c
 +++ b/map.c
 @@ -4566,28 +4566,6 @@ static int map_parse_tlvvalue(struct sigma_dut *dut, char *mod, char *buf,
@@ -146,10 +147,10 @@ index 8d071f9..0ef27b6 100644
  		if (map_parse_default_802_1q_settings_tlv(dut, mod, dut->map_pw,
  							  bufsize) < 1) {
 diff --git a/sigma_dut.c b/sigma_dut.c
-index 1299437..3209d01 100644
+index f6a3c804..12090cee 100644
 --- a/sigma_dut.c
 +++ b/sigma_dut.c
-@@ -886,6 +886,9 @@ static void set_defaults(struct sigma_dut *dut)
+@@ -891,6 +891,9 @@ static void set_defaults(struct sigma_dut *dut)
  	/* by default, enable writing of traffic stream stats */
  	dut->write_stats = 1;
  	dut->priv_cmd = "iwpriv";
@@ -160,10 +161,10 @@ index 1299437..3209d01 100644
  	dut->ap_ocvc = -1;
  	dut->user_config_ap_ocvc = -1;
 diff --git a/sigma_dut.h b/sigma_dut.h
-index 7e1b379..e12d179 100644
+index d0b00f58..fbaffc77 100644
 --- a/sigma_dut.h
 +++ b/sigma_dut.h
-@@ -1381,6 +1381,11 @@ void sniffer_close(struct sigma_dut *dut);
+@@ -1479,6 +1479,11 @@ void sniffer_close(struct sigma_dut *dut);
  /* sigma_dut.c */
  int wifi_hal_initialize(struct sigma_dut *dut);
  
@@ -175,7 +176,7 @@ index 7e1b379..e12d179 100644
  /* ap.c */
  void ap_register_cmds(void);
  void ath_disable_txbf(struct sigma_dut *dut, const char *intf);
-@@ -1401,6 +1406,7 @@ void ath_set_assoc_disallow(struct sigma_dut *dut, const char *ifname,
+@@ -1499,6 +1504,7 @@ void ath_set_assoc_disallow(struct sigma_dut *dut, const char *ifname,
  			    const char *val);
  int ap_wps_registration(struct sigma_dut *dut, struct sigma_conn *conn,
  			struct sigma_cmd *cmd);
@@ -184,10 +185,10 @@ index 7e1b379..e12d179 100644
  void get_wiphy_capabilities(struct sigma_dut *dut);
  void kill_hostapd_process_pid(struct sigma_dut *dut);
 diff --git a/sta.c b/sta.c
-index f9d55b5..b77802e 100644
+index 027fc287..5ac6647d 100644
 --- a/sta.c
 +++ b/sta.c
-@@ -18758,7 +18758,7 @@ static enum sigma_cmd_result cmd_start_wps_registration(struct sigma_dut *dut,
+@@ -20544,7 +20544,7 @@ static enum sigma_cmd_result cmd_start_wps_registration(struct sigma_dut *dut,
  	const char *intf = get_param(cmd, "Interface");
  	const char *network_mode = get_param(cmd, "network_mode");
  	const char *config_method = get_param(cmd, "WPSConfigMethod");
@@ -196,7 +197,7 @@ index f9d55b5..b77802e 100644
  	int res;
  	char buf[256];
  	const char *events[] = {
-@@ -18769,6 +18769,35 @@ static enum sigma_cmd_result cmd_start_wps_registration(struct sigma_dut *dut,
+@@ -20555,6 +20555,35 @@ static enum sigma_cmd_result cmd_start_wps_registration(struct sigma_dut *dut,
  		NULL
  	};
  	int id = 0;
@@ -218,7 +219,7 @@ index f9d55b5..b77802e 100644
 +	} else {
 +		role = get_param(cmd, "WpsRole");
 +		if (role)
-+			ap_wps_registration(dut, conn, role);
++			ap_wps_registration(dut, conn, cmd);
 +		method = get_param(cmd, "WpsConfigMethod");
 +		if (method) {
 +			if (run_hostapd_cli(dut, "wps_pbc") != 0) {
@@ -233,5 +234,5 @@ index f9d55b5..b77802e 100644
  	/* 60G WPS tests do not pass Interface parameter */
  	if (!intf)
 -- 
-2.17.1
+2.34.1
 
