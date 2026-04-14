@@ -19,12 +19,11 @@ endif
 include $(INCLUDE_DIR)/package.mk
 
 EXTRA_ADDR :=lib/modules/$(LINUX_VERSION)-${COMPILE_MODE}/extra
+LOCAL_SRC:=$(TOPDIR)/src/wlan/qca-ezmesh/emesh-sp/*
 ifeq ($(BOARD),sdx85)
-	LOCAL_SRC:=$(TOPDIR)/src/wlan/qca-ezmesh/emesh-sp/*
 	ENABLE_BAZEL=y
 	BAZEL_FILES=$(TOPDIR)/owrt-qti-wlan/feeds/emesh-sp-mcc/files/*.b*z*l
 else
-	LOCAL_SRC:=$(TOPDIR)/src/ipq/emesh-sp/*
 	ENABLE_BAZEL:=n
 	BAZEL_FILES:=
 endif
