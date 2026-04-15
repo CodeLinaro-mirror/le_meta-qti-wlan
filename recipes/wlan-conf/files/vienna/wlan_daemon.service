@@ -38,7 +38,7 @@ After=qsaharaserver.service
 Restart=no
 RemainAfterExit=yes
 ExecStart=/usr/sbin/wlan start
-Type=oneshot
+Type=simple
 ExecStop=/usr/sbin/wlan stop
 
 [Install]
