@@ -36,7 +36,7 @@ RDEPENDS:packagegroup-qti-wifi:append = "iw rfkill dnsmasq iperf2 iperf3"
 RDEPENDS:packagegroup-qti-wifi:append:neo = "tcpdump dhcpcd"
 RDEPENDS:packagegroup-qti-wifi:remove:qcs40x = "dnsmasq"
 RDEPENDS:packagegroup-qti-wifi:remove:qcm2290-mtp = "dnsmasq"
-RDEPENDS:packagegroup-qti-wifi:append:vienna = "wifi-hal"
+RDEPENDS:packagegroup-qti-wifi:append:vienna = " wifi-hal"
 
 RDEPENDS:packagegroup-qti-wifi = " \
         ${WLAN_DEVICETREE_BB} \
