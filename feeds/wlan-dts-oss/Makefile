@@ -30,8 +30,8 @@ endef
 MAKE_OPTS:= \
 	M="$(PKG_BUILD_DIR)"
 
-ifeq ($(BOARD),sdxecho)
-MAKE_OPTS += CONFIG_ARCH_SDXECHO=y
+ifeq ($(BOARD),echo)
+MAKE_OPTS += CONFIG_ARCH_ECHO=y
 endif
 
 define Build/Compile
