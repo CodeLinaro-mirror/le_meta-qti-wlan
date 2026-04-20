@@ -19,12 +19,11 @@ endif
 include $(INCLUDE_DIR)/package.mk
 
 EXTRA_ADDR :=lib/modules/$(LINUX_VERSION)-${COMPILE_MODE}/extra
+LOCAL_SRC:=$(TOPDIR)/src/wlan/qca-ezmesh/emesh-sp/*
 ifeq ($(BOARD),sdx85)
-	LOCAL_SRC:=$(TOPDIR)/src/wlan/qca-ezmesh/emesh-sp/*
 	ENABLE_BAZEL=y
 	BAZEL_FILES=$(TOPDIR)/owrt-qti-wlan/feeds/emesh-sp-mcc/files/*.b*z*l
 else
-	LOCAL_SRC:=$(TOPDIR)/src/ipq/emesh-sp/*
 	ENABLE_BAZEL:=n
 	BAZEL_FILES:=
 endif
@@ -61,7 +60,7 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/emesh-sp
 	$(INSTALL_DIR) $(STAGING_DIR)/usr/include/emesh-sp
 	$(foreach header_file,$(EMESH_SP_HEADERS), $(CP) $(header_file) $(1)/usr/include/emesh-sp;)
-ifeq ($(BOARD),sdxecho)
+ifeq ($(BOARD),echo)
 	$(CP) $(PKG_BUILD_DIR)/Module.symvers.tmp $(STAGING_DIR)/usr/include/emesh-sp/Module.symvers
 else
 	$(CP) $(PKG_BUILD_DIR)/Module.symvers $(STAGING_DIR)/usr/include/emesh-sp

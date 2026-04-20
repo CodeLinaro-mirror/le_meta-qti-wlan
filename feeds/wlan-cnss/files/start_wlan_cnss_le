@@ -10,6 +10,7 @@ case "$1" in
   start)
         echo -n "Starting/Loading wlan cnss modules: "
 
+	bus_type_path="/etc/misc/wifi/wlan_bus_type"
 	fullpath=$(find $MODULE_BASE -name cnss2.ko)
 	if [ -z "$fullpath" ]; then
 		echo -n "wlan cnss modules missing "
@@ -26,8 +27,19 @@ case "$1" in
 		insmod $basepath/cnss_nl.ko
 	fi
 
+	dev_type="HSP"
 	if [ $(cat /sys/firmware/devicetree/base/model | grep -c ROME) = 1 ];then
+		dev_type="ROME"
+	fi
 
+	bus_type="PCIe"
+	if [ -f "${bus_type_path}" ] && [ $(cat "${bus_type_path}" | grep -ic SDIO) = 1 ];then
+		bus_type="SDIO"
+	fi
+
+	type_comb="${dev_type}_${bus_type}"
+	case "${type_comb}" in
+	"ROME_PCIe")
 		if [ -f $basepath/cnss_crypto.ko ]; then
 			insmod $basepath/cnss_crypto.ko
 		fi
@@ -37,7 +49,16 @@ case "$1" in
 		if [ -f $basepath/cnss.ko ]; then
 			insmod $basepath/cnss.ko
 		fi
-	else
+		;;
+	"ROME_SDIO")
+		if [ -f $basepath/cnss_crypto.ko ]; then
+			insmod $basepath/cnss_crypto.ko
+		fi
+		if [ -f $basepath/cnss_sdio_bus.ko ]; then
+			insmod $basepath/cnss_sdio_bus.ko
+		fi
+		;;
+	*)
 		if [ -f $basepath/cnss_plat_ipc_qmi_svc.ko ]; then
 			insmod $basepath/cnss_plat_ipc_qmi_svc.ko
 		fi
@@ -50,7 +71,8 @@ case "$1" in
 		if [ -f $basepath/cnss2.ko ]; then
 			insmod $basepath/cnss2.ko
 		fi
-	fi
+		;;
+	esac
         echo "done loading wlan cnss modules"
 
         if [ $(cat /tmp/sysinfo/board_name | grep -c sdxkova) = 1 ]; then
