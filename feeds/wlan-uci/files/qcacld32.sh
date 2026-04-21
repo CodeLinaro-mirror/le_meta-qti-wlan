@@ -1799,7 +1799,6 @@ update_ezmesh_ini() {
 	$update_ini_func gIPAWds 1
 	$update_ini_func gPreferNonDfsChanOnRadar 1
 	$update_ini_func gEnableDcs 3
-	$update_ini_func dcs_debug 2
 	$update_ini_func dcs_coch_intfr_threshold 600
 	$update_ini_func ssdp 0
 	$update_ini_func sap_rrm_enable 1
