@@ -33,15 +33,15 @@
 
 [Unit]
 Description=Wlan Service
-SourcePath=/etc/init.d/wlan
+SourcePath=/usr/sbin/initscripts/wlan
 After=persist.mount firmware-links.service usb.service
 
 [Service]
 Restart=no
 RemainAfterExit=yes
-ExecStart=/etc/initscripts/wlan init-start
+ExecStart=/usr/sbin/initscripts/wlan init-start
 Type=oneshot
-ExecStop=/etc/initscripts/wlan stop
+ExecStop=/usr/sbin/initscripts/wlan stop
 
 [Install]
 WantedBy=multi-user.target
