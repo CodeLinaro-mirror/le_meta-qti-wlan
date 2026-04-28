@@ -32,7 +32,7 @@ else ifeq ($(BOARD),sdx85)
 	# Reuse sdxpinn for now.
 	# To be revised if sigma-dut branch out later or divergency.
 	TARGET_LOCAL_NAME := sdxpinn
-else ifeq ($(BOARD),sdxecho)
+else ifeq ($(BOARD),echo)
 	# Reuse sdxpinn for now.
 	# To be revised if sigma-dut branch out later or divergency.
 	TARGET_LOCAL_NAME := sdxpinn

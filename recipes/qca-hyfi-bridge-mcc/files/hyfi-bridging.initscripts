@@ -16,7 +16,9 @@ start() {
 }
 
 stop() {
-	echo "do nothing for /etc/initscripts/start_hyfi-bridging-mcc stop"
+	/etc/init.d/hyfi-bridging-mcc stop
+	rmmod /lib/modules/$(uname -r)/kernel/drivers/qca-hyfi-bridge-mcc/hyfi-bridging-mcc.ko 2>/dev/null >/dev/null
+	/etc/initscripts/start_emesh-sp-mcc stop
 }
 
 case "$1" in

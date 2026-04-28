@@ -1,38 +1,50 @@
 load("//build/bazel_common_rules/dist:dist.bzl", "copy_to_dist_dir")
 load("//build/kernel/kleaf:kernel.bzl", "ddk_module")
-load("//msm-kernel:target_variants.bzl", "get_all_variants")
+
+_copts = [
+    "-Werror",
+    "-Wall",
+    "-g",
+    "-DSP_DEBUG_LEVEL=0",
+]
 
 _srcs = [
-    "sp_api.h",
     "sp.c",
     "sp_hook.c",
     "sp_mapdb.c",
-    "sp_mapdb.h",
-    "sp_types.h",
 ]
 
-def define_modules():
-    for (t, v) in get_all_variants():
-        tv = "{}_{}".format(t, v)
-        name = "{}_emesh_sp".format(tv)
+def define_module_variants():
+    target = "sdxkova"
+    variants = ["debug-defconfig", "perf-defconfig"]
+    for variant in variants:
+        _define_modules(target, variant)
 
-        ddk_module(
-            name = name,
-            srcs = native.glob(_srcs),
-            out = "emesh-sp.ko",
-            kernel_build = "//msm-kernel:{}".format(tv),
-            deps = [
-                "//msm-kernel:all_headers",
-            ],
-        )
+def _define_modules(target, variant):
 
-        copy_to_dist_dir(
-            name = "{}_modules_dist".format(tv),
-            data = [":{}".format(name)],
-            dist_dir = "out/target/product/{}/dlkm/lib/modules/".format(t),
-            flat = True,
-            wipe_dist_dir = False,
-            allow_duplicate_filenames = False,
-            mode_overrides = {"**/*": "644"},
-            log = "info",
-        )
+    ddk_module(
+        name = "{}_{}_emesh_sp".format(target, variant),
+        out = "emesh-sp.ko",
+        srcs = _srcs,
+        copts = _copts,
+        kernel_build = "//msm-kernel:{}_{}".format(target, variant),
+        deps = [
+            ":emesh_sp_headers",
+            "//msm-kernel:all_headers",
+        ],
+        visibility = ["//visibility:public"],
+    )
+
+    copy_to_dist_dir(
+        name = "{}_{}_emesh_sp_module_dist".format(target, variant),
+        data = [":{}_{}_emesh_sp".format(target, variant)],
+        dist_dir = "out/target/product/{}/dlkm/lib/modules/".format(target),
+        flat = True,
+        wipe_dist_dir = False,
+        allow_duplicate_filenames = False,
+        mode_overrides = {"**/*": "644"},
+        log = "info",
+    )
+
+def define_emesh_sp():
+    define_module_variants()
