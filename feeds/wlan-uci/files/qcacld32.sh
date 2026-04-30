@@ -739,7 +739,7 @@ reconf_qcacld32() {
 
 assign_vif_ifname() {
 	local device="$1"
-	local disabled ifname
+	local disabled ifname mld
 	local processed_vifs=""
 	local unused_ifnames
 	local unused_ifcount=0
@@ -775,6 +775,7 @@ assign_vif_ifname() {
 
 		# Update unused wlan names based on UCI config
 		config_get ifname "$vif" ifname
+		config_get mld "$vif" mld
 		if [ -n "$ifname" ] && [ ${ifname//[0-9]} != ${wlanif_prefix} ]; then
 			# Reset invalid ifnames to empty (i.e. option ifname 'cfgxxxx')
 			# it will auto reassigned a name from unused wlan names later.
@@ -792,7 +793,9 @@ assign_vif_ifname() {
 					else
 						qlog_cmd "assign_vif_ifname $vif manual-used $ifname"
 						uci set wireless.${vif}.ifname=$ifname
-						uci rename wireless.${vif}=$ifname
+						if [ -z "$mld" ]; then
+							uci rename wireless.${vif}=$ifname
+						fi
 						uci commit wireless
 						config_load wireless
 					fi
@@ -808,6 +811,7 @@ assign_vif_ifname() {
 		[ $disabled = 0 ] || continue
 
 		config_get ifname "$vif" ifname
+		config_get mld "$vif" mld
 		# /sbin/wifi appends one duplicated vif, so remove it here
 		if list_contains processed_vifs $vif; then
 			qlog_cmd "assign_vif_ifname $vif [$ifname] already processed -- skip"
@@ -823,7 +827,9 @@ assign_vif_ifname() {
 				if [ $auto_assigned -eq 0 ]; then
 					config_set "$vif" ifname $unused_name
 					uci set wireless.${vif}.ifname=$unused_name
-					uci rename wireless.${vif}=$unused_name
+					if [ -z "$mld" ]; then
+						uci rename wireless.${vif}=$unused_name
+					fi
 					uci commit wireless
 					config_load wireless
 					qlog_cmd "assign_vif_ifname $vif auto-assign $unused_name"
