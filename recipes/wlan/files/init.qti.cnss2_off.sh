@@ -37,7 +37,7 @@ if (echo -n $LSPCI|grep cnss_pci);then
 	if (echo -n $LSPCI|grep 1102);then
 		echo -n "unload qca6595" > /dev/kmsg
 		rmmod qca6595
-	elif ((echo -n $LSPCI|grep 003e) || (echo -n $LSPCI|grep QCA6174));then
+	elif (echo -n $LSPCI|grep 003e) || (echo -n $LSPCI|grep QCA6174);then
 		echo -n "unload qca6574" > /dev/kmsg
 		rmmod qca6574
 	elif (echo -n $LSPCI|grep 1101);then
