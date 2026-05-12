@@ -57,6 +57,9 @@ case "$1" in
 		if [ -f $basepath/cnss_sdio_bus.ko ]; then
 			insmod $basepath/cnss_sdio_bus.ko
 		fi
+		if [ -f $basepath/wlan_prealloc.ko ]; then
+			insmod $basepath/wlan_prealloc.ko
+		fi
 		;;
 	*)
 		if [ -f $basepath/cnss_plat_ipc_qmi_svc.ko ]; then

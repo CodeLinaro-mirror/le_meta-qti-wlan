@@ -53,6 +53,7 @@ TARGET_MAKEOPTS := CONFIG_ARCH_SDXBAAGHA=y \
 		   CONFIG_CNSS_PCI=n \
 		   CONFIG_CNSS_SDIO=y \
 		   CONFIG_CLD_HL_SDIO_CORE=y \
+		   CONFIG_VOS_MEM_PRE_ALLOC=y \
 		   MODNAME=wlan_sdio
 
 WLAN_PLATFORM_SYMBOLS = $(PKG_BUILD_DIR)/../wlan-cnss-sdio/Module.symvers
@@ -115,8 +116,10 @@ endef
 
 define  KernelPackage/qcacld-ll-sdio/install
 	$(INSTALL_DIR) $(1)/$(EXTRA_ADDR)/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/wlan_prealloc.ko $(1)/$(EXTRA_ADDR)/wlan_prealloc.ko
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/wlan_sdio.ko $(1)/$(EXTRA_ADDR)/wlan_sdio.ko
 	$(INSTALL_DIR) $(TOPDIR)/bin/targets/$(COMPILE_MODE)/modules
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/wlan_prealloc.ko $(TOPDIR)/bin/targets/$(COMPILE_MODE)/modules/wlan_prealloc.ko
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/wlan_sdio.ko $(TOPDIR)/bin/targets/$(COMPILE_MODE)/modules/wlan_sdio.ko
 endef
 
