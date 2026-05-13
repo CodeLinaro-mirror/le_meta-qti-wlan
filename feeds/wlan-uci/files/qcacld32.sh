@@ -684,14 +684,14 @@ action_vif() {
 	case "$action" in
 		start)
 			update_backhaul_bss_info
-			if [ $(echo $device | grep -c "$mld_prefix") -eq 1 ]; then
+			if [[ "$device" == "$mld_prefix"* ]]; then
 				start_mld_ap $device
 			else
 				start_vifs_qcacld32 "$device" "$vif" ""
 			fi
 		;;
 		stop)
-			if [ $(echo $device | grep -c "$mld_prefix") -eq 1 ]; then
+			if [[ "$device" == "$mld_prefix"* ]]; then
 				stop_mld_ap $device
 			else
 				config_get ifname "$vif" ifname
@@ -1099,7 +1099,7 @@ multi_radio_wifi_updown() {
 	while [ $device_idx -le ${#} ]; do
 		eval "device=\$${device_idx}";
 
-		if [ $(echo $device | grep -c "$mld_prefix") -eq 1 ]; then
+		if [[ "$device" == "$mld_prefix"* ]]; then
 			action_vif $action $device
 			device_idx=$(($device_idx + 1))
 			vif_idx=$(($vif_idx + 1))
