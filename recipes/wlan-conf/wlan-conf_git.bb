@@ -81,13 +81,13 @@ do_install:msm() {
 do_install_common_service(){
 	# Install common systemd dirs
 	install -d ${D}${sysconfdir}/tmpfiles.d
-	install -d ${D}/etc/initscripts
+	install -d ${D}${sbindir}/initscripts
 	install -d ${D}/etc/systemd/system/
 	install -d ${D}/etc/systemd/system/multi-user.target.wants/
 	# Install common systemd files
 	install -m 0644 ${WORKDIR}/neo/wlan-conf_systemd_tmpfiles.conf \
 		-D ${D}${sysconfdir}/tmpfiles.d/wlan-conf_systemd_tmpfiles.conf
-	cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
+	mv ${D}/etc/init.d/wlan ${D}${sbindir}/initscripts/wlan
 	install -m 0644 ${WORKDIR}/neo/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
 	ln -sf /etc/systemd/system/wlan_daemon.service ${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
 }

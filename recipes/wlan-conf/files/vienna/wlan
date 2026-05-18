@@ -1,0 +1,147 @@
+#!/bin/sh
+#
+# Copyright (c) 2013, The Linux Foundation. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+#       copyright notice, this list of conditions and the following
+#       disclaimer in the documentation and/or other materials provided
+#       with the distribution.
+#     * Neither the name of The Linux Foundation nor the names of its
+#       contributors may be used to endorse or promote products derived
+#       from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
+# WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+# IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# Changes from Qualcomm Technologies, Inc. are provided under the following license:
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+
+export RETRY_LIMIT=100       # 100 retries x 200ms = 20 seconds
+DUMP_TO_KMSG=/dev/kmsg
+SLEEP_INTERVAL=0.2           # 200ms sleep between retries
+INTERFACE=wlan0
+
+do_ctrl_cld_ll() {
+  case "$1" in
+    start)
+      # Check wlan0 interface is available
+      RETRY_COUNT=0
+      while [ $RETRY_COUNT -le $RETRY_LIMIT ]; do
+        if [ -d "/sys/class/net/$INTERFACE" ]; then
+          echo "$INTERFACE is available." | tee $DUMP_TO_KMSG
+          break
+        else
+          echo "$INTERFACE is not available - Retrying...($RETRY_COUNT)"
+        fi
+
+        sleep $SLEEP_INTERVAL
+        RETRY_COUNT=$((RETRY_COUNT + 1))
+      done
+
+      if [ $RETRY_COUNT -gt $RETRY_LIMIT ]; then
+        echo "ERROR: $INTERFACE is not available ($RETRY_LIMIT retries)" | tee $DUMP_TO_KMSG
+        exit 1
+      fi
+
+      echo "Starting wpa supplicant..." > $DUMP_TO_KMSG
+      if pgrep -x "wpa_supplicant" > /dev/null; then
+        echo "wpa_supplicant is already running... " | tee $DUMP_TO_KMSG
+      else
+        wpa_supplicant -Dnl80211 -iwlan0 -c /etc/wpa_supplicant.conf &
+        WPA_PID=$!
+        sleep 0.5
+        if ! kill -0 $WPA_PID 2>/dev/null; then
+          echo "ERROR: wpa_supplicant failed to start" | tee $DUMP_TO_KMSG
+          exit 1
+        fi
+      fi
+
+      # Check for wlan0 interface is up
+      RETRY_COUNT=0
+      while [ $RETRY_COUNT -le $RETRY_LIMIT ]; do
+        if [ -f "/sys/class/net/$INTERFACE/operstate" ]; then
+          STATE=$(cat /sys/class/net/$INTERFACE/operstate)
+          if [ "$STATE" = "up" ]; then
+            echo "$INTERFACE is now UP." | tee $DUMP_TO_KMSG
+            break
+          else
+            echo "$INTERFACE is DOWN (State: $STATE) - Retrying...($RETRY_COUNT)"
+          fi
+        else
+          echo "ERROR: $INTERFACE does not exist." | tee $DUMP_TO_KMSG
+          exit 1
+        fi
+
+        sleep $SLEEP_INTERVAL
+        RETRY_COUNT=$((RETRY_COUNT + 1))
+      done
+
+      if [ $RETRY_COUNT -gt $RETRY_LIMIT ]; then
+        echo "ERROR: $INTERFACE failed to come UP. ($RETRY_LIMIT retries)" | tee $DUMP_TO_KMSG
+        exit 1
+      fi
+
+      # Lease IP address
+      echo "Acquiring IP address for $INTERFACE..." | tee $DUMP_TO_KMSG
+      udhcpc -i $INTERFACE
+      echo "$INTERFACE is now READY." | tee $DUMP_TO_KMSG
+    ;;
+
+    stop)
+      if [ -f "/sys/class/net/$INTERFACE/operstate" ]; then
+        # Interface exists, bring it down
+        STATE=$(cat /sys/class/net/$INTERFACE/operstate)
+        if [ "$STATE" = "up" ]; then
+          ifconfig $INTERFACE down
+          echo "$INTERFACE is now DOWN." | tee $DUMP_TO_KMSG
+        else
+          echo "$INTERFACE is already DOWN." | tee $DUMP_TO_KMSG
+        fi
+      else
+        # Interface doesn't exist, already stopped - success
+        echo "$INTERFACE interface not found," | tee $DUMP_TO_KMSG
+      fi
+
+      # kill wpa_supplicant
+      killall wpa_supplicant
+      echo "Killed wpa_supplicant." | tee $DUMP_TO_KMSG
+    ;;
+
+    restart)
+      do_ctrl_cld_ll stop
+      do_ctrl_cld_ll start
+      return $?
+    ;;
+
+    *)
+      return 1
+    ;;
+
+  esac
+
+  return 0
+}
+
+# Entry point
+do_ctrl_cld_ll $@
+if [ $? -ne 0 ]; then
+  exit 1
+fi
+
+exit 0

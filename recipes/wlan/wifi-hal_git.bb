@@ -16,7 +16,7 @@ CFLAGS += "-I ${WORKSPACE}/hardware/qcom/wlan/qcwcn/wifi_hal/wifi_hal_ctrl"
 CFLAGS  += "-include stdint.h"
 CXXFLAGS += " -std=gnu++17 -include bits/stdc++.h"
 
-DEPENDS = "diag libcutils glib-2.0 cld80211-lib"
+DEPENDS = "diag libcutils glib-2.0 cld80211-lib wpa-supplicant-qcacld"
 
 FILESPATH =+ "${WORKSPACE}/hardware/qcom/:"
 
@@ -33,4 +33,8 @@ EXTRA_OECONF = " \
 		--with-system-core-includes=${WORKSPACE}/system/core/include \
 		--with-vendor-nan-includes=${WORKSPACE}/hardware/qcom/wlan/qcwcn/wifi_hal/vendor_nan \
 		--with-wifi-hal-ctrl-includes=${WORKSPACE}/hardware/qcom/wlan/qcwcn/wifi_hal/wifi_hal_ctrl \
+		--with-supplicant-utils-includes=${WORKSPACE}/external/wpa_supplicant_8/src/ \
+		--with-supplicant-includes=${WORKSPACE}/external/wpa_supplicant_8/src/utils \
 		"
+
+RDEPENDS:${PN} += "wpa-supplicant-qcacld"

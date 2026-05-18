@@ -25,18 +25,18 @@ WLAN_PLATFORM="wlan-platform"
 WLAN_PLATFORM:vienna="wlan-platform-vienna-le"
 
 WLAN_CONF="wlan-conf"
-WLAN_CONF:vienna=""
+WLAN_CONF:vienna="wlan-conf-vienna"
 
 WLAN_DEVICETREE_BB="wlan-devicetree"
 WLAN_DEVICETREE_BB:ar-sg1="wlan-devicetree-ar-sg1"
 
 # default WLAN and network software package
-RDEPENDS:packagegroup-qti-wifi:append = "iw rfkill dnsmasq iperf2 iperf3"
+RDEPENDS:packagegroup-qti-wifi:append = "iw rfkill dnsmasq iperf2 iperf3 tcpdump"
 
 RDEPENDS:packagegroup-qti-wifi:append:neo = "tcpdump dhcpcd"
 RDEPENDS:packagegroup-qti-wifi:remove:qcs40x = "dnsmasq"
 RDEPENDS:packagegroup-qti-wifi:remove:qcm2290-mtp = "dnsmasq"
-RDEPENDS:packagegroup-qti-wifi:append:vienna = "wifi-hal"
+RDEPENDS:packagegroup-qti-wifi:append:vienna = " wifi-hal"
 
 RDEPENDS:packagegroup-qti-wifi = " \
         ${WLAN_DEVICETREE_BB} \
