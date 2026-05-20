@@ -3,7 +3,7 @@ include qcacld32-ll.inc
 SUMMARY = "Qualcomm Technologies, Inc. WLAN Driver"
 DESCRIPTION = "Qualcomm Technologies, Inc. WLAN CLD3.0 low latency driver for the first WLAN chip.\
                It is a kernel extra module, which loaded by qca6696-module-load.service \
-               once the system bootup. And this WLAN host driver module name is qca6490.ko,\
+               once the system bootup. And this WLAN host driver module name is wcn7760.ko,\
                it create two interface by defaults, one is wlan0 and the other is wlan1. \
                Application can use the wireless interfaces as STA or AP mode in need. \
                Usually, it bind to pcie0 slot by default if it loaded first. \"
@@ -12,13 +12,12 @@ LICENSE = "ISC"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=f3b90e78ea0cffb20bf5cca7947a896d"
 
 PR = "r8"
-_MODNAME = "qca6797"
-FW_PATH_NAME = "kiwi"
+_MODNAME = "wcn7760"
+FW_PATH_NAME = "cologne"
 FILES:${PN}     += "${nonarch_base_libdir}/firmware/wlan/*"
 FILES:${PN}     += "${nonarch_base_libdir}/firmware/*"
 FILES:${PN}     += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/${_MODNAME}.ko"
 FILES:${PN}     += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/"
-FILES:${PN}     += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/updates/*"
 PROVIDES_NAME   = "kernel-module-${_MODNAME}"
 RPROVIDES:${PN} += "${PROVIDES_NAME}-${KERNEL_VERSION}"
 
@@ -34,13 +33,13 @@ SRC_URI += "file://wlan/fw-api/"
 S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn"
 S = "${WORKDIR}/wlan/qcacld-3.0"
 
-FIRMWARE_PATH = "${D}/${nonarch_base_libdir}/firmware/wlan/qca_cld/${_MODNAME}"
+FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld/${_MODNAME}"
 
 # Explicitly disable HL to enable LL as current WLAN driver is not having
 # simultaneous support of HL and LL.
 EXTRA_OEMAKE:append = " CONFIG_CLD_HL_SDIO_CORE=n \
                        CONFIG_CNSS_SDIO=n \
-                       CONFIG_QCA_CLD_WLAN_PROFILE=kiwi_v2 \
+                       CONFIG_QCA_CLD_WLAN_PROFILE=wcn7760 \
                        DYNAMIC_SINGLE_CHIP=${_MODNAME} \
                        MODNAME=${_MODNAME} \
                        "
@@ -53,94 +52,6 @@ KERNEL_CC += "-Wno-packed-bitfield-compat"
 EXTRA_OEMAKE:append:sa515m = " CONFIG_ENABLE_IPA=n"
 
 _WLAN_CFG_OVERRIDE_525 = "\
-						CONFIG_FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE=n \
-						CONFIG_SUPPORT_P2P_BY_ONE_INTF_WLAN=y \
-						CONFIG_DCS=n \
-						CONFIG_WLAN_FEATURE_MIB_STATS=n \
-						CONFIG_WLAN_CONV_SPECTRAL_ENABLE=n \
-						CONFIG_FEATURE_MEMDUMP_ENABLE=n \
-						CONFIG_FEATURE_UNIT_TEST_SUSPEND=n \
-						CONFIG_WLAN_WBUFF=n \
-						CONFIG_TSO_DEBUG_LOG_ENABLE=n \
-						CONFIG_WLAN_FEATURE_P2P_DEBUG=n \
-						CONFIG_DESC_DUP_DETECT_DEBUG=n \
-						CONFIG_DEBUG_RX_RING_BUFFER=n \
-						CONFIG_FOURTH_CONNECTION=n \
-						CONFIG_FOURTH_CONNECTION_AUTO=n \
-						CONFIG_REMOVE_PKT_LOG=y \
-						CONFIG_WDI_EVENT_ENABLE=n \
-						CONFIG_SMMU_S1_UNMAP=y \
-						CONFIG_REO_DESC_DEFER_FREE=y \
-						CONFIG_FEATURE_COEX=y \
-						CONFIG_QCACLD_FEATURE_BTC_CHAIN_MODE=y \
-						CONFIG_QCACLD_FEATURE_COEX_CONFIG=y \
-						CONFIG_DIRECT_BUF_RX_ENABLE=n \
-						CONFIG_WMI_DBR_SUPPORT=n \
-						CONFIG_QCOM_ESE=y \
-						CONFIG_RX_FISA=n \
-						CONFIG_WLAN_BCN_RECV_FEATURE=n \
-						CONFIG_SAP_AVOID_ACS_FREQ_LIST=n \
-						CONFIG_SAR_SAFETY_FEATURE=n \
-						CONFIG_FEATURE_INTEROP_ISSUES_AP=n \
-						CONFIG_FEATURE_CLUB_LL_STATS_AND_GET_STATION=n \
-						CONFIG_INTERFACE_MGR=n \
-						CONFIG_FEATURE_MSCS=n \
-						CONFIG_ADAPTIVE_11R=n \
-						CONFIG_CM_ROAM_OFFLOAD=n \
-						CONFIG_ANI_LEVEL_REQUEST=n \
-						CONFIG_WLAN_HANG_EVENT=n \
-						CONFIG_FEATURE_VDEV_OPS_WAKELOCK=n \
-						CONFIG_QCACLD_RX_DESC_MULTI_PAGE_ALLOC=n \
-						CONFIG_RX_HASH_DEBUG=n \
-						CONFIG_DP_MEM_PRE_ALLOC=n \
-						CONFIG_MAX_ALLOC_PAGE_SIZE=n \
-						CONFIG_UNIT_TEST=n \
-						CONFIG_DSC_DEBUG=n \
-						CONFIG_LEAK_DETECTION=n \
-						CONFIG_TALLOC_DEBUG=n \
-						CONFIG_HAL_DEBUG=n \
-						CONFIG_HIF_DEBUG=n \
-						CONFIG_QDF_TEST=n \
-						CONFIG_HIF_REG_WINDOW_SUPPORT=y \
-						CONFIG_DEVICE_FORCE_WAKE_ENABLE=y \
-						CONFIG_HIF_CE_DEBUG_DATA_BUF=n  \
-						CONFIG_BAND_6GHZ=y \
-						CONFIG_IPA_WDI3_TX_TWO_PIPES=y \
-						CONFIG_HANDLE_RX_REROUTE_ERR=n \
-						CONFIG_WLAN_FEATURE_P2P_P2P_STA=n \
-						CONFIG_WLAN_FEATURE_DP_RX_RING_HISTORY=n \
-						CONFIG_WLAN_FEATURE_DP_TX_DESC_HISTORY=n \
-						CONFIG_REO_QDESC_HISTORY=n \
-						CONFIG_DP_TX_HW_DESC_HISTORY=n \
-						CONFIG_WLAN_FEATURE_DP_EVENT_HISTORY=y \
-						CONFIG_RX_DESC_DEBUG_CHECK=n \
-						CONFIG_QCACLD_WLAN_CONNECTIVITY_LOGGING=n \
-						CONFIG_DP_TX_TRACKING=n \
-						CONFIG_WLAN_DEBUG_LINK_VOTE=n \
-						CONFIG_QCOM_LTE_COEX=y \
-						CONFIG_CNSS_OUT_OF_TREE=y \
-						CONFIG_CNSS2=m \
-						CONFIG_QMI=y \
-						CONFIG_IPA3=y \
-						CONFIG_IPA_OFFLOAD=y \
-						CONFIG_WLAN_CONV_SPECTRAL_ENABLE=n \
-						CONFIG_WLAN_CFR_ENABLE=n \
-						CONFIG_WLAN_CFR_ADRASTEA=n \
-						CONFIG_ENABLE_VALLOC_REPLACE_MALLOC=y \
-						CONFIG_WLAN_FEATURE_SR=n \
-						CONFIG_QCACLD_WLAN_LFR3=y \
-						CONFIG_WLAN_FEATURE_11BE=y \
-						CONFIG_DP_MULTIPASS_SUPPORT=n \
-						CONFIG_FOURTH_CONNECTION=n \
-						CONFIG_FIFTH_CONNECTION=n \
-						CONFIG_WLAN_FEATURE_11BE_MLO=y \
-						CONFIG_WLAN_FEATURE_MULTI_LINK_SAP=y \
-						CONFIG_ENABLE_SMMU_S1_TRANSLATION=y \
-						CONFIG_MORE_TX_DESC=n \
-						CONFIG_WIFI_MONITOR_SUPPORT=n \
-						"
-
-_WLAN_CFG_OVERRIDE_535 = "\
 						CONFIG_FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE=n \
 						CONFIG_SUPPORT_P2P_BY_ONE_INTF_WLAN=y \
 						CONFIG_DCS=n \
@@ -211,6 +122,8 @@ _WLAN_CFG_OVERRIDE_535 = "\
 						CONFIG_QMI=y \
 						CONFIG_IPA3=y \
 						CONFIG_IPA_OFFLOAD=y \
+						CONFIG_DP_FEATURE_HW_COOKIE_CONVERSION=n \
+						CONFIG_DP_HW_COOKIE_CONVERT_EXCEPTION=n \
 						CONFIG_WLAN_CONV_SPECTRAL_ENABLE=n \
 						CONFIG_WLAN_CFR_ENABLE=n \
 						CONFIG_WLAN_CFR_ADRASTEA=n \
@@ -226,28 +139,15 @@ _WLAN_CFG_OVERRIDE_535 = "\
 						CONFIG_ENABLE_SMMU_S1_TRANSLATION=y \
 						CONFIG_MORE_TX_DESC=n \
 						CONFIG_WIFI_MONITOR_SUPPORT=n \
-						CONFIG_IPA_OUT_OF_TREE=y \
-						CONFIG_DP_FEATURE_HW_COOKIE_CONVERSION=n \
-						CONFIG_DP_HW_COOKIE_CONVERT_EXCEPTION=n \
 						"
 
-EXTRA_OEMAKE:append:sa515m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_515}"
 EXTRA_OEMAKE:append:sa525m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_525}"
-EXTRA_OEMAKE:append:sa535m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_535}"
 
 WLAN_PLATFORM_PATH = "${WORKDIR}/recipe-sysroot/usr/include"
-DATA_IPA_PATH = "${WORKDIR}/recipe-sysroot/usr/include"
-DATA_IPA_INC = "${WORKDIR}/recipe-sysroot/usr/include/ipa"
-DATA_IPA_UAPI_INC = "${WORKDIR}/recipe-sysroot/usr/include/ipa/uapi"
-WLAN_KBUILD_EXTRA = "KBUILD_EXTRA_SYMBOLS=${WORKDIR}/Module.symvers"
+WLAN_KBUILD_EXTRA = "KBUILD_EXTRA_SYMBOLS=${WLAN_PLATFORM_PATH}/wlan-platform-dlkm/Module.symvers"
 WLAN_PLATFORM_CFG = " KBUILD_EXTRA=${WLAN_KBUILD_EXTRA} WLAN_PLATFORM_INC=${WLAN_PLATFORM_PATH}"
-WLAN_IPA_CFG = " DATA_IPA_INC=${DATA_IPA_INC} DATA_IPA_UAPI_INC=${DATA_IPA_UAPI_INC}"
-
 EXTRA_OEMAKE:append = "${@bb.utils.contains('PREFERRED_VERSION_linux-msm', '5.15', '${WLAN_PLATFORM_CFG}', '', d)}"
-EXTRA_OEMAKE:append:sa535m = "${@bb.utils.contains('_WLAN_CFG_OVERRIDE_535', 'CONFIG_IPA3=y', ' ${WLAN_PLATFORM_CFG} ${WLAN_IPA_CFG}', ' ${WLAN_PLATFORM_CFG}', d)}"
-
-DEPENDS:append = "wlan-platform-dlkm"
-DEPENDS:append:sa535m = "${@bb.utils.contains('_WLAN_CFG_OVERRIDE_535', 'CONFIG_IPA3=y', ' virtual/kernel linux-kernel-qcom-headers dataipa', '', d)}"
+DEPENDS:append:sa525m = "wlan-platform-dlkm"
 
 LDFLAGS:aarch64 = "-O1 --hash-style=gnu --as-needed"
 
@@ -263,11 +163,8 @@ SYSTEMD_AUTO_ENABLE:${PN} = "disable"
 
 SRC_URI:append = " file://init.qti.wlan_on.sh"
 SRC_URI:append = " file://init.qti.wlan_off.sh"
-SRC_URI:append = " file://wlan_sap_sta_setup.sh"
 FILES:${PN}     += "${bindir}/init.qti.wlan_on.sh"
 FILES:${PN}     += "${bindir}/init.qti.wlan_off.sh"
-FILES:${PN}     += "${bindir}/wlan_sap_sta_setup.sh"
-
 
 do_compile:prepend() {
     if ${@bb.utils.contains('PREFERRED_VERSION_linux-msm', '5.15', 'true', 'false', d)}; then
@@ -276,28 +173,6 @@ do_compile:prepend() {
 		        -DCFG80211_EXTERNAL_AUTH_MLO_SUPPORT"
         sed -i -e "/$(CONFIG_QCA_CLD_WLAN_PROFILE)_defconfig$/i${CFG80211_FLAG}" ${S}/Kbuild
     fi
-
-    if [ "${BASEMACHINE}" == "sa535m" ] ; then
-        IPA_FLAG="ccflags-$\(CONFIG_IPA_OFFLOAD\) += -DCONFIG_IPA3=1"
-        sed -i -e "/$(CONFIG_QCA_CLD_WLAN_PROFILE)_defconfig$/i${IPA_FLAG}" ${S}/Kbuild
-        CONFIG_MOBILE_ROUTER="ccflags-y += -DMDM_PLATFORM"
-        sed -i -e "/$(CONFIG_QCA_CLD_WLAN_PROFILE)_defconfig$/i${CONFIG_MOBILE_ROUTER}" ${S}/Kbuild
-    fi
-
-    if ${@bb.utils.contains('PREFERRED_VERSION_linux-msm', '5.15', 'true', 'false', d)}; then
-        cat ${WLAN_PLATFORM_PATH}/wlan-platform-dlkm/Module.symvers > ${WORKDIR}/Module.symvers
-    elif [ "${BASEMACHINE}" == "sa535m" ] ; then
-        cat ${WLAN_PLATFORM_PATH}/wlan-platform-dlkm/Module.symvers > ${WORKDIR}/Module.symvers
-        if ${@bb.utils.contains('_WLAN_CFG_OVERRIDE_535', 'CONFIG_IPA3=y', 'true', 'false', d)}; then
-            cat ${DATA_IPA_PATH}/ipa/Module.symvers >> ${WORKDIR}/Module.symvers
-        fi
-    fi
-}
-
-do_install:sa535m () {
-    module_do_install
-    install -d ${DEPLOY_DIR_IMAGE}/kernel_modules/wlan/
-    install -m 0644 ${S}/${_MODNAME}.ko ${DEPLOY_DIR_IMAGE}/kernel_modules/wlan/
 }
 
 do_install () {
@@ -314,24 +189,17 @@ do_install () {
 }
 
 do_install:append() {
-    install -d ${D}/${nonarch_base_libdir}/firmware/${FW_PATH_NAME}/
-    ln -sf ${nonarch_base_libdir}/firmware/image/${FW_PATH_NAME}/amss20.bin ${D}/${nonarch_base_libdir}/firmware/${FW_PATH_NAME}/
-    ln -sf ${nonarch_base_libdir}/firmware/image/${FW_PATH_NAME}/bdwlan02.e01 ${D}/${nonarch_base_libdir}/firmware/${FW_PATH_NAME}/
-    ln -sf ${nonarch_base_libdir}/firmware/image/${FW_PATH_NAME}/bdwlan02.e02 ${D}/${nonarch_base_libdir}/firmware/${FW_PATH_NAME}/
-    ln -sf ${nonarch_base_libdir}/firmware/image/${FW_PATH_NAME}/bdwlan02.e03 ${D}/${nonarch_base_libdir}/firmware/${FW_PATH_NAME}/
-    ln -sf ${nonarch_base_libdir}/firmware/image/${FW_PATH_NAME}/bdwlan.elf ${D}/${nonarch_base_libdir}/firmware/${FW_PATH_NAME}/
+    install -d ${D}/lib/firmware/${FW_PATH_NAME}/
+    ln -sf /firmware/image/${FW_PATH_NAME}/amss.bin ${D}/lib/firmware/${FW_PATH_NAME}/
+    ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan.e14 ${D}/lib/firmware/${FW_PATH_NAME}/
+    ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan.e18 ${D}/lib/firmware/${FW_PATH_NAME}/
     install -d ${D}${bindir}
     install -D -m 0755 ${WORKDIR}/init.qti.wlan_on.sh ${D}${bindir}/init.qti.wlan_on.sh
     install -D -m 0755 ${WORKDIR}/init.qti.wlan_off.sh ${D}${bindir}/init.qti.wlan_off.sh
-    install -D -m 0755 ${WORKDIR}/wlan_sap_sta_setup.sh ${D}${bindir}/wlan_sap_sta_setup.sh
     # Install systemd service file
     if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}; then
         install -m 0644 ${WORKDIR}/init_qti_wlan_auto.service -D ${D}${systemd_unitdir}/system/init_qti_wlan_auto.service
     fi
-}
-
-do_module_signing:sa535m() {
-    bbnote "${PN} module is not being signed"
 }
 
 do_module_signing() {

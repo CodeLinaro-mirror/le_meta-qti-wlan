@@ -1,5 +1,4 @@
 inherit useradd
-
 DESCRIPTION = "Device specific config"
 
 LICENSE = "BSD-3-Clause"
@@ -13,13 +12,14 @@ FILES:${PN} += "lib/firmware/wlan/*"
 FILES:${PN} += "/data/qca6490/*"
 FILES:${PN} += "/data/qca6574/*"
 FILES:${PN} += "/data/qca6797/*"
-FIRMWARE_PATH_HSP = "${D}/lib/firmware/wlan/qca_cld/qca6490"
-FIRMWARE_PATH_HMT = "${D}/lib/firmware/wlan/qca_cld/qca6797"
-FIRMWARE_PATH_ROME = "${D}/lib/firmware/wlan/qca_cld/qca6574"
-FIRMWARE_PATH_ROME:sa510m = "${D}/usr/lib/firmware/wlan/qca_cld/qca6574"
-FIRMWARE_PATH_HSP:sa510m = "${D}/usr/lib/firmware/wlan/qca_cld/qca6490"
-FILES:${PN}:sa510m += "/usr/lib/firmware/wlan/*"
-FILES:${PN}:sa510m += "/etc/misc/wifi"
+FILES:${PN} += "/data/wcn7760/*"
+FIRMWARE_PATH_HSP = "${D}/${nonarch_base_libdir}/firmware/wlan/qca_cld/qca6490"
+FIRMWARE_PATH_HMT = "${D}/${nonarch_base_libdir}/firmware/wlan/qca_cld/qca6797"
+FIRMWARE_PATH_ROME = "${D}${nonarch_base_libdir}/firmware/wlan/qca_cld/qca6574"
+FIRMWARE_PATH_COLOGNE = "${D}${nonarch_base_libdir}/firmware/wlan/qca_cld/wcn7760"
+FILES:${PN} += "${nonarch_base_libdir}/firmware/wlan/*"
+FILES:${PN} += "/etc/misc/wifi"
+
 
 # Provide a baseline
 SRC_URI = "file://device/"
@@ -52,18 +52,23 @@ do_install:append:sa525m(){
 	install -d ${FIRMWARE_PATH_HSP}
 	install -d ${FIRMWARE_PATH_ROME}
 	install -d ${FIRMWARE_PATH_HMT}
+	install -d ${FIRMWARE_PATH_COLOGNE}
 	install -d ${D}/data/qca6574
 	install -d ${D}/data/qca6490
 	install -d ${D}/data/qca6797
+	install -d ${D}/data/wcn7760
 	install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6174.ini ${D}/data/qca6574/WCNSS_qcom_cfg.ini
 	chmod -R 0664 ${D}/data/qca6574/WCNSS_qcom_cfg.ini
 	install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6490.ini ${D}/data/qca6490/WCNSS_qcom_cfg.ini
 	chmod -R 0664 ${D}/data/qca6490/WCNSS_qcom_cfg.ini
 	install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6797.ini ${D}/data/qca6797/WCNSS_qcom_cfg.ini
         chmod -R 0664 ${D}/data/qca6797/WCNSS_qcom_cfg.ini
+	install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_wcn7760.ini ${D}/data/wcn7760/WCNSS_qcom_cfg.ini
+        chmod -R 0664 ${D}/data/wcn7760/WCNSS_qcom_cfg.ini
         ln -sf /data/qca6574/WCNSS_qcom_cfg.ini ${FIRMWARE_PATH_ROME}/
         ln -sf /data/qca6490/WCNSS_qcom_cfg.ini ${FIRMWARE_PATH_HSP}/
         ln -sf /data/qca6797/WCNSS_qcom_cfg.ini ${FIRMWARE_PATH_HMT}/
+        ln -sf /data/wcn7760/WCNSS_qcom_cfg.ini ${FIRMWARE_PATH_COLOGNE}/
 }
 
 do_install:append:sa415m_auto(){
@@ -92,10 +97,24 @@ do_install:append:sa515m(){
 do_install:append:sa510m(){
         install -d ${D}/etc/misc/wifi
         install -m 0644 ${S}/qcom/wlan/sdx_auto/*.conf ${D}/etc/misc/wifi
+        chown -h 1001:1001 ${D}/etc/misc/wifi
+        chown -h 1001:1001 ${D}/etc/misc/wifi/*.conf
         install -d ${FIRMWARE_PATH_ROME}
         install -D -m 0644 ${S}/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6174.ini ${FIRMWARE_PATH_ROME}/WCNSS_qcom_cfg.ini
         chmod -R 0664 ${FIRMWARE_PATH_ROME}/WCNSS_qcom_cfg.ini
         install -d ${FIRMWARE_PATH_HSP}
         install -D -m 0644 ${S}/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6490.ini ${FIRMWARE_PATH_HSP}/WCNSS_qcom_cfg.ini
+        chmod -R 0664 ${FIRMWARE_PATH_HSP}/WCNSS_qcom_cfg.ini
+}
+
+do_install:append:sa535m(){
+	install -d ${D}/etc/misc/wifi
+	install -m 0644 ${S}/qcom/wlan/sdx_auto/*.conf ${D}/etc/misc/wifi
+	chown -R radio:radio ${D}/etc/misc/wifi
+	install -d ${FIRMWARE_PATH_HMT}
+	install -d ${FIRMWARE_PATH_HSP}
+        install -D -m 0644 ${S}/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6797.ini ${FIRMWARE_PATH_HMT}/WCNSS_qcom_cfg.ini
+        install -D -m 0644 ${S}/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6490.ini ${FIRMWARE_PATH_HSP}/WCNSS_qcom_cfg.ini
+        chmod -R 0664 ${FIRMWARE_PATH_HMT}/WCNSS_qcom_cfg.ini
         chmod -R 0664 ${FIRMWARE_PATH_HSP}/WCNSS_qcom_cfg.ini
 }

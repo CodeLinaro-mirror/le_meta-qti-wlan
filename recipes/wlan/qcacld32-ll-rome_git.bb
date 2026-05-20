@@ -1,6 +1,7 @@
 include qcacld32-ll.inc
 
 DESCRIPTION = "Qualcomm Atheros WLAN CLD3.0 low latency driver"
+PACKAGE_ARCH = "${MACHINE_ARCH}"
 LICENSE = "ISC"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=f3b90e78ea0cffb20bf5cca7947a896d"
 
@@ -43,7 +44,6 @@ EXTRA_OEMAKE += "DYNAMIC_SINGLE_CHIP=${_MODNAME}"
 EXTRA_OEMAKE += "MODNAME=${_MODNAME}"
 
 KERNEL_CC += "-w"
-KERNEL_CC += "-Wno-packed-bitfield-compat"
 
 _WLAN_CFG_OVERRIDE_515 = "\
 						CONFIG_WLAN_CONV_SPECTRAL_ENABLE=n \
@@ -107,6 +107,10 @@ _WLAN_CFG_OVERRIDE_525 = "\
 						CONFIG_AUTO_PLATFORM=y \
                         "
 
+_WLAN_CFG_OVERRIDE_510 = "\
+						CONFIG_SHUTDOWN_WLAN_IN_SYSTEM_SUSPEND=y \
+						CONFIG_WLAN_WEXT_SUPPORT_ENABLE=y \
+						"
 EXTRA_OEMAKE:append:sdxpoorwills = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_415}"
 EXTRA_OEMAKE:append:sa515m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_515}"
 EXTRA_OEMAKE:append:sa410m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_410}"
@@ -130,6 +134,7 @@ SSTATE_ALLOW_OVERLAP_FILES += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wla
 inherit systemd
 FILES:${PN}     += "${bindir}/init.qti.wlan_on.sh"
 FILES:${PN}     += "${bindir}/init.qti.wlan_off.sh"
+FILES:${PN}     += "${bindir}/wlan_sap_sta_setup.sh"
 
 SRC_URI:append = " file://init_qti_wlan_auto.service"
 SYSTEMD_SERVICE:${PN} = "init_qti_wlan_auto.service"
@@ -139,13 +144,34 @@ SYSTEMD_AUTO_ENABLE:${PN} = "disable"
 
 SRC_URI:append = " file://init.qti.wlan_on.sh"
 SRC_URI:append = " file://init.qti.wlan_off.sh"
+SRC_URI:append = " file://wlan_sap_sta_setup.sh"
 
 
 EXT_MODULES = "${@os.path.relpath("${S}", "${KERNEL_PLATFORM_PATH}")}"
 
+do_compile:sa510m:prepend() {
+    CFG_FILE=${S}/configs/sa510m_gki_qca6574_defconfig
+    CFG_1g_FILE=${S}/configs/sa510m.1g_gki_qca6574_defconfig
+    for cfg in ${_WLAN_CFG_OVERRIDE_510}
+    do
+        item="${cfg%=*}"
+        if (( `grep -c "$item" ${CFG_FILE}` )); then
+            sed -i "/$item/c\\$cfg" "${CFG_FILE}"
+        else
+            echo "$cfg" >> ${CFG_FILE}
+        fi
+        if (( `grep -c "$item" ${CFG_1g_FILE}` )); then
+            sed -i "/$item/c\\$cfg" "${CFG_1g_FILE}"
+        else
+            echo "$cfg" >> ${CFG_1g_FILE}
+        fi
+    done
+}
+
+
 do_compile:prepend() {
     if ${@bb.utils.contains('PREFERRED_VERSION_linux-msm', '5.15', 'true', 'false', d)}; then
-        CFG80211_FLAG="ccflags-y += -DCFG80211_SINGLE_NETDEV_MULTI_LINK_SUPPORT -D__ANDROID_COMMON_KERNEL__"
+        CFG80211_FLAG="ccflags-y += -DCFG80211_SINGLE_NETDEV_MULTI_LINK_SUPPORT"
         sed -i -e "/$(CONFIG_QCA_CLD_WLAN_PROFILE)_defconfig$/i${CFG80211_FLAG}" ${S}/Kbuild
     fi
 }
@@ -154,12 +180,20 @@ do_compile:prepend:sa410m() {
     sed -i -e "/Load wlanhost driver done/i${CMD}" ${WORKDIR}/init.qti.wlan_on.sh
 }
 
+# ------------------------------
+# Board platform selection
+# ------------------------------
+# Default to sa510m; override per MACHINE or in local.conf as needed.
+TARGET_BOARD_PLATFORM ?= "sa510m"
+# If your MACHINE is named 'sa510m-1g', this maps the platform string to 'sa510m.1g'
+TARGET_BOARD_PLATFORM:sa510m-1g = "sa510m.1g"
+
 do_compile:sa510m() {
     variant="${@bb.utils.contains('DEBUG_BUILD','1', "debug", "perf", d)}"
     cd ${KERNEL_PLATFORM_PATH}
     ln -sf ../../wlan
     ENABLE_DDK_BUILD=true \
-    TARGET_BOARD_PLATFORM=sa510m \
+    TARGET_BOARD_PLATFORM=${TARGET_BOARD_PLATFORM} \
     BUILD_CONFIG=${KERNEL_BUILD_CONFIG} \
     EXT_MODULES=${EXT_MODULES} \
     ROOTDIR=${WORKDIR}/ \
@@ -197,6 +231,7 @@ do_install:append() {
     install -d ${D}${bindir}
     install -D -m 0555 ${WORKDIR}/init.qti.wlan_on.sh ${D}${bindir}/init.qti.wlan_on.sh
     install -D -m 0555 ${WORKDIR}/init.qti.wlan_off.sh ${D}${bindir}/init.qti.wlan_off.sh
+    install -D -m 0555 ${WORKDIR}/wlan_sap_sta_setup.sh ${D}${bindir}/wlan_sap_sta_setup.sh
     if [ ${BASEMACHINE} != "sa510m" ]; then
         install -d ${D}/lib/firmware/${_MODNAME}/
         ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan30.b00 ${D}/lib/firmware/${_MODNAME}/

@@ -28,6 +28,8 @@
 #
 #
 
+machine=`cat /sys/devices/soc0/machine` 2>/dev/null
+
 if (lsmod|grep cnss2);then
 	echo -n "cnss2 already exist" > /dev/kmsg
 else
@@ -37,6 +39,10 @@ else
             if [ $2 == "enable" ];then
                 echo -n "start to load cnss2" > /dev/kmsg
                 modprobe cnss2
+                if (echo -n $machine|grep SA535M);then
+                    echo "trigger pcie rescan" > /dev/kmsg
+                    echo 1 > /sys/bus/pci/rescan
+                fi
             fi
             ;;
         cnss)
@@ -54,6 +60,10 @@ else
                 if [ "$soc_subtypeid" == "0" ]; then
                     echo -n "standalone ADP/TTP -> load cnss2 module" > /dev/kmsg
                     modprobe cnss2
+                    if (echo -n $machine|grep SA535M);then
+                        echo "trigger pcie rescan" > /dev/kmsg
+                        echo 1 > /sys/bus/pci/rescan
+                    fi
                 # Check if device is ADP/TTP with PCIe fusion
                 elif [ "$soc_subtypeid" == "1" ]; then
                     echo -n "ADP/TTP with PCIe fusion -> skip loading cnss2 module" > /dev/kmsg
@@ -61,6 +71,10 @@ else
                 elif [ "$soc_subtypeid" == "2" ]; then
                     echo -n "ADP/TTP with USB fusion -> load cnss2 module" > /dev/kmsg
                     modprobe cnss2
+                    if (echo -n $machine|grep SA535M);then
+                        echo "trigger pcie rescan" > /dev/kmsg
+                        echo 1 > /sys/bus/pci/rescan
+                    fi
                 # Check if device is ADP/TTP with Flashless PCIe fusion
                 elif [ "$soc_subtypeid" == "3" ]; then
                     echo -n "ADP/TTP with Flashless PCIe fusion -> skip loading cnss2 module" > /dev/kmsg
@@ -70,7 +84,29 @@ else
             # For SA525/SA510 IDP board
             elif [ "$soc_hwplatform" == "IDP" ]; then
                 echo -n "IDP -> load cnss2 module" > /dev/kmsg
-                modprobe cnss2
+
+                # Run the command and extract the line containing "Subtype:"
+                subtype_line=$(cdt_tool.sh -r | grep "Subtype:")
+
+                # Extract the value after "Subtype:"
+                subtype_value=$(echo "$subtype_line" | awk -F'Subtype:' '{print $2}' | xargs)
+
+                # Check the value and load the corresponding cnss2 mode
+                case "$subtype_value" in
+                  "00")
+                    modprobe cnss2
+                    if (echo -n $machine|grep SA535M);then
+                        echo "trigger pcie rescan" > /dev/kmsg
+                        echo 1 > /sys/bus/pci/rescan
+                    fi
+                    ;;
+                  "01")
+                    modprobe cnss2 sdio_mode=1
+                    ;;
+                  *)
+                    echo "Unknown subtype: $subtype_value"
+                    ;;
+                esac
             else
                 echo -n "Not supported platform from CDT, QCMAP_CLI will load cnss2 in needed" > /dev/kmsg
             fi

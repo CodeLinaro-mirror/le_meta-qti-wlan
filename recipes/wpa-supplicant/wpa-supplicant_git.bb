@@ -13,6 +13,9 @@ FILES:${PN} += "/usr/include/*"
 S = "${WORKDIR}/external/wpa_supplicant_8/wpa_supplicant"
 
 do_configure() {
+    if [ "${BASEMACHINE}" == "sa535m" ] ; then
+        sed -i -e 's/^CONFIG_EAP_PROXY=qmi/#CONFIG_EAP_PROXY=qmi/g' ${WORKDIR}/defconfig-qcacld
+    fi
     install -m 0644 ${WORKDIR}/defconfig-qcacld .config
     echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
 }

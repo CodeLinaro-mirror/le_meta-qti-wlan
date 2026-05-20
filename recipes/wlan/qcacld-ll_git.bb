@@ -10,8 +10,8 @@ python __anonymous () {
      d.setVar('WLAN_MODULE_NAME', 'wlan')
 }
 
-FILES:${PN}     += "${base_libdir}/firmware/wlan/*"
-FILES:${PN}     += "${base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko"
+FILES:${PN}     += "${nonarch_base_libdir}/firmware/wlan/*"
+FILES:${PN}     += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko"
 RPROVIDES:${PN} += "${@'kernel-module-${WLAN_MODULE_NAME}'.replace('_', '-')}"
 PROVIDES_NAME   = "kernel-module-${WLAN_MODULE_NAME}"
 
@@ -47,8 +47,8 @@ do_install () {
 }
 
 do_install:append:sdx20 () {
-    if [ -e ${D}/${base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko ]; then
-        mv ${D}/${base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko ${D}/${base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_TARGET_NAME}.ko
+    if [ -e ${D}/${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko ]; then
+        mv ${D}/${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_NAME}.ko ${D}/${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/${WLAN_MODULE_TARGET_NAME}.ko
     fi
 }
 

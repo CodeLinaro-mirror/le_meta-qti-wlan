@@ -6,9 +6,9 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5
 
 _MODNAME = "qca6595"
 FW_PATH_NAME = "qcn7605"
-FILES:${PN}     += "${base_libdir}/firmware/wlan/*"
-FILES:${PN}     += "${base_libdir}/firmware/*"
-FILES:${PN}     += "${base_libdir}/modules/${KERNEL_VERSION}/extra/${_MODNAME}.ko"
+FILES:${PN}     += "${nonarch_base_libdir}/firmware/wlan/*"
+FILES:${PN}     += "${nonarch_base_libdir}/firmware/*"
+FILES:${PN}     += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/${_MODNAME}.ko"
 PROVIDES_NAME   = "kernel-module-${_MODNAME}"
 RPROVIDES:${PN} += "${PROVIDES_NAME}-${KERNEL_VERSION}"
 
@@ -59,6 +59,7 @@ _WLAN_CFG_OVERRIDE_515 = "\
 						CONFIG_FW_THERMAL_THROTTLE=y\
 						CONFIG_SMMU_S1_UNMAP=y \
 						CONFIG_WLAN_CE4_SZ_QCN7605=2048 \
+						CONFIG_SIR_SAP_MAX_NUM_PEERS=32 \
 						CONFIG_AUTO_PLATFORM=y \
 						"
 _WLAN_CFG_OVERRIDE_415 = "\
@@ -70,6 +71,7 @@ _WLAN_CFG_OVERRIDE_415 = "\
 						CONFIG_QCOM_LTE_COEX=y \
 						CONFIG_SMMU_S1_UNMAP=y \
 						CONFIG_WLAN_CE4_SZ_QCN7605=2048 \
+						CONFIG_SIR_SAP_MAX_NUM_PEERS=32 \
 						CONFIG_AUTO_PLATFORM=y \
                         "
 EXTRA_OEMAKE:append:sa515m = " WLAN_CFG_OVERRIDE=${_WLAN_CFG_OVERRIDE_515}"
