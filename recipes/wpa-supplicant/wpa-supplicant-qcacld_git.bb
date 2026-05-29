@@ -9,11 +9,11 @@ SRC_URI += "file://defconfig-qcacld"
 
 FILES:${PN} += "/usr/include/*"
 
-S = "${WORKDIR}/external/wpa_supplicant_8/wpa_supplicant"
+S = "${UNPACKDIR}/external/wpa_supplicant_8/wpa_supplicant"
 
 do_configure() {
-    sed -i -e 's/^CONFIG_EAP_PROXY=qmi/#CONFIG_EAP_PROXY=qmi/g' ${WORKDIR}/defconfig-qcacld
-    install -m 0644 ${WORKDIR}/defconfig-qcacld .config
+    sed -i -e 's/^CONFIG_EAP_PROXY=qmi/#CONFIG_EAP_PROXY=qmi/g' ${UNPACKDIR}/defconfig-qcacld
+    install -m 0644 ${UNPACKDIR}/defconfig-qcacld .config
     echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
 }
 
@@ -25,3 +25,5 @@ INCSUFFIX:sa525m = "wpa-supplicant_auto"
 INCSUFFIX:sa535m = "wpa-supplicant_auto"
 INCSUFFIX:sa510m = "wpa-supplicant_auto"
 include ${INCSUFFIX}.inc
+INSANE_SKIP:${PN} += "buildpaths"
+INSANE_SKIP:${PN}-dbg += "buildpaths"

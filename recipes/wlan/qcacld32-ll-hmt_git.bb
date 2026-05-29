@@ -31,8 +31,8 @@ SRC_URI = "file://wlan/qcacld-3.0/"
 SRC_URI += "file://wlan/qca-wifi-host-cmn/"
 SRC_URI += "file://wlan/fw-api/"
 
-S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn"
-S = "${WORKDIR}/wlan/qcacld-3.0"
+S1 = "${UNPACKDIR}/wlan/qca-wifi-host-cmn"
+S = "${UNPACKDIR}/wlan/qcacld-3.0"
 
 FIRMWARE_PATH = "${D}/${nonarch_base_libdir}/firmware/wlan/qca_cld/${_MODNAME}"
 
@@ -240,7 +240,7 @@ WLAN_PLATFORM_PATH = "${WORKDIR}/recipe-sysroot/usr/include"
 DATA_IPA_PATH = "${WORKDIR}/recipe-sysroot/usr/include"
 DATA_IPA_INC = "${WORKDIR}/recipe-sysroot/usr/include/ipa"
 DATA_IPA_UAPI_INC = "${WORKDIR}/recipe-sysroot/usr/include/ipa/uapi"
-WLAN_KBUILD_EXTRA = "KBUILD_EXTRA_SYMBOLS=${WORKDIR}/Module.symvers"
+WLAN_KBUILD_EXTRA = "KBUILD_EXTRA_SYMBOLS=${UNPACKDIR}/Module.symvers"
 WLAN_PLATFORM_CFG = " KBUILD_EXTRA=${WLAN_KBUILD_EXTRA} WLAN_PLATFORM_INC=${WLAN_PLATFORM_PATH}"
 WLAN_IPA_CFG = " DATA_IPA_INC=${DATA_IPA_INC} DATA_IPA_UAPI_INC=${DATA_IPA_UAPI_INC}"
 
@@ -286,11 +286,11 @@ do_compile:prepend() {
     fi
 
     if ${@bb.utils.contains('PREFERRED_VERSION_linux-msm', '5.15', 'true', 'false', d)}; then
-        cat ${WLAN_PLATFORM_PATH}/wlan-platform-dlkm/Module.symvers > ${WORKDIR}/Module.symvers
+        cat ${WLAN_PLATFORM_PATH}/wlan-platform-dlkm/Module.symvers > ${UNPACKDIR}/Module.symvers
     elif [ "${BASEMACHINE}" == "sa535m" ] ; then
-        cat ${WLAN_PLATFORM_PATH}/wlan-platform-dlkm/Module.symvers > ${WORKDIR}/Module.symvers
+        cat ${WLAN_PLATFORM_PATH}/wlan-platform-dlkm/Module.symvers > ${UNPACKDIR}/Module.symvers
         if ${@bb.utils.contains('_WLAN_CFG_OVERRIDE_535', 'CONFIG_IPA3=y', 'true', 'false', d)}; then
-            cat ${DATA_IPA_PATH}/ipa/Module.symvers >> ${WORKDIR}/Module.symvers
+            cat ${DATA_IPA_PATH}/ipa/Module.symvers >> ${UNPACKDIR}/Module.symvers
         fi
     fi
 }
@@ -322,12 +322,12 @@ do_install:append() {
     ln -sf ${nonarch_base_libdir}/firmware/image/${FW_PATH_NAME}/bdwlan02.e03 ${D}/${nonarch_base_libdir}/firmware/${FW_PATH_NAME}/
     ln -sf ${nonarch_base_libdir}/firmware/image/${FW_PATH_NAME}/bdwlan.elf ${D}/${nonarch_base_libdir}/firmware/${FW_PATH_NAME}/
     install -d ${D}${bindir}
-    install -D -m 0755 ${WORKDIR}/init.qti.wlan_on.sh ${D}${bindir}/init.qti.wlan_on.sh
-    install -D -m 0755 ${WORKDIR}/init.qti.wlan_off.sh ${D}${bindir}/init.qti.wlan_off.sh
-    install -D -m 0755 ${WORKDIR}/wlan_sap_sta_setup.sh ${D}${bindir}/wlan_sap_sta_setup.sh
+    install -D -m 0755 ${UNPACKDIR}/init.qti.wlan_on.sh ${D}${bindir}/init.qti.wlan_on.sh
+    install -D -m 0755 ${UNPACKDIR}/init.qti.wlan_off.sh ${D}${bindir}/init.qti.wlan_off.sh
+    install -D -m 0755 ${UNPACKDIR}/wlan_sap_sta_setup.sh ${D}${bindir}/wlan_sap_sta_setup.sh
     # Install systemd service file
     if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}; then
-        install -m 0644 ${WORKDIR}/init_qti_wlan_auto.service -D ${D}${systemd_unitdir}/system/init_qti_wlan_auto.service
+        install -m 0644 ${UNPACKDIR}/init_qti_wlan_auto.service -D ${D}${systemd_unitdir}/system/init_qti_wlan_auto.service
     fi
 }
 

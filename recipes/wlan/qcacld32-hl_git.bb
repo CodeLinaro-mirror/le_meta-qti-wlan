@@ -1,4 +1,4 @@
-WLAN_BB = 'autotools-brokensep module qperf'
+WLAN_BB = 'autotools-brokensep module'
 WLAN_BB:remove:sa535m = 'qperf'
 inherit ${WLAN_BB}
 
@@ -9,7 +9,7 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/ISC;md5=f3b90e
 LIC_FILES_CHKSUM += "file://${COREBASE}/meta/files/common-licenses/BSD-3-Clause;md5=550794465ba0ec5312d6919e203a55f9"
 LIC_FILES_CHKSUM += "file://${COREBASE}/meta-qti-bsp/files/common-licenses/BSD-3-Clause-Clear;md5=3771d4920bd6cdb8cbdf1e8344489ee0"
 
-_LINUX_BUILD_TOP = "${WORKDIR}/wlan"
+_LINUX_BUILD_TOP = "${UNPACKDIR}/wlan"
 EXTRA_OEMAKE:append = " LINUX_BUILD_TOP=${_LINUX_BUILD_TOP}"
 
 _MODNAME = "qca6574au-3"
@@ -43,8 +43,8 @@ SRC_URI += "file://wlan/fw-api/"
 SRC_URI:append = " file://device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_sdio_qca6174.ini"
 SRC_URI:append = " file://device/qcom/wlan/sdx_auto/wlan_mac.bin"
 
-S = "${WORKDIR}/wlan/qcacld-3.0/"
-S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn/"
+S = "${UNPACKDIR}/wlan/qcacld-3.0/"
+S1 = "${UNPACKDIR}/wlan/qca-wifi-host-cmn/"
 FIRMWARE_PATH = "${D}/usr/lib/firmware/wlan/qca_cld/${_MODNAME}"
 
 EXT_MODULES = "${@os.path.relpath("${S}", "${KERNEL_PLATFORM_PATH}")}"
@@ -114,7 +114,7 @@ do_compile:sa510m() {
     TARGET_BOARD_PLATFORM=${TARGET_BOARD_PLATFORM} \
     BUILD_CONFIG=${KERNEL_BUILD_CONFIG} \
     EXT_MODULES=${EXT_MODULES} \
-    ROOTDIR=${WORKDIR}/ \
+    ROOTDIR=${UNPACKDIR}/ \
     MODULE_OUT=${S} \
     OUT_DIR=${KERNEL_PREBUILT_PATH} \
     VARIANT=${variant}_defconfig \
@@ -132,9 +132,9 @@ do_install() {
     install -d ${D}${includedir}/qcacld/
     install -m 0644 ${S1}/utils/nlink/inc/wlan_nlink_common.h ${D}${includedir}/qcacld/
 
-    install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_sdio_qca6174.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
+    install -D -m 0644 ${UNPACKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_sdio_qca6174.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
     chmod -R 0664 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
-    install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/wlan_mac.bin ${FIRMWARE_PATH}/wlan_mac.bin
+    install -D -m 0644 ${UNPACKDIR}/device/qcom/wlan/sdx_auto/wlan_mac.bin ${FIRMWARE_PATH}/wlan_mac.bin
     chmod -R 0664 ${FIRMWARE_PATH}/wlan_mac.bin
 }
 
