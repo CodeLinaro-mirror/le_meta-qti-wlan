@@ -2218,23 +2218,42 @@ EOF
 	fi
 
 	entropy_file=${wlan_module_path}/entropy-$ifname.bin
-	[ "${FORCE_USE_WLAN_CONFIG_TEMPLATE}" = "1" ] && {
-		if [ "$ifname" = "wlan0" ]; then
-			src_config="/etc/misc/wifi/hostapd.conf"
-		elif [ "$ifname" = "wlan1" ]; then
-			src_config="/etc/misc/wifi/hostapd-wlan1.conf"
-			[[ $concurrency_mode = "*STA*" ]] && src_config="/etc/misc/wifi/sta_mode_hostapd.conf"
-		elif [ "$ifname" = "wlan2" ]; then
-			src_config="/etc/misc/wifi/hostapd-wlan2.conf"
-		elif [ "$ifname" = "wlan3" ]; then
-			src_config="/etc/misc/wifi/hostapd-wlan3.conf"
-		fi
 
-		[ -n $src_config ] && {
+	# Interface name mapping
+	# Role    2.4G       5G        6G
+	# AP1    wlan20    wlan50    wlan60
+	# AP2    wlan21    wlan51    wlan61
+	# STA    wlan0     wlan0     wlan0
+	if [ "${FORCE_USE_WLAN_CONFIG_TEMPLATE}" = "1" ]; then
+		local src_config=
+
+		case "$ifname" in
+			wlan50)
+				case "$concurrency_mode" in
+					*STA*)
+						src_config="/etc/misc/wifi/sta_mode_hostapd.conf"
+						;;
+					*)
+						src_config="/etc/misc/wifi/hostapd.conf"
+						;;
+				esac
+				;;
+			wlan51)
+				src_config="/etc/misc/wifi/hostapd-wlan1.conf"
+				;;
+			wlan20)
+				src_config="/etc/misc/wifi/hostapd-wlan2.conf"
+				;;
+			wlan21)
+				src_config="/etc/misc/wifi/hostapd-wlan3.conf"
+				;;
+		esac
+
+		if [ -n "$src_config" ]; then
 			cp $src_config ${wlan_module_path}/hostapd-$ifname.conf
 			qlog_cmd "src config: $src_config, dst: ${wlan_module_path}/hostapd-$ifname.conf"
-		}
-	}
+		fi
+	fi
 
 	# Attach wlan ifaces to hostapd if "force_hostapd_attach" is set
 	# to 1. SDX75 boards will have it set to 1 always; SDX65 boards
