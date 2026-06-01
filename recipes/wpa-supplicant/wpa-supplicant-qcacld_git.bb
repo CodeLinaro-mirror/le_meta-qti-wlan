@@ -31,6 +31,8 @@ PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"
 
 LDFLAGS:append:neo = " -Wl,--no-as-needed -L${RECIPE_SYSROOT}/usr/lib -llog"
 CFLAGS:append:neo =" -DCONFIG_ANDROID_LOG"
+LDFLAGS:append:vienna = " -Wl,--no-as-needed -L${RECIPE_SYSROOT}/usr/lib -llog"
+CFLAGS:append:vienna = " -DCONFIG_ANDROID_LOG"
 EXTRA_OEMAKE:append:ar-sg1 = " CONFIG_OCV=y"
 
 do_configure() {
@@ -57,6 +59,11 @@ do_configure:neo() {
     install -m 0644 ${WORKDIR}/${BASEMACHINE}/defconfig-qcacld .config
     echo "CFLAGS +=\"-I${STAGING_INCDIR}/libnl3\"" >> .config
     rm -rf ${STAGING_LIBDIR}/libwpa_supplicant_8_lib.so*
+    echo "EXTRALIBS +=\"-llog\"" >> .config
+    echo "LIBS +=\"-llog\"" >> .config
+}
+
+do_configure:append:vienna() {
     echo "EXTRALIBS +=\"-llog\"" >> .config
     echo "LIBS +=\"-llog\"" >> .config
 }
