@@ -8,10 +8,10 @@ BSD-3-Clause;md5=550794465ba0ec5312d6919e203a55f9"
 
 DEPENDS += "virtual/kernel"
 
+FILESEXTRAPATHS:prepend := "${WORKSPACE}/wlan:"
 SRC_URI = "file://wlan-devicetree/"
 S = "${WORKDIR}/wlan-devicetree"
 
-FILESPATH =+ "${WORKSPACE}/wlan:${WORKSPACE}/wlan-proprietary:"
 do_configure[depends] = "virtual/kernel:do_deploy"
 
 EXTRA_OEMAKE += "TARGET_SUPPORT=${BASEMACHINE}"
