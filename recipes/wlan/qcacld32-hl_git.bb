@@ -139,10 +139,19 @@ do_install() {
 }
 
 do_module_signing() {
-    if [ -f ${KERNEL_PREBUILT_PATH} ]; then
-        WLAN_KO=${D}/${base_libdir}/modules/${KERNEL_VERSION}/extra
-        export LD_LIBRARY_PATH=${KERNEL_PREBUILT_PATH}/dist
-        ${KERNEL_PREBUILT_PATH}/dist/sign-file sha1 ${KERNEL_PREBUILT_PATH}/dist/signing_key.pem ${KKERNEL_PREBUILT_PATH}/dist/signing_key.x509 ${WLAN_KO}/${_MODNAME}.ko
+    if [ "${BASEMACHINE}" != "sa510m" ]; then
+        if [ -f ${KERNEL_PREBUILT_PATH} ]; then
+            WLAN_KO=${D}/${base_libdir}/modules/${KERNEL_VERSION}/extra
+            export LD_LIBRARY_PATH=${KERNEL_PREBUILT_PATH}/dist
+            ${KERNEL_PREBUILT_PATH}/dist/sign-file sha1 ${KERNEL_PREBUILT_PATH}/dist/signing_key.pem ${KERNEL_PREBUILT_PATH}/dist/signing_key.x509 ${WLAN_KO}/${_MODNAME}.ko
+        fi
+    else
+        variant="${@bb.utils.contains('DEBUG_BUILD','1', "debug", "perf", d)}"
+        if [ -f ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/signing_key.pem ]; then
+            bbnote "Signing ${PN} module"
+            export LD_LIBRARY_PATH=${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist
+            ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/sign-file sha1 ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/signing_key.pem ${KERNEL_PLATFORM_PATH}/../out/msm-kernel-sa510m-${variant}_defconfig/dist/signing_key.x509 ${PKGDEST}/${PN}${base_libdir}/modules/${KERNEL_VERSION}/extra/${_MODNAME}.ko
+        fi
     fi
 }
 
