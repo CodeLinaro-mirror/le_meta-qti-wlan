@@ -6,8 +6,7 @@ START=10
 STOP=89
 
 start() {
-
-	/etc/initscripts/start_wlan_cnss_le start
+	/usr/bin/start_wlan_cnss_le start
 }
 
 stop() {
