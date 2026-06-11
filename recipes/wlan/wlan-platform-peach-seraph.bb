@@ -37,16 +37,6 @@ EXTRA_OEMAKE += "'EXTRA_CFLAGS=-I${S}/inc -I${S}/cnss_utils -I${STAGING_INCDIR}/
 do_configure[noexec] = "1"
 
 
-do_compile:prepend() {
-
-    SOC_VERSION=$(echo ${KERNEL_VERSION} | cut -d'.' -f1,2)
-    # Copy soc-repo headers to staging directory before compilation
-    SOC_REPO_SRC="${TMPDIR}/work/${MACHINE}-oe-linux/soc-modules/${SOC_VERSION}/soc-repo"
-
-    install -d ${STAGING_INCDIR}/soc-repo
-    cp -rp ${SOC_REPO_SRC}/include ${STAGING_INCDIR}/soc-repo/
-}
-
 do_compile() {
     if [ -f ${STAGING_INCDIR}/soc-repo/include/linux/mhi.h ]; then
         cp --remove-destination \
@@ -72,15 +62,6 @@ do_install() {
     done
 
     install ${WORKDIR}/wlan/platform/Module.symvers -D ${D}${base_libdir}/modules/${KERNEL_VERSION}/cnsswlan-kernel/Module.symvers
-}
-
-do_install:prepend() {
-    SOC_VERSION=$(echo ${KERNEL_VERSION} | cut -d'.' -f1,2)
-    # Install soc-repo headers needed by dependent recipes
-    SOC_REPO_SRC="${TMPDIR}/work/${MACHINE}-oe-linux/soc-modules/${SOC_VERSION}/soc-repo"
-
-    install -d ${D}${includedir}/soc-repo
-    cp -rp ${SOC_REPO_SRC}/include ${D}${includedir}/soc-repo/
 }
 
 do_module_signing[noexec] = "1"
