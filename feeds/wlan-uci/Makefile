@@ -58,6 +58,7 @@ define Package/$(PKG_NAME)/install
 ifeq ($(BOARD),sdx35)
 	mv $(1)/lib/wifi/qcacld32-modules $(1)/etc/misc/wifi/qcacld32-modules.hsp
 	$(CP) files/qcacld32-modules.rome $(1)/etc/misc/wifi/
+	$(CP) files/qcacld32-modules.rome.sdio $(1)/etc/misc/wifi/
 	$(LN) -rsf $(1)/etc/misc/wifi/qcacld32-modules $(1)/lib/wifi/qcacld32-modules
 	$(LN) -rsf $(1)/etc/misc/wifi/qcacld32-modules.hsp $(1)/etc/misc/wifi/qcacld32-modules
 endif
