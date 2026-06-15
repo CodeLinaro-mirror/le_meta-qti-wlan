@@ -49,6 +49,9 @@ case "$1" in
 		if [ -f $basepath/cnss.ko ]; then
 			insmod $basepath/cnss.ko
 		fi
+		if [ -f $basepath/wlan_prealloc.ko ] && [ ! -d /sys/module/wlan_prealloc ]; then
+			insmod $basepath/wlan_prealloc.ko
+		fi
 		;;
 	"ROME_SDIO")
 		if [ -f $basepath/cnss_crypto.ko ]; then
@@ -57,7 +60,7 @@ case "$1" in
 		if [ -f $basepath/cnss_sdio_bus.ko ]; then
 			insmod $basepath/cnss_sdio_bus.ko
 		fi
-		if [ -f $basepath/wlan_prealloc.ko ]; then
+		if [ -f $basepath/wlan_prealloc.ko ] && [ ! -d /sys/module/wlan_prealloc ]; then
 			insmod $basepath/wlan_prealloc.ko
 		fi
 		;;
