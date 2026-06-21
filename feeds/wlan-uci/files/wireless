@@ -1,0 +1,34 @@
+config wifi-device wifi0
+	option type       qcacld32
+	option hwmode     11axa
+	option channel    auto
+	# REMOVE THIS LINE TO ENABLE WIFI:
+	option disabled   1
+
+config wifi-device wifi1
+	option type       qcacld32
+	option hwmode     11axg
+	option channel    auto
+	# REMOVE THIS LINE TO ENABLE WIFI:
+	option disabled   1
+
+config wifi-iface
+	option device     wifi0
+	option network    lan
+	option mode       ap
+	option ssid       QsoftAP_5G
+	option encryption psk2+ccmp
+	option key        1234567890
+	option disabled   1
+
+config wifi-iface
+	option device     wifi1
+	option network    lan
+	option mode       ap
+	option ssid       QsoftAP_2G
+	option encryption psk2+ccmp
+	option key        1234567890
+	option disabled   1
+
+config qcacld32 'qcacld32'
+	option wds_ext    0

@@ -32,9 +32,9 @@ else ifeq ($(BOARD),sdx85)
 	ifeq ($(TARGET_VARIANT),perf)
 		WLAN_INI_FILE := $(WLAN_INI_PERF)
 	endif
-else ifeq ($(BOARD),sdxecho)
-	CONFIGURE_ARGS += --enable-target-sdxecho=yes
-	WLAN_SUB_ADDR :=wlan_sdxecho
+else ifeq ($(BOARD),echo)
+	CONFIGURE_ARGS += --enable-target-echo=yes
+	WLAN_SUB_ADDR :=wlan_echo
 	ifeq ($(TARGET_VARIANT),perf)
 		WLAN_INI_FILE := $(WLAN_INI_PERF)
 	endif
@@ -91,7 +91,7 @@ define Package/$(PKG_NAME)/install
 ifeq ($(BOARD),sdx85)
 	chmod 0664 $(1)/$(MISC_WIFI_ADDR)/$(WLAN_INI_DEFAULT)
 endif
-ifeq ($(BOARD),sdxecho)
+ifeq ($(BOARD),echo)
 	chmod 0664 $(1)/$(MISC_WIFI_ADDR)/$(WLAN_INI_DEFAULT)
 endif
 	$(CP) $(CONF_ADDR)/wlan $(1)/$(INIT_D_ADDR)/
@@ -104,6 +104,9 @@ ifeq ($(BOARD),sdx35)
 	$(LN) -rsf $(1)/$(MISC_WIFI_ADDR)/WCNSS_qcom_cfg.hsp.ini $(1)/$(MISC_WIFI_ADDR)/WCNSS_qcom_cfg.ini
 	$(INSTALL_BIN) $(CONF_ADDR)/start_cnss_le.init $(1)/etc/init.d/
 	$(INSTALL_BIN) $(CONF_ADDR)/start_cnss_le $(1)/etc/initscripts/
+# Add Rome SDIO configuration for SDX35
+	mkdir -p  $(1)/$(FIRMWARE_ADDR)/wlan_sdio
+	$(LN) -rsf $(1)/$(MISC_WIFI_ADDR)/WCNSS_qcom_cfg.Rome.ini $(1)/$(FIRMWARE_ADDR)/wlan_sdio/$(WLAN_INI_DEFAULT)
 endif
 endef
 

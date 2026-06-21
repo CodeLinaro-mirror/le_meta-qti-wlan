@@ -1,11 +1,13 @@
-QTIWLAN:= wlan-conf wpa-supplicant-8-lib hostapd-daemon wlan-sigma-dut  wpa-supplicant-qcacld
+QTIWLAN:= wlan-conf wpa-supplicant-8-lib hostapd-daemon wlan-sigma-dut  wpa-supplicant-qcacld wlan-uci
+QTIWLANMIN:=kmod-emesh-sp-mcc
 
-ifeq ($(BOARD),sdxecho)
+ifeq ($(BOARD),echo)
   QTIWLAN+=kmod-qcacld32-ll kmod-wlan-cnss2 cld80211-lib kmod-wlan-dts-oss
 endif
 
 ifeq ($(BOARD),sdx85)
   QTIWLAN+=kmod-qcacld32-ll kmod-wlan-cnss2 cld80211-lib
+  QTIWLAN+=kmod-emesh-sp-mcc
 endif
 
 ifeq ($(BOARD),sdx75)
@@ -15,4 +17,6 @@ endif
 
 ifeq ($(BOARD),sdx35)
   QTIWLAN+=kmod-qcacld32-ll kmod-qcacld-ll kmod-wlan-cnss2 kmod-wlan-cnss-legacy cld80211-lib
+  #Enable WLAN SDIO for SDX35 IOT only
+  QTIWLANIOT+=kmod-wlan-cnss-sdio  kmod-qcacld-ll-sdio
 endif

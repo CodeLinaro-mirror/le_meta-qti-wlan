@@ -2,11 +2,12 @@
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
-From 9fdbfe68f0c7ab88f4494c3ac86645194733eb51 Mon Sep 17 00:00:00 2001
+From 8b6d5e418620c44597897c768ef18d748b46796d Mon Sep 17 00:00:00 2001
 From: Xinyue Ling <xinyling@qti.qualcomm.com>
-Date: Thu, 27 Nov 2025 13:22:48 +0800
+Date: Wed, 25 Feb 2026 16:47:27 +0800
 Subject: [PATCH] sigma-dut: MAP support on yocto build
 
+Change-Id: I5f1d4116a0d14e194174ff9b1a68b32b523b0ecb
 Signed-off-by: Xinyue Ling <xinyling@qti.qualcomm.com>
 ---
  Android.mk  |    1 +
@@ -15,12 +16,12 @@ Signed-off-by: Xinyue Ling <xinyling@qti.qualcomm.com>
  cmds_reg.c  |    1 +
  dev.c       |   27 +-
  dpp.c       |   22 +-
- map.c       | 8437 +++++++++++++++++++++++++++++++++++++++++++++++++++
+ map.c       | 8332 +++++++++++++++++++++++++++++++++++++++++++++++++++
  sigma_dut.c |   13 +-
  sigma_dut.h |   87 +-
  sta.c       |   43 +-
  utils.c     |  128 +-
- 11 files changed, 8834 insertions(+), 78 deletions(-)
+ 11 files changed, 8729 insertions(+), 78 deletions(-)
  create mode 100644 map.c
 
 diff --git a/Android.mk b/Android.mk
@@ -530,10 +531,10 @@ index 6ba88b04..8b7bfccc 100644
  
 diff --git a/map.c b/map.c
 new file mode 100644
-index 00000000..4502e0af
+index 00000000..15bd2292
 --- /dev/null
 +++ b/map.c
-@@ -0,0 +1,8437 @@
+@@ -0,0 +1,8332 @@
 +/*
 + * Sigma Control API DUT (station/MAP)
 + * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
@@ -912,30 +913,29 @@ index 00000000..4502e0af
 +	return 1;
 +}
 +
-+
 +const char *get_param2(struct sigma_cmd *cmd, const char *name, int *ndx)
 +{
 +	int i;
 +
-+	printf("qcdbg, enter get_param2, name: %s\n", name);
++	printf("%s: looking for name: %s\n", __func__, name);
 +
 +	for (i = 0; i < cmd->count; i++) {
-+		printf("qcdbg, name:%s, cmd->params[%d]=%s, cmd->values[%d]=%s\n",
-+			name, i, cmd->params[i], i, ((!cmd->values[i]) ? "NULL" : cmd->values[i]));
 +		if (strcasecmp(name, cmd->params[i]) == 0) {
 +			*ndx = i;
-+			printf("qcdbg, exit get_param2, find name: %s, *ndx=%d\n", name, i);
++			printf("%s: find matching cmd->params[%d]=%s, cmd->values[%d]=%s\n",
++				__func__, i, cmd->params[i], i,
++				((!cmd->values[i]) ? "NULL" : cmd->values[i]));
 +			return cmd->values[i];
 +		}
 +	}
-+	printf("qcdbg, exit get_param2, failed to find name: %s\n", name);
++	printf("%s: failed to find name: %s\n", __func__, name);
 +	*ndx = -1;
 +	return NULL;
 +}
++
 +const char *map_get_param_ndx(struct sigma_cmd *cmd, const char *name,
 +			      const int ndx)
 +{
-+	printf("\nndx=%d count=%d\n", ndx, cmd->count);
 +	if (ndx < cmd->count && ndx >= 0) {
 +		if (strcasecmp(name, cmd->params[ndx]) == 0)
 +			return cmd->values[ndx];
@@ -7655,10 +7655,10 @@ index 00000000..4502e0af
 +	int value;
 +
 +	const bool afile_exists =
-+	    file_exists("/etc/config/map.conf") ? true : false;
++		file_exists("/etc/config/map.conf") ? true : false;
 +
 +	const bool bsta_file_exists =
-+	    file_exists("/etc/config/map_bsta.conf") ? true : false;
++		file_exists("/etc/config/map_bsta.conf") ? true : false;
 +
 +	while (one_more) {
 +		if ((i & 0x0F) == 10)
@@ -7724,11 +7724,9 @@ index 00000000..4502e0af
 +		map_require_new_line_bsta = false;
 +
 +		val = get_param2(cmd, bss_info, &k);
-+		val1 = get_param2(cmd, bss_info_mld_group, &k);
-+		val3 = get_param2(cmd, bsta_info, &k);
 +
 +		if (val) {
-+			printf("\nvalbss=%s\n", val);
++			printf("val=%s\n", val);
 +			if (found_one == false) {
 +				pfd = fopen("/etc/config/map.conf", "w");
 +				if (pfd == NULL)
@@ -7759,11 +7757,9 @@ index 00000000..4502e0af
 +			       NULL)
 +				;
 +
-+			printf("\nj=%d\n", j);
-+
 +			if (j == 8) {
 +				fprintf(pfd, "%02x%02x%02x%02x%02x%02x,%s,%s,%"
-+					     "s,%s,%s,%s,%s",
++					"s,%s,%s,%s,%s",
 +					map_addr[0], map_addr[1], map_addr[2],
 +					map_addr[3], map_addr[4], map_addr[5],
 +					token_p[1], token_p[2], token_p[3],
@@ -7789,187 +7785,84 @@ index 00000000..4502e0af
 +			if (dut->program == PROGRAM_MAPR2 || dut->program == PROGRAM_MAPR3 ||
 +				dut->program == PROGRAM_MAPR4 || dut->program == PROGRAM_MAPR5 ||
 +				dut->program == PROGRAM_MAPR6) {
-+				printf("\ni=%d k=%d\n", i, k);
 +				tlvtype[8] = tlvlength[10] = tlvvalue[9] = '1';
-+				tlvtype[9] = tlvlength[11] = tlvvalue[10] =
-+				    '\0';
++				tlvtype[9] = tlvlength[11] = tlvvalue[10] = '\0';
 +				k++;
 +
 +				for (l = 0; l < 2; l++) {
++					printf("parse %s %s %s\n", tlvtype, tlvlength, tlvvalue);
 +
-+					printf("\n%s %s %s\n", tlvtype,
-+					       tlvlength, tlvvalue);
-+
-+					val2 = map_get_param_ndx(cmd, tlvtype,
-+								k++);
++					val2 = map_get_param_ndx(cmd, tlvtype, k++);
 +					if (val2) {
 +						found_one_tlv = true;
-+						if (strlen(val2) >
-+						    sizeof(map_tlvtype) - 1) {
-+							send_resp(dut, conn,
-+								  SIGMA_ERROR,
-+								  "errorCode,"
-+								  "MAP invalid "
-+								  "tlvtype");
++						if (strlen(val2) > sizeof(map_tlvtype) - 1) {
++							send_resp(dut, conn, SIGMA_ERROR,
++								"errorCode, MAP invalid tlvtype");
 +							goto map_set_config_error;
 +						}
-+						snprintf(map_tlvtype,
-+							 sizeof(map_tlvtype),
-+							 "%s", val2);
-+						dut->map_tlvtype =
-+						    (unsigned int)get_value(
-+							map_tlvtype);
++						snprintf(map_tlvtype, sizeof(map_tlvtype), "%s", val2);
++						dut->map_tlvtype = (unsigned int)get_value(map_tlvtype);
 +
-+						sigma_dut_print(
-+						    dut, DUT_MSG_DEBUG,
-+						    "MAP: tlvtype: %s",
-+						    map_tlvtype);
++						sigma_dut_print(dut, DUT_MSG_DEBUG,
++							"MAP: tlvtype: %s", map_tlvtype);
 +
-+						val2 = map_get_param_ndx(
-+						    cmd, tlvlength, k++);
++						val2 = map_get_param_ndx(cmd, tlvlength, k++);
 +						if (val2) {
-+							if (strlen(val2) >
-+							    sizeof(
-+								map_tlvlength) -
-+								1) {
-+								send_resp(
-+								    dut, conn,
-+								    SIGMA_ERROR,
-+								    "errorCode,"
-+								    "MAP "
-+								    "invalid "
-+								    "tlvlengt"
-+								    "h");
++							if (strlen(val2) > sizeof(map_tlvlength) - 1) {
++								send_resp(dut, conn, SIGMA_ERROR,
++									"errorCode, MAP invalid tlvlength");
 +								goto map_set_config_error;
 +							}
-+							snprintf(
-+							    map_tlvlength,
-+							    sizeof(
-+								map_tlvlength),
-+							    "%s", val2);
-+							sigma_dut_print(
-+							    dut, DUT_MSG_DEBUG,
-+							    "MAP: tlvlength: "
-+							    "%s",
-+							    map_tlvlength);
++							snprintf(map_tlvlength, sizeof(map_tlvlength), "%s", val2);
++							sigma_dut_print(dut, DUT_MSG_DEBUG,
++								"MAP: tlvlength: %s", map_tlvlength);
 +						}
 +
-+						val2 = map_get_param_ndx(
-+						    cmd, tlvvalue, k++);
++						val2 = map_get_param_ndx(cmd, tlvvalue, k++);
 +						if (val2) {
-+							map_removeAllCurlyBrackets(
-+							    val2, mod);
-+							printf("\nmod=%s\n",
-+							       mod);
++							map_removeAllCurlyBrackets(val2, mod);
++							printf("mod=%s\n", mod);
 +
-+							switch (
-+							    dut->map_tlvtype) {
++							switch (dut->map_tlvtype) {
 +							case IEEE1905_TLV_TYPE_DEFAULT_802_1Q_SETTINGS:
 +								/* VLAN ID */
-+								token_p[0] =
-+								    strtok_r(
-+									mod,
-+									" ",
-+									&saveptr);
++								token_p[0] = strtok_r(mod, " ", &saveptr);
 +								if (!token_p[0])
 +									return -1;
-+								if ((value = get_value(
-+									 token_p
-+									     [0])) <
-+								    0)
++								if ((value = get_value(token_p[0])) < 0)
 +									return -1;
-+								snprintf(
-+								    buf,
-+								    sizeof(buf),
-+								    ",B5,%d",
-+								    (unsigned char)
-+									value);
-+								fprintf(pfd,
-+									"%s",
-+									buf);
++								snprintf(buf, sizeof(buf), ",B5,%d", (unsigned char)value);
++								fprintf(pfd, "%s", buf);
 +
-+								/* Default PCP
-+								 */
-+								token_p[0] =
-+								    strtok_r(
-+									NULL,
-+									" ",
-+									&saveptr);
++								/* Default PCP */
++								token_p[0] = strtok_r(NULL, " ", &saveptr);
 +								if (!token_p[0])
 +									return -1;
-+								if ((value = get_value(
-+									 token_p
-+									     [0])) <
-+								    0)
++								if ((value = get_value(token_p[0])) < 0)
 +									return -1;
-+								fprintf(pfd,
-+									",%d",
-+									value);
++								fprintf(pfd, ",%d", value);
 +
 +								break;
 +
 +							case IEEE1905_TLV_TYPE_TRAFFIC_SEPARATION_POLICY:
-+								if (map_parse_traffic_separation_policy_tlv(
-+									dut,
-+									mod,
-+									buf,
-+									sizeof(
-+									    buf),
-+									&value) <
-+								    1) {
-+									sigma_dut_print(
-+									    dut,
-+									    SIGMA_ERROR,
-+									    "MA"
-+									    "P:"
-+									    " p"
-+									    "ar"
-+									    "si"
-+									    "ng"
-+									    " 1"
-+									    "90"
-+									    "5_"
-+									    "tl"
-+									    "v"
-+									    " T"
-+									    "ra"
-+									    "ff"
-+									    "ic"
-+									    " s"
-+									    "ep"
-+									    "ar"
-+									    "at"
-+									    "io"
-+									    "n "
-+									    "po"
-+									    "li"
-+									    "c"
-+									    "y");
++								if (map_parse_traffic_separation_policy_tlv(dut, mod,
++									buf, sizeof(buf), &value) < 1) {
++									sigma_dut_print(dut, SIGMA_ERROR,
++										"MAP: parsing 1905_tlv Traffic separation policy");
 +									goto map_set_config_error;
 +								}
-+								fprintf(
-+								    pfd,
-+								    ",B6,%d",
-+								    value);
++								fprintf(pfd, ",B6,%d", value);
 +								break;
 +
 +							default:
-+								sigma_dut_print(
-+								    dut,
-+								    DUT_MSG_ERROR,
-+								    "MAP: "
-+								    "1905_tlv "
-+								    "not "
-+								    "supporte"
-+								    "d");
++								sigma_dut_print(dut, DUT_MSG_ERROR,
++									"MAP: 1905_tlv not supported");
 +								goto map_set_config_error;
 +							}
 +						}
 +
-+						tlvtype[8] = tlvlength[10] =
-+						    tlvvalue[9] = '2';
-+						tlvtype[9] = tlvlength[11] =
-+						    tlvvalue[10] = '\0';
++						tlvtype[8] = tlvlength[10] = tlvvalue[9] = '2';
++						tlvtype[9] = tlvlength[11] = tlvvalue[10] = '\0';
 +					} else
 +						break;
 +				}
@@ -7980,6 +7873,9 @@ index 00000000..4502e0af
 +								   dut->program == PROGRAM_MAPR6))
 +				fprintf(pfd, ",B5,-1,0,B6,-1");
 +		}
++
++		val1 = get_param2(cmd, bss_info_mld_group, &k);
++		val3 = get_param2(cmd, bsta_info, &k);
 +
 +		if(val1 && pfd != NULL) {
 +			fprintf(pfd, ",MLD,%s", val1);

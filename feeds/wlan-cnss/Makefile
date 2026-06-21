@@ -89,7 +89,7 @@ endif
 CNSS2_DEPENDS := $(DATA_SMEM_MODULE)
 CNSS2_MAKEOPTS := $(DATA_SMEM_MAKEOPTS)
 
-ifeq ($(BOARD),sdxecho)
+ifeq ($(BOARD),echo)
   CNSS2_DEPENDS += +kmod-mhi-bus
   CNSS2_MAKEOPTS += USE_EXTERNAL_CONFIGS=y \
 		    CONFIG_CNSS2=m \
@@ -104,7 +104,7 @@ ifeq ($(BOARD),sdxecho)
 		    CONFIG_CNSS2_SSR_DRIVER_DUMP=y \
 		    CONFIG_PCIE_QCOM_ECAM=y \
 		    CONFIG_PINCTRL_MSM_NO_EXT=y \
-		    CONFIG_QLI_MHI=y \
+		    CONFIG_QLI=y \
 		    WLAN_PLATFORM_ROOT=$(PKG_BUILD_DIR) \
 		    CROSS_COMPILE=aarch64-openwrt-linux-musl- ARCH=arm64
 endif
@@ -124,12 +124,34 @@ define KernelPackage/wlan-cnss-legacy
   VARIANT:=legacy
 endef
 
+define KernelPackage/wlan-cnss-sdio
+  SECTION:=Kernel Modules
+  CATEGORY:=External Kernel Modules
+  TITLE:=CNSS SDIO platform driver
+  VARIANT:=sdio
+endef
+
+define KernelPackage/wlan-cnss-crypto
+  SECTION:=Kernel Modules
+  CATEGORY:=External Kernel Modules
+  TITLE:=CNSS crypto Module
+  VARIANT:=crypto
+endef
+
 define KernelPackage/wlan-cnss2/Description
 	CNSS2 platform driver
 endef
 
 define KernelPackage/wlan-cnss-legacy/Description
 	CNSS platform driver
+endef
+
+define KernelPackage/wlan-cnss-sdio/Description
+	CNSS SDIO platform driver
+endef
+
+define KernelPackage/wlan-cnss-crypto/Description
+	CNSS CNSS crypto driver
 endef
 
 ifeq ($(BUILD_VARIANT),cnss2)
@@ -144,10 +166,23 @@ else ifeq ($(BUILD_VARIANT),legacy)
 			 WLAN_PLATFORM_ROOT="$(LOCAL_SRC)" \
 			 CONFIG_CNSS=m \
 			 CONFIG_CNSS_PCI=y \
-			 CONFIG_CNSS_ASYNC=y \
 			 CONFIG_CNSS_LOGGER=m \
-			 CONFIG_CNSS_CRYPTO=m \
+			 CONFIG_CNSS_ASYNC=y \
 			 CONFIG_CNSS_SHUTDOWN_CALLBACK=y
+
+else ifeq ($(BUILD_VARIANT),sdio)
+        TARGET_MAKEOPTS  = CONFIG_CNSS_OUT_OF_TREE=y \
+			 M="$(PKG_BUILD_DIR)" \
+			 WLAN_PLATFORM_ROOT="$(LOCAL_SRC)" \
+			 CONFIG_CNSS=m \
+			 CONFIG_CNSS_SDIO=y \
+			 MODNAME=cnss_sdio_bus
+
+else ifeq ($(BUILD_VARIANT),crypto)
+        TARGET_MAKEOPTS  = CONFIG_CNSS_OUT_OF_TREE=y \
+			 M="$(PKG_BUILD_DIR)" \
+			 WLAN_PLATFORM_ROOT="$(LOCAL_SRC)" \
+			 CONFIG_CNSS_CRYPTO=m
 endif
 
 ifeq ($(BUILD_VARIANT),cnss2)
@@ -206,9 +241,23 @@ define KernelPackage/wlan-cnss-legacy/install
 	$(INSTALL_DIR) $(TOPDIR)/bin/targets/$(COMPILE_MODE)/modules
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss/cnss.ko $(1)/$(EXTRA_ADDR)/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss/logger/logger.ko $(1)/$(EXTRA_ADDR)/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss_crypto/cnss_crypto.ko $(1)/$(EXTRA_ADDR)/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss/cnss.ko $(TOPDIR)/bin/targets/$(COMPILE_MODE)/modules/
 endef
 
+define KernelPackage/wlan-cnss-sdio/install
+	$(INSTALL_DIR) $(1)/$(EXTRA_ADDR)/
+	$(INSTALL_DIR) $(TOPDIR)/bin/targets/$(COMPILE_MODE)/modules
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss/cnss_sdio_bus.ko $(1)/$(EXTRA_ADDR)/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss/cnss_sdio_bus.ko $(TOPDIR)/bin/targets/$(COMPILE_MODE)/modules/
+endef
+
+define KernelPackage/wlan-cnss-crypto/install
+	$(INSTALL_DIR) $(1)/$(EXTRA_ADDR)/
+	$(INSTALL_DIR) $(TOPDIR)/bin/targets/$(COMPILE_MODE)/modules
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cnss_crypto/cnss_crypto.ko $(1)/$(EXTRA_ADDR)/
+endef
+
+$(eval $(call KernelPackage,wlan-cnss-crypto))
 $(eval $(call KernelPackage,wlan-cnss-legacy))
 $(eval $(call KernelPackage,wlan-cnss2))
+$(eval $(call KernelPackage,wlan-cnss-sdio))
