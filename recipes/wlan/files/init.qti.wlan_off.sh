@@ -32,7 +32,7 @@ if (lspci -k|grep cnss_pci);then
 	if (lspci -k|grep 1102);then
 		echo "##########unload qca6595#############"
 		rmmod qca6595
-	elif ((lspci -k|grep 003e) || (lspci -k|grep QCA6174));then
+	elif (lspci -k|grep 003e) || (lspci -k|grep QCA6174);then
 		echo "##########unload qca6574#############"
 		rmmod qca6574
 	elif (lspci -k|grep 1101);then
