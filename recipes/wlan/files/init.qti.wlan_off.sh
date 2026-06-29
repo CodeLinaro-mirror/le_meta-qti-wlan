@@ -27,24 +27,15 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #
-echo "##########Trying to unload wlanhost driver ##########"
-if (lspci -k|grep cnss_pci);then
-	if (lspci -k|grep 1102);then
-		echo "##########unload qca6595#############"
-		modprobe -r qca6595
-	elif ((lspci -k|grep 003e) || (lspci -k|grep QCA6174));then
-		echo "##########unload qca6574#############"
-		modprobe -r qca6574
-	elif (lspci -k|grep 1101);then
-		echo "##########unload qca6696#############"
-		modprobe -r qca6696
-	elif (lspci -k|grep 1103);then
-		echo "##########unload qca6490#############"
-		modprobe -r qca6490
-	else
-		echo "##########unload default wlan########"
-		modprobe -r wlan
-	fi
+echo "########## Disable Wifi ##########"
+if (lspci -k | grep cnss_pci); then
+    if (lspci -k | grep -E "1102|003e|QCA6174|1101|1103"); then
+        echo "##########bring wlan0 down#############"
+        ifconfig wlan0 down
+    else
+        echo "##########unload default wlan########"
+        modprobe -r wlan
+    fi
 fi
-echo "##########Unload wlanhost driver done################"
+echo "########## Disable Wifi Done ##########"
 

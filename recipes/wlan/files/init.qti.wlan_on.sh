@@ -33,7 +33,7 @@
 
 
 
-echo "##########Trying to load wlanhost driver ##########"
+echo "########## Enable WiFi ##########"
 
 if (lsmod|grep cnss2);then
 	echo "##########cnss2 already exist######"
@@ -41,25 +41,52 @@ else
 	echo "##########loading cnss2############"
 	modprobe cnss2
 fi
-echo "##########load cnss2 done############"
 
-if (lspci -k|grep cnss_pci);then
-	if (lspci -k|grep 1102);then
-		echo "##########load qca6595#############"
-		modprobe qca6595
-	elif ((lspci -k|grep 003e) || (lspci -k|grep QCA6174));then
-		echo "##########load qca6574#############"
-		modprobe qca6574
-	elif (lspci -k|grep 1101);then
-		echo "##########load qca6696#############"
-		modprobe qca6696
-	elif (lspci -k|grep 1103);then
-		echo "##########load qca6490#############"
-		modprobe qca6490
-	else
-		echo "##########load default wlan########"
-		modprobe wlan
-	fi
+if (lspci -k | grep cnss_pci); then
+
+    if (lspci -k | grep 1102); then
+        if (lsmod | grep -wq qca6595 &> /dev/null); then
+            echo "##########bring wlan0 up##########"
+            ifconfig wlan0 up || { echo "##########failed to bring wlan0 up##########"; exit 1; }
+        else
+            echo "########## load wlan-host driver [qca6595] ##########"
+            modprobe qca6595
+        fi
+
+    elif ((lspci -k | grep 003e) || (lspci -k | grep QCA6174)); then
+        if (lsmod | grep -wq qca6574 &> /dev/null); then
+            echo "##########bring wlan0 up##########"
+            ifconfig wlan0 up || { echo "##########failed to bring wlan0 up##########"; exit 1; }
+        else
+            echo "########## load wlan-host driver [qca6574] ##########"
+            modprobe qca6574
+        fi
+
+    elif (lspci -k | grep 1101); then
+        if (lsmod | grep -wq qca6696 &> /dev/null); then
+            echo "##########bring wlan0 up##########"
+            ifconfig wlan0 up || { echo "##########failed to bring wlan0 up##########"; exit 1; }
+        else
+            echo "########## load wlan-host driver [qca6696] ##########"
+            modprobe qca6696
+        fi
+
+    elif (lspci -k | grep 1103); then
+        if (lsmod | grep -wq qca6490 &> /dev/null); then
+            echo "##########bring wlan0 up##########"
+            ifconfig wlan0 up || { echo "##########failed to bring wlan0 up##########"; exit 1; }
+        else
+            echo "########## load wlan-host driver [qca6490] ##########"
+            modprobe qca6490
+        fi
+
+    else
+        echo "##########load default wlan##########"
+        modprobe wlan
+    fi
+
+else
+    echo "##########cnss_pci not found, skipping driver load##########"
 fi
-echo "##########Load wlanhost driver done################"
+echo "########## Enable Wifi Done ################"
 
