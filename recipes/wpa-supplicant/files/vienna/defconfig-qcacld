@@ -426,7 +426,7 @@ CONFIG_DEBUG_FILE=y
 
 # Add support for writing debug log to Android logcat instead of standard
 # output
-#CONFIG_ANDROID_LOG=y
+CONFIG_ANDROID_LOG=y
 
 # LE platform build with wpa_cli "driver" command
 CONFIG_LINUX_EMBEDDED=y
