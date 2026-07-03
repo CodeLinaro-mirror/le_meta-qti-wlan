@@ -1,6 +1,3 @@
-# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
-# SPDX-License-Identifier: BSD-3-Clause-Clear
-
 #!/bin/sh
 # ============================================================
 # Unified WLAN bring-up/tear-down for SAP1/SAP2/SAP3 and STA1/STA2
@@ -639,7 +636,95 @@ sap_start() {
         {
           printf 'ctrl_interface=/var/run\n'
           printf 'driver=nl80211\n'
-          printprintf 'ctrl_interface=/var/run\n'
+          printf 'ssid=%s\n' "$SSID"
+          printf 'country_code=%s\n' "$COUNTRY"
+          if [ "$USE_ACS" -eq 1 ]; then
+              printf 'channel=0\n'
+              printf 'acs_exclude_dfs=1\n'
+              printf 'freqlist=\n'
+          else
+              printf 'channel=%s\n' "$CHANNEL"
+          fi
+          printf 'ieee80211n=1\n'
+          case "$WLAN_CHIP_TYPE" in
+            HSP|HMT)
+              printf 'ieee80211ac=1\n'
+              printf 'ieee80211ax=1\n'
+              printf 'he_su_beamformer=1\n'
+              printf 'he_su_beamformee=1\n'
+              printf 'he_mu_beamformer=1\n'
+              printf 'he_twt_required=1\n'
+              ;;
+            GENOA|ROME)
+              printf 'ieee80211ac=1\n'
+              ;;
+          esac
+          printf '\n'
+          printf 'hw_mode=g\n'
+          printf 'ht_capab=%s\n' "$BW_HT_CAPAB"
+          printf '\n'
+          printf 'ignore_broadcast_ssid=0\n'
+          printf 'wowlan_triggers=any\n'
+          printf 'interworking=1\n'
+          printf 'access_network_type=2\n'
+          printf '\n'
+          printf 'interface=%s\n' "$IFACE"
+        } > "$CONF"
+        ;;
+      5g)
+        {
+          printf 'ctrl_interface=/var/run\n'
+          printf 'driver=nl80211\n'
+          printf 'ssid=%s\n' "$SSID"
+          printf 'country_code=%s\n' "$COUNTRY"
+          printf '\n'
+          if [ "$USE_ACS" -eq 1 ]; then
+              printf 'channel=0\n'
+              printf 'acs_exclude_dfs=1\n'
+              printf 'freqlist=5160-5885\n'
+          else
+              printf 'channel=%s\n' "$CHANNEL"
+          fi
+          printf 'ieee80211n=1\n'
+          case "$WLAN_CHIP_TYPE" in
+            HSP|HMT)
+              printf 'ieee80211ac=1\n'
+              printf 'ieee80211ax=1\n'
+              printf 'he_su_beamformer=1\n'
+              printf 'he_su_beamformee=1\n'
+              printf 'he_mu_beamformer=1\n'
+              printf 'he_twt_required=1\n'
+              ;;
+            GENOA|ROME)
+              printf 'ieee80211ac=1\n'
+              ;;
+          esac
+          printf '\n'
+          if [ "$USE_ACS" -eq 1 ]; then
+              printf 'hw_mode=any\n'
+          else
+              printf 'hw_mode=a\n'
+          fi
+          if [ -n "$BW_HT_CAPAB" ]; then printf 'ht_capab=%s\n' "$BW_HT_CAPAB"; fi
+          printf 'vht_oper_chwidth=1\n'
+          if [ -n "$BW_SEG0" ]; then printf 'vht_oper_centr_freq_seg0_idx=%s\n' "$BW_SEG0"; fi
+          case "$WLAN_CHIP_TYPE" in
+            HSP|HMT)
+              printf 'he_oper_chwidth=1\n'
+              ;;
+          esac
+          printf 'ignore_broadcast_ssid=0\n'
+          printf 'wowlan_triggers=any\n'
+          printf 'interworking=1\n'
+          printf 'access_network_type=2\n'
+          printf '\n'
+          printf 'interface=%s\n' "$IFACE"
+        } > "$CONF"
+        ;;
+      6g)
+        # Only reached for HSP/HMT — GENOA/ROME blocked by chip_supports_band()
+        {
+          printf 'ctrl_interface=/var/run\n'
           printf 'driver=nl80211\n'
           printf 'ssid=%s\n' "$SSID"
           printf 'country_code=%s\n' "$COUNTRY"
@@ -751,7 +836,52 @@ EOF
 #
 # Only valid when -reload_driver n AND the interface is already UP in the same band.
 # Validates that SSID, security, and password match the running config; errors out
-# if any differ (a full restart would be need'a-z' 'A-Z')
+# if any differ (a full restart would be needed in that case).
+sap_chan_switch() {
+    _sw_sap="$1"    # SAP1|SAP2|SAP3
+    _sw_band="$2"   # 2g|5g|6g
+    _sw_ch="$3"     # new primary channel
+    _sw_ssid="$4"   # must match running SSID (or empty = no check)
+    _sw_sec="$5"    # must match running security (or empty = no check)
+    _sw_pass="$6"   # must match running password (or empty = no check)
+
+    case "$_sw_sap" in
+      SAP1) _sw_if="$SAP1_IF" ;;
+      SAP2) _sw_if="$SAP2_IF" ;;
+      SAP3) _sw_if="$SAP3_IF" ;;
+      *) err "sap_chan_switch: unknown SAP '$_sw_sap'"; return 1 ;;
+    esac
+
+    _sw_conf="/data/hostapd_${_sw_if}.conf"
+    _sw_ctrl=$(grep -m1 '^ctrl_interface=' "$_sw_conf" 2>/dev/null | cut -d= -f2)
+    [ -z "$_sw_ctrl" ] && _sw_ctrl="/var/run"
+
+    # Check hostapd is actually running on this interface
+    if ! hostapd_cli -i "$_sw_if" -p "$_sw_ctrl" ping 2>/dev/null | grep -q PONG; then
+        err "$_sw_sap: hostapd is not running on $_sw_if (use normal bring-up, not chan_switch)"
+        return 1
+    fi
+
+    # Validate that SSID / security / password match the existing config
+    if [ -f "$_sw_conf" ]; then
+        _run_ssid=$(grep -m1 '^ssid=' "$_sw_conf" 2>/dev/null | cut -d= -f2-)
+        _run_sec_wpa=$(grep -m1 '^wpa_key_mgmt=' "$_sw_conf" 2>/dev/null | cut -d= -f2-)
+        _run_sec_sae=$(grep -m1 '^wpa=' "$_sw_conf" 2>/dev/null | cut -d= -f2-)
+        _run_pass_psk=$(grep -m1 '^wpa_passphrase=' "$_sw_conf" 2>/dev/null | cut -d= -f2-)
+        _run_pass_sae=$(grep -m1 '^sae_password=' "$_sw_conf" 2>/dev/null | cut -d= -f2-)
+
+        if [ -n "$_sw_ssid" ] && [ "$_sw_ssid" != "$_run_ssid" ]; then
+            err "$_sw_sap: SSID mismatch (given='$_sw_ssid' running='$_run_ssid') — restart with -reload_driver y instead"
+            return 1
+        fi
+        # Detect running security mode
+        _run_sec="OPEN"
+        case "$_run_sec_wpa" in
+          *SAE*) _run_sec="WPA3" ;;
+          *WPA-PSK*) _run_sec="WPA2" ;;
+        esac
+        if [ -n "$_sw_sec" ]; then
+            _sw_sec_uc=$(echo "$_sw_sec" | tr 'a-z' 'A-Z')
             if [ "$_sw_sec_uc" != "$_run_sec" ]; then
                 err "$_sw_sap: security mismatch (given='$_sw_sec_uc' running='$_run_sec') — restart with -reload_driver y instead"
                 return 1
@@ -841,7 +971,100 @@ sap_bring_up() {
         fi
     fi
 
-    # Full start (trace "+ $(mask_line wpa_cli -i "$IFACE" set_network "$NET_ID" ssid "\"$_SSID\"")"
+    # Full start (driver reload or new interface or band change)
+    sap_start "$_bu_sap" "$_bu_if" "$_bu_band" "$_bu_ssid" "$_bu_sec" "$_bu_pw" "$_bu_ch"
+}
+
+# -------- STA helpers --------
+
+mask_line() {
+    line="$*"
+    # mask passwords in logs
+    echo "$line" | sed -E 's/(sae_password|psk|--password[= ]|-p[ ]?)"[^"]*"/\1"********"/g'
+}
+
+sta_connect() {
+    ROLE="$1"       # STA1|STA2
+    IFACE="$2"      # wlan0|wlan4
+    SSID="$3"
+    PASS="$4"       # may be empty for OPEN
+    SECTYPE="$5"    # OPEN|WPA2|WPA3
+    TIMEOUT="${6:-10}"
+    HIDDEN="${7:-0}"
+
+    [ -z "$SSID" ] && { err "$ROLE: SSID required"; return 1; }
+    case "$(echo "$SECTYPE" | tr 'a-z' 'A-Z')" in
+      OPEN)  TYPE="OPEN" ;;
+      WPA2|WPA2-PSK) TYPE="WPA2" ;;
+      WPA3|WPA3-SAE) TYPE="WPA3" ;;
+      *) err "$ROLE: invalid security '$SECTYPE' (use OPEN|WPA2|WPA3)"; return 1 ;;
+    esac
+    if [ "$TYPE" != "OPEN" ] && [ -z "$PASS" ]; then
+        err "$ROLE: password required for $TYPE"
+        return 1
+    fi
+
+    WPA_CONF="/data/wpa_supplicant_${IFACE}.conf"
+    WPA_CTRL="/var/run/wpa_supplicant"
+
+    mkdir -p "$(dirname "$WPA_CONF")" "$WPA_CTRL" 2>/dev/null
+
+    if [ ! -f "$WPA_CONF" ]; then
+        info "$ROLE: creating $WPA_CONF"
+        {
+          echo "ctrl_interface=$WPA_CTRL"
+          echo "update_config=1"
+        } > "$WPA_CONF"
+    fi
+
+    # Ensure STA interface exists (create managed VIF if needed)
+    if ! iface_exists "$IFACE"; then
+        warn "$ROLE: $IFACE not found; attempting to create managed VIF from wlan0"
+        ensure_managed_interface "$IFACE" || {
+            err "$ROLE: could not create $IFACE (managed) — aborting this STA bring-up"
+            return 1
+        }
+    else
+        iface_up "$IFACE" || true
+    fi
+
+    # Stop any existing wpa_supplicant on this interface before (re-)starting
+    PIDFILE="/var/run/wpa_supplicant_${IFACE}.pid"
+    [ -d /var/run ] || mkdir -p /var/run
+
+    stop_sta "$ROLE" "$IFACE"
+
+    echo "+ wpa_supplicant -B -P $PIDFILE -Dnl80211 -i $IFACE -c $WPA_CONF"
+    if [ "$DEBUG" -eq 1 ]; then
+        if ! wpa_supplicant -B -P "$PIDFILE" -Dnl80211 -i "$IFACE" -c "$WPA_CONF"; then
+            err "$ROLE: failed to start wpa_supplicant for $IFACE"
+            return 1
+        fi
+    else
+        if ! wpa_supplicant -B -P "$PIDFILE" -Dnl80211 -i "$IFACE" -c "$WPA_CONF" >/dev/null 2>&1; then
+            err "$ROLE: failed to start wpa_supplicant for $IFACE"
+            return 1
+        fi
+    fi
+    sleep 1
+
+    trace "+ wpa_cli -i $IFACE list_networks"
+    wpa_cli -i "$IFACE" list_networks >/dev/null 2>&1 || true
+
+    trace "+ wpa_cli -i $IFACE remove_network all"
+    wpa_cli -i "$IFACE" remove_network all >/dev/null 2>&1 || true
+    trace "+ wpa_cli -i $IFACE add_network"
+    NET_ID=$(wpa_cli -i "$IFACE" add_network 2>/dev/null | tail -n1)
+    case "$NET_ID" in ''|*[!0-9]*)
+        err "$ROLE: failed to add network (got '$NET_ID')"
+        return 1
+        ;;
+    esac
+    info "$ROLE: using network id $NET_ID"
+
+    # Set SSID (escape quotes)
+    _SSID=$(printf "%s" "$SSID" | sed 's/\\/\\\\/g; s/"/\\"/g')
+    trace "+ $(mask_line wpa_cli -i "$IFACE" set_network "$NET_ID" ssid "\"$_SSID\"")"
     wpa_cli -i "$IFACE" set_network "$NET_ID" ssid "\"$_SSID\"" >/dev/null
 
     if [ "$HIDDEN" -eq 1 ]; then
@@ -916,7 +1139,104 @@ stop_sap() {
     case "$SAP_NAME" in
       SAP1) IFACE="$SAP1_IF" ;;
       SAP2) IFACE="$SAP2_IF" ;;
-!0-9]*) PID="";; esac
+      SAP3) IFACE="$SAP3_IF" ;;
+      *) err "stop_sap: unknown SAP '$SAP_NAME'"; return 1 ;;
+    esac
+
+    CONF="/data/hostapd_${IFACE}.conf"
+    PIDFILE="/var/run/hostapd_${IFACE}.pid"
+    killed=0
+
+    # 1) Try control socket (clean exit)
+    if command -v hostapd_cli >/dev/null 2>&1; then
+        # If CLI responds to ping, ask it to terminate
+        if hostapd_cli -i "$IFACE" ping 2>/dev/null | grep -q PONG; then
+            echo "+ hostapd_cli -i $IFACE terminate"
+            if hostapd_cli -i "$IFACE" terminate >/dev/null 2>&1; then
+                killed=1
+                # Give it a moment to exit and remove pidfile
+                sleep 1
+            fi
+        fi
+    fi
+
+    # 2) PID file kill (fast and precise)
+    if [ "$killed" -eq 0 ] && [ -f "$PIDFILE" ]; then
+        PID="$(cat "$PIDFILE" 2>/dev/null | tr -d '[:space:]')"
+        case "$PID" in
+          ''|*[!0-9]*) PID="";;
+        esac
+        if [ -n "$PID" ]; then
+            trace "+ kill $PID   # hostapd for $SAP_NAME ($IFACE via pidfile)"
+            kill "$PID" 2>/dev/null || true
+            sleep 1
+            # If still alive, try SIGKILL
+            if kill -0 "$PID" 2>/dev/null; then
+                trace "+ kill -9 $PID"
+                kill -9 "$PID" 2>/dev/null || true
+            fi
+            killed=1
+        fi
+        # Clean up stale pidfile
+        [ -f "$PIDFILE" ] && rm -f "$PIDFILE" 2>/dev/null || true
+    fi
+
+    # 3) ps-based fallback (try to match on iface or conf path)
+    if [ "$killed" -eq 0 ]; then
+        if ps -ef >/dev/null 2>&1; then
+            PIDS="$(ps -ef | grep '[h]ostapd' | grep -E "$CONF|$IFACE" | awk '{print $2}')"
+        else
+            # BusyBox 'ps w' fallback
+            PIDS="$(ps w 2>/dev/null | grep '[h]ostapd' | grep -E "$CONF|$IFACE" | awk '{print $1}')"
+        fi
+        for pid in $PIDS; do
+            trace "+ kill $pid   # hostapd for $SAP_NAME (matched by $IFACE|$CONF)"
+            kill "$pid" 2>/dev/null || true
+            sleep 1
+            if kill -0 "$pid" 2>/dev/null; then
+                trace "+ kill -9 $pid"
+                kill -9 "$pid" 2>/dev/null || true
+            fi
+            killed=1
+        done
+    fi
+
+    if [ "$killed" -eq 0 ]; then
+        info "$SAP_NAME: no hostapd process found for iface=$IFACE (CONF=$CONF, PIDFILE=$PIDFILE)"
+    else
+        info "$SAP_NAME: stop requested"
+        # Only bring interface down when we actually killed a running hostapd.
+        # Skipping when killed=0 prevents tearing down a freshly-created VIF
+        # that sap_start() just raised via ensure_ap_interface().
+        if iface_exists "$IFACE"; then
+            iface_down "$IFACE" && info "$SAP_NAME: $IFACE brought down" || warn "$SAP_NAME: failed to bring $IFACE down"
+        fi
+    fi
+}
+
+# Stop wpa_supplicant for a specific STA iface (-i wlanX) — robust:
+# 1) wpa_cli terminate (clean) -> 2) pidfile kill -> 3) ps fallback
+stop_sta() {
+    ROLE="$1"   # STA1|STA2
+    IFACE="$2"
+    killed=0
+    PIDFILE="/var/run/wpa_supplicant_${IFACE}.pid"
+
+    # 1) Try control socket first (clean shutdown)
+    if command -v wpa_cli >/dev/null 2>&1; then
+        if wpa_cli -i "$IFACE" ping 2>/dev/null | grep -q PONG; then
+            trace "+ wpa_cli -i $IFACE terminate"
+            if wpa_cli -i "$IFACE" terminate >/dev/null 2>&1; then
+                killed=1
+                sleep 1
+            fi
+        fi
+    fi
+
+    # 2) PID file: precise and fast
+    if [ "$killed" -eq 0 ] && [ -f "$PIDFILE" ]; then
+        PID="$(cat "$PIDFILE" 2>/dev/null | tr -d '[:space:]')"
+        case "$PID" in ''|*[!0-9]*) PID="";; esac
         if [ -n "$PID" ]; then
             trace "+ kill $PID   # wpa_supplicant for $ROLE ($IFACE via pidfile)"
             kill "$PID" 2>/dev/null || true
@@ -998,7 +1318,183 @@ Usage (examples):
 
 # Mix SAP and STA:
   sh ./wlan_sap_sta_setup.sh -reload_driver y -SAP_interfaces SAP1,SAP2,SAP3 \
-     -SAP1_band <band> [-SAP1_ssid <ssid>] [-SAP1_securitS+1))
+     -SAP1_band <band> [-SAP1_ssid <ssid>] [-SAP1_security <OPEN|WPA2|WPA3>] [-SAP1_password <pwd>] [-SAP1_channel <ch>] \
+     -SAP2_band <band> [-SAP2_ssid <ssid>] [-SAP2_security <OPEN|WPA2|WPA3>] [-SAP2_password <pwd>] [-SAP2_channel <ch>] \
+     -SAP3_band <band> [-SAP3_ssid <ssid>] [-SAP3_security <OPEN|WPA2|WPA3>] [-SAP3_password <pwd>] [-SAP3_channel <ch>] \
+     -STA_interfaces STA1,STA2 \
+     -STA1_ssid <ssid> -STA1_password <pwd> -STA1_security <WPA2|WPA3|OPEN> \
+     -STA2_ssid <ssid> -STA2_password <pwd> -STA2_security <WPA2|WPA3|OPEN>
+
+# Stop selected interfaces (no driver reload):
+  sh ./wlan_sap_sta_setup.sh -stop SAP1,STA2
+
+# Enable debug output (command traces + daemon verbose logs):
+  sh ./wlan_sap_sta_setup.sh -d -reload_driver y -SAP_interfaces SAP1 -SAP1_band 5g
+
+SAP security defaults (when -SAPx_security is omitted):
+  2G -> WPA2   5G -> WPA3   6G -> WPA3
+  Default password (when -SAPx_password is omitted): 1234567890
+
+STA connection timeout defaults (when -STAx_timeout is omitted):
+  30s  (WPA3-SAE on 5GHz HE can take 15-20s on embedded; 30s gives safe margin)
+
+Notes:
+- Config paths are per-interface:
+    hostapd:        /data/hostapd_<iface>.conf
+    wpa_supplicant: /data/wpa_supplicant_<iface>.conf
+- Channel per SAP (optional):
+    -SAPx_channel <ch>  : fixed channel (disables ACS); omit for ACS (channel=0)
+    Bandwidth is fixed per band: 2G=40MHz, 5G=80MHz, 6G=160MHz
+- Fast channel switch (no driver reload):
+    When -reload_driver n AND the SAP is already UP in the same band AND a channel is
+    given, the script uses hostapd_cli chan_switch instead of a full restart.
+    SSID, security, and password must match the running config — any mismatch returns
+    an error (use -reload_driver y to change those parameters).
+- Debug mode (-d flag):
+    Without -d: only [INFO]/[WARN]/[ERROR] messages are shown; daemon output
+      (hostapd, wpa_supplicant, wpa_cli) is suppressed.
+    With -d: all command traces (+ ...) and full daemon stdout/stderr are printed.
+- Environment overrides for SAP:
+    COUNTRY=US
+EOF
+}
+
+# Defaults
+RELOAD_DRIVER="n"
+UNLOAD_DRIVER="n"
+SAP_LIST=""
+STA_LIST=""
+STOP_LIST=""
+
+# Per-interface params
+SAP1_BAND=""; SAP1_SSID=""; SAP1_SEC=""; SAP1_PW=""; SAP1_CH=""
+SAP2_BAND=""; SAP2_SSID=""; SAP2_SEC=""; SAP2_PW=""; SAP2_CH=""
+SAP3_BAND=""; SAP3_SSID=""; SAP3_SEC=""; SAP3_PW=""; SAP3_CH=""
+
+STA1_SSID=""; STA1_PW=""; STA1_SEC=""; STA1_TIMEOUT=30
+STA2_SSID=""; STA2_PW=""; STA2_SEC=""; STA2_TIMEOUT=30
+
+# Parse
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    -reload_driver) RELOAD_DRIVER="$2"; shift 2;;
+    -unload_driver) UNLOAD_DRIVER="$2"; shift 2;;
+    -SAP_interfaces) SAP_LIST="$2"; shift 2;;
+    -STA_interfaces) STA_LIST="$2"; shift 2;;
+
+    -SAP1_band)     SAP1_BAND="$2"; shift 2;;
+    -SAP1_ssid)     SAP1_SSID="$2"; shift 2;;
+    -SAP1_security) SAP1_SEC="$2";  shift 2;;
+    -SAP1_password) SAP1_PW="$2";   shift 2;;
+    -SAP1_channel)  SAP1_CH="$2";   shift 2;;
+    -SAP2_band)     SAP2_BAND="$2"; shift 2;;
+    -SAP2_ssid)     SAP2_SSID="$2"; shift 2;;
+    -SAP2_security) SAP2_SEC="$2";  shift 2;;
+    -SAP2_password) SAP2_PW="$2";   shift 2;;
+    -SAP2_channel)  SAP2_CH="$2";   shift 2;;
+    -SAP3_band)     SAP3_BAND="$2"; shift 2;;
+    -SAP3_ssid)     SAP3_SSID="$2"; shift 2;;
+    -SAP3_security) SAP3_SEC="$2";  shift 2;;
+    -SAP3_password) SAP3_PW="$2";   shift 2;;
+    -SAP3_channel)  SAP3_CH="$2";   shift 2;;
+
+    -STA1_ssid)      STA1_SSID="$2";    shift 2;;
+    -STA1_password)  STA1_PW="$2";      shift 2;;
+    -STA1_security)  STA1_SEC="$2";     shift 2;;
+    -STA1_timeout)   STA1_TIMEOUT="$2"; shift 2;;
+    -STA2_ssid)      STA2_SSID="$2";    shift 2;;
+    -STA2_password)  STA2_PW="$2";      shift 2;;
+    -STA2_security)  STA2_SEC="$2";     shift 2;;
+    -STA2_timeout)   STA2_TIMEOUT="$2"; shift 2;;
+
+    -stop) STOP_LIST="$2"; shift 2;;
+    -d) DEBUG=1; shift;;
+    -h|--help) usage; exit 0;;
+    *) err "Unknown option: $1"; usage; exit 2;;
+  esac
+done
+
+# Validate reload_driver and unload_driver
+case "$RELOAD_DRIVER" in y|n) : ;; *) err "-reload_driver must be y or n"; exit 2;; esac
+case "$UNLOAD_DRIVER" in y|n) : ;; *) err "-unload_driver must be y or n"; exit 2;; esac
+
+# -------- Step 1: Detect chip (and optionally reload) --------
+if ! detect_chip; then
+    # If user only requested -stop or -unload_driver, continue; else abort
+    if [ -n "$STOP_LIST" ] && [ -z "$SAP_LIST$STA_LIST" ]; then
+        warn "Chip detection failed but proceeding with -stop operations"
+    elif [ "$UNLOAD_DRIVER" = "y" ]; then
+        warn "Chip detection failed but proceeding with -unload_driver"
+    else
+        exit 1
+    fi
+fi
+
+# Unload driver if requested (exits immediately after)
+if [ "$UNLOAD_DRIVER" = "y" ]; then
+    unload_driver
+    exit $?
+fi
+
+# Reload driver if requested
+reload_driver_if_requested "$RELOAD_DRIVER"
+
+# -------- Step 2: Show which interfaces are UP --------
+show_up_interfaces_table
+
+# -------- Stop-only path --------
+if [ -n "$STOP_LIST" ] && [ -z "$SAP_LIST$STA_LIST" ]; then
+    info "Stopping requested interfaces: $STOP_LIST"
+    IFS=','; for item in $STOP_LIST; do
+        case "$item" in
+          SAP1) stop_sap SAP1 ;;
+          SAP2) stop_sap SAP2 ;;
+          SAP3) stop_sap SAP3 ;;
+          STA1) stop_sta STA1 "$STA1_IF" ;;
+          STA2) stop_sta STA2 "$STA2_IF" ;;
+          *) warn "Unknown stop target: $item" ;;
+        esac
+    done
+    show_up_interfaces_table
+    exit 0
+fi
+
+# -------- Step 3: Bring up SAPs (then STAs) --------
+FAILS=0
+
+# Bring up SAPs
+if [ -n "$SAP_LIST" ]; then
+    IFS=','; for sap in $SAP_LIST; do
+        case "$sap" in
+          SAP1)
+            if [ -z "$SAP1_BAND" ]; then warn "SAP1 requested but -SAP1_band missing"; FAILS=$((FAILS+1)); else
+                sap_bring_up "SAP1" "$SAP1_IF" "$SAP1_BAND" "$SAP1_SSID" "$SAP1_SEC" "$SAP1_PW" "$SAP1_CH" || FAILS=$((FAILS+1))
+            fi
+          ;;
+          SAP2)
+            if [ -z "$SAP2_BAND" ]; then warn "SAP2 requested but -SAP2_band missing"; FAILS=$((FAILS+1)); else
+                sap_bring_up "SAP2" "$SAP2_IF" "$SAP2_BAND" "$SAP2_SSID" "$SAP2_SEC" "$SAP2_PW" "$SAP2_CH" || FAILS=$((FAILS+1))
+            fi
+          ;;
+          SAP3)
+            if [ -z "$SAP3_BAND" ]; then warn "SAP3 requested but -SAP3_band missing"; FAILS=$((FAILS+1)); else
+                sap_bring_up "SAP3" "$SAP3_IF" "$SAP3_BAND" "$SAP3_SSID" "$SAP3_SEC" "$SAP3_PW" "$SAP3_CH" || FAILS=$((FAILS+1))
+            fi
+          ;;
+          *) warn "Unknown SAP interface: $sap"; FAILS=$((FAILS+1)) ;;
+        esac
+    done
+fi
+
+# Bring up STAs
+if [ -n "$STA_LIST" ]; then
+    IFS=','; for sta in $STA_LIST; do
+        case "$sta" in
+          STA1)
+            if [ -z "$STA1_SSID" ] || [ -z "$STA1_SEC" ]; then
+                warn "STA1 requires -STA1_ssid and -STA1_security"; FAILS=$((FAILS+1))
+            else
+                sta_connect "STA1" "$STA1_IF" "$STA1_SSID" "$STA1_PW" "$STA1_SEC" "$STA1_TIMEOUT" 0 || FAILS=$((FAILS+1))
             fi
           ;;
           STA2)
@@ -1024,4 +1520,3 @@ else
     info "All requested interfaces started successfully."
     exit 0
 fi
-
