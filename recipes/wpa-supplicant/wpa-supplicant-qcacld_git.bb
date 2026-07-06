@@ -11,6 +11,7 @@ MACHINE_CONFIG:kera = "kalama"
 MACHINE_CONFIG:sun = "kalama"
 MACHINE_CONFIG:alor = "kalama"
 MACHINE_CONFIG:vienna = "vienna"
+MACHINE_CONFIG:pebble = "kalama"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://external/wpa_supplicant_8/"

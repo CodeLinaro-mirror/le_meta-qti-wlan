@@ -19,6 +19,7 @@ QCACLD32_LL:ar-sg1="qcacld32-ar-sg1"
 QCACLD32_LL:kera="qcacld32-ll-debug qcacld32-ll-cologne"
 QCACLD32_LL:sun="qcacld32-ll-peach"
 QCACLD32_LL:alor="qcacld32-ll-debug"
+QCACLD32_LL:pebble="qcacld32-ll-debug"
 QCACLD32_LL:vienna="qcacld32-ll-vienna-le"
 
 WLAN_PLATFORM="wlan-platform"

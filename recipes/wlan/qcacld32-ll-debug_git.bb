@@ -11,12 +11,14 @@ OVERRIDES:append = "${@':ddk_build' if d.getVar('DDK_BUILD') == 'true' else ''}"
 
 TARGET_WLAN_CHIP:kera = "wcn7750"
 TARGET_WLAN_CHIP:alor = "wcn7750"
+TARGET_WLAN_CHIP:pebble = "wcn7750"
 MODULE_NAME = "wlan"
 MODULE_NAME:ddk_build = "qca_cld3_${TARGET_WLAN_CHIP}"
 
 MACHINE_CONFIG = "${BASEMACHINE}"
 MACHINE_CONFIG:kera = "sun"
 MACHINE_CONFIG:alor = "sun"
+MACHINE_CONFIG:pebble = "sun"
 
 do_unpack[deptask] = "do_populate_sysroot"
 PR = "r8"

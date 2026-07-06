@@ -8,6 +8,7 @@ BSD-3-Clause;md5=550794465ba0ec5312d6919e203a55f9"
 
 DEPENDS += "virtual/kernel"
 DEPENDS:alor += " coreutils-native rsync-native "
+DEPENDS:pebble += " coreutils-native rsync-native "
 
 FILESEXTRAPATHS:prepend := "${WORKSPACE}/wlan:"
 SRC_URI = "file://wlan-devicetree/"
@@ -39,6 +40,18 @@ do_compile() {
 do_compile:alor() {
     cd ${KERNEL_PLATFORM_PATH}
     BUILD_CONFIG=${KERNEL_BUILD_CONFIG} \
+    EXT_MODULES=${EXT_MODULES} \
+    KERNEL_KIT=${KERNEL_PREBUILT_PATH} \
+    MODULE_OUT=${S} \
+    OUT_DIR=${WORKDIR}/out/${KERNEL_DEFCONFIG} \
+    INPLACE_COMPILE=y \
+    ./build/build_module.sh dtbs
+}
+
+do_compile:pebble() {
+    cd ${KERNEL_PLATFORM_PATH}
+    BUILD_CONFIG=${KERNEL_BUILD_CONFIG} \
+    VARIANT=${KERNEL_DEFCONFIG_VARIANT} \
     EXT_MODULES=${EXT_MODULES} \
     KERNEL_KIT=${KERNEL_PREBUILT_PATH} \
     MODULE_OUT=${S} \
