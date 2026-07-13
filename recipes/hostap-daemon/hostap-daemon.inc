@@ -14,7 +14,7 @@ DEPENDS = "openssl libnl"
 
 SRC_URI = "file://${WORKSPACE}/external/hostap/"
 
-S = "${WORKDIR}/external/hostap/hostapd/"
+S = "${UNPACKDIR}/external/hostap/hostapd/"
 
 do_install() {
     make install DESTDIR=${D} BINDIR=${sbindir}/

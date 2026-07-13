@@ -30,8 +30,8 @@ SRC_URI = "file://wlan/qcacld-3.0/"
 SRC_URI += "file://wlan/qca-wifi-host-cmn/"
 SRC_URI += "file://wlan/fw-api/"
 
-S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn"
-S = "${WORKDIR}/wlan/qcacld-3.0"
+S1 = "${UNPACKDIR}/wlan/qca-wifi-host-cmn"
+S = "${UNPACKDIR}/wlan/qcacld-3.0"
 
 FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld/${_MODNAME}"
 
@@ -194,11 +194,11 @@ do_install:append() {
     ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan.e14 ${D}/lib/firmware/${FW_PATH_NAME}/
     ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan.e18 ${D}/lib/firmware/${FW_PATH_NAME}/
     install -d ${D}${bindir}
-    install -D -m 0755 ${WORKDIR}/init.qti.wlan_on.sh ${D}${bindir}/init.qti.wlan_on.sh
-    install -D -m 0755 ${WORKDIR}/init.qti.wlan_off.sh ${D}${bindir}/init.qti.wlan_off.sh
+    install -D -m 0755 ${UNPACKDIR}/init.qti.wlan_on.sh ${D}${bindir}/init.qti.wlan_on.sh
+    install -D -m 0755 ${UNPACKDIR}/init.qti.wlan_off.sh ${D}${bindir}/init.qti.wlan_off.sh
     # Install systemd service file
     if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}; then
-        install -m 0644 ${WORKDIR}/init_qti_wlan_auto.service -D ${D}${systemd_unitdir}/system/init_qti_wlan_auto.service
+        install -m 0644 ${UNPACKDIR}/init_qti_wlan_auto.service -D ${D}${systemd_unitdir}/system/init_qti_wlan_auto.service
     fi
 }
 
