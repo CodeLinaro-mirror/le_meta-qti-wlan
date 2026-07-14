@@ -32,7 +32,8 @@
 
 [Unit]
 Description=Wlan Service
-After=qsaharaserver.service
+After=firmware.mount etc.mount dev-ttyHS1.device
+DefaultDependencies=no
 
 [Service]
 Restart=no

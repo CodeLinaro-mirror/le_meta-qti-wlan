@@ -9,12 +9,10 @@ BSD-3-Clause;md5=550794465ba0ec5312d6919e203a55f9"
 DEPENDS += "virtual/kernel"
 DEPENDS:alor += " coreutils-native rsync-native "
 
-WLAN_SRC_PATH = "${@'wlan' if os.path.exists(os.path.join(d.getVar('WORKSPACE'), 'wlan/wlan-devicetree')) else 'wlan-proprietary'}"
+FILESEXTRAPATHS:prepend := "${WORKSPACE}/wlan:"
+SRC_URI = "file://wlan-devicetree/"
+S = "${WORKDIR}/wlan-devicetree"
 
-SRC_URI = "file://${WLAN_SRC_PATH}/wlan-devicetree/"
-S = "${WORKDIR}/${WLAN_SRC_PATH}/wlan-devicetree"
-
-FILESPATH =+ "${WORKSPACE}:"
 do_configure[depends] = "virtual/kernel:do_shared_workdir"
 
 KERNEL_VERSION = "${@get_kernelversion_headers('${STAGING_KERNEL_BUILDDIR}')}"

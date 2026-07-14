@@ -99,8 +99,6 @@ do_install() {
     install -d ${S}/unstripped
     install -m 0755 ${S}/${MODULE_NAME}.ko -D ${S}/unstripped
     install -d ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}
-    install -d ${D}${includedir}/qcacld/
-    install -m 0644 ${S1}/utils/nlink/inc/wlan_nlink_common.h ${D}${includedir}/qcacld/
 
     ${STAGING_DIR_NATIVE}/usr/bin/aarch64-oe-linux/aarch64-oe-linux-strip \
              --strip-debug ${S}/unstripped/${MODULE_NAME}.ko -o ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/${MODULE_NAME}.ko
@@ -108,6 +106,13 @@ do_install() {
     #auto load
     install -d ${D}${sysconfdir}/modules-load.d
     install -m 0755 ${WORKDIR}/wlan_load.conf -D ${D}${sysconfdir}/modules-load.d/wlan_load.conf
+}
+
+do_install:append() {
+    if [ "${MACHINE}" != "kera" ]; then
+        install -d ${D}${includedir}/qcacld/
+        install -m 0644 ${S1}/utils/nlink/inc/wlan_nlink_common.h ${D}${includedir}/qcacld/
+    fi
 }
 
 do_deploy () {
