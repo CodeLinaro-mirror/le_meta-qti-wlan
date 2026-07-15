@@ -12,6 +12,8 @@ do_unpack[deptask] = "do_populate_sysroot"
 PR = "r8"
 PV = "2.0"
 DEPENDS += "wlan-platform"
+DEPENDS:qcm2290-mtp += "pkgconfig-native"
+DEPENDS:qcm4325-mtp += "pkgconfig-native"
 
 do_configure[depends] += "virtual/kernel:do_shared_workdir"
 
