@@ -1,3 +1,6 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
 #!/bin/sh
 # ============================================================
 # Unified WLAN bring-up/tear-down for SAP1/SAP2/SAP3 and STA1/STA2
