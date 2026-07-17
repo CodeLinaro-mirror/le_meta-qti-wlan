@@ -77,6 +77,7 @@ SYSTEMD_SERVICE:${PN} = "init_qti_cnss2_auto.service"
 
 # disable wlan service on boot for sdxpoorwills-auto
 SYSTEMD_AUTO_ENABLE:${PN} = "disable"
+SYSTEMD_AUTO_ENABLE:${PN}:sa535m = "enable"
 
 SRC_URI:append = " file://init.qti.cnss2_on.sh"
 SRC_URI:append = " file://init.qti.cnss2_off.sh"
