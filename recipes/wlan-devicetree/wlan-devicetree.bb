@@ -17,11 +17,13 @@ S = "${WORKDIR}/wlan-devicetree"
 do_configure[depends] = "virtual/kernel:do_shared_workdir"
 
 KERNEL_VERSION = "${@get_kernelversion_headers('${STAGING_KERNEL_BUILDDIR}')}"
+
 EXT_MODULES = "${@os.path.relpath("${S}", "${KERNEL_PLATFORM_PATH}")}"
 
 EXTRA_OEMAKE += "TARGET_SUPPORT=${BASEMACHINE}"
 
 KERNEL_CC = "${STAGING_BINDIR_NATIVE}/clang/bin/clang -target ${TARGET_ARCH}${TARGET_VENDOR}-${TARGET_OS}"
+KERNEL_KIT = "${@'${KERNEL_PREBUILT_PATH}' if d.getVar('MACHINE_USES_KERNEL_PREBUILTS') == 'True' else '${STAGING_KERNEL_BUILDDIR}'}"
 
 do_compile[depends]   += "virtual/kernel:do_shared_workdir"
 do_compile[cleandirs] += "${WORKDIR}/out/${KERNEL_DEFCONFIG}"
@@ -53,7 +55,7 @@ do_compile:pebble() {
     BUILD_CONFIG=${KERNEL_BUILD_CONFIG} \
     VARIANT=${KERNEL_DEFCONFIG_VARIANT} \
     EXT_MODULES=${EXT_MODULES} \
-    KERNEL_KIT=${KERNEL_PREBUILT_PATH} \
+    KERNEL_KIT=${KERNEL_KIT} \
     MODULE_OUT=${S} \
     OUT_DIR=${WORKDIR}/out/${KERNEL_DEFCONFIG} \
     INPLACE_COMPILE=y \
