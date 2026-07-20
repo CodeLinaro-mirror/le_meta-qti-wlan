@@ -107,6 +107,15 @@ else
                     echo "Unknown subtype: $subtype_value"
                     ;;
                 esac
+            # SA535M EMMC TDP: hw_platform returns "Unknown" (unmapped CDT value); identify via machine string instead
+            elif (echo -n $machine|grep TDP); then
+                if (echo -n $machine|grep SA535M); then
+                    echo -n "SA535M TDP -> load cnss2 module and trigger pcie rescan" > /dev/kmsg
+                    modprobe cnss2
+                    echo 1 > /sys/bus/pci/rescan
+                else
+                    echo -n "Non-SA535M TDP platform, skipping cnss2 load" > /dev/kmsg
+                fi
             else
                 echo -n "Not supported platform from CDT, QCMAP_CLI will load cnss2 in needed" > /dev/kmsg
             fi

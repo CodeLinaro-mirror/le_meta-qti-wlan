@@ -1,4 +1,4 @@
-CNSS_BB = 'autotools-brokensep module qperf'
+CNSS_BB = 'autotools-brokensep module'
 CNSS_BB:remove:sa535m = 'qperf'
 inherit ${CNSS_BB}
 
@@ -63,7 +63,7 @@ MAKE_TARGETS = " modules"
 
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/platform/"
-S = "${WORKDIR}/wlan/platform/"
+S = "${UNPACKDIR}/wlan/platform/"
 EXT_MODULES = "${@os.path.relpath("${S}", "${KERNEL_PLATFORM_PATH}")}"
 
 EXTRA_OEMAKE += "MODNAME=${_MODNAME}"
@@ -77,6 +77,7 @@ SYSTEMD_SERVICE:${PN} = "init_qti_cnss2_auto.service"
 
 # disable wlan service on boot for sdxpoorwills-auto
 SYSTEMD_AUTO_ENABLE:${PN} = "disable"
+SYSTEMD_AUTO_ENABLE:${PN}:sa535m = "enable"
 
 SRC_URI:append = " file://init.qti.cnss2_on.sh"
 SRC_URI:append = " file://init.qti.cnss2_off.sh"
@@ -96,7 +97,7 @@ do_compile:sa510m() {
     TARGET_BOARD_PLATFORM=${TARGET_BOARD_PLATFORM} \
     BUILD_CONFIG=${KERNEL_BUILD_CONFIG} \
     EXT_MODULES=${EXT_MODULES} \
-    ROOTDIR=${WORKDIR}/ \
+    ROOTDIR=${UNPACKDIR}/ \
     MODULE_OUT=${S} \
     OUT_DIR=${KERNEL_OUT_PATH}/ \
     VARIANT=${variant} \
@@ -155,11 +156,11 @@ do_install:sa510m() {
 
 do_install:append() {
     install -d ${D}${bindir}
-    install -D -m 0555 ${WORKDIR}/init.qti.cnss2_on.sh ${D}${bindir}/init.qti.cnss2_on.sh
-    install -D -m 0555 ${WORKDIR}/init.qti.cnss2_off.sh ${D}${bindir}/init.qti.cnss2_off.sh
+    install -D -m 0555 ${UNPACKDIR}/init.qti.cnss2_on.sh ${D}${bindir}/init.qti.cnss2_on.sh
+    install -D -m 0555 ${UNPACKDIR}/init.qti.cnss2_off.sh ${D}${bindir}/init.qti.cnss2_off.sh
     # Install systemd service file
     if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}; then
-        install -m 0644 ${WORKDIR}/init_qti_cnss2_auto.service -D ${D}${systemd_unitdir}/system/init_qti_cnss2_auto.service
+        install -m 0644 ${UNPACKDIR}/init_qti_cnss2_auto.service -D ${D}${systemd_unitdir}/system/init_qti_cnss2_auto.service
     fi
 }
 
@@ -191,5 +192,7 @@ do_module_signing() {
         fi
     fi
 }
+
+do_configure[noexec] = "1"
 
 addtask module_signing after do_package before do_package_qa do_package_write_ipk

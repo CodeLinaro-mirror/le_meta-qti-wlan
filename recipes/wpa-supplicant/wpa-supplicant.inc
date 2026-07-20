@@ -14,7 +14,7 @@ DEPENDS = "openssl libnl dbus"
 
 SRC_URI = "file://${WORKSPACE}/external/hostap"
 
-S = "${WORKDIR}/hostap/wpa_supplicant"
+S = "${UNPACKDIR}/hostap/wpa_supplicant"
 
 do_install() {
     make install DESTDIR=${D} BINDIR=${sbindir} LIBDIR=${libdir} INCDIR=${includedir}

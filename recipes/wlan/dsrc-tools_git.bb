@@ -15,7 +15,7 @@ PV = "1.0"
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/tools/ \
           "
-S = "${WORKDIR}/wlan/tools"
+S = "${UNPACKDIR}/wlan/tools"
 
 CFLAGS += "-I${STAGING_INCDIR}/libnl3"
 CFLAGS += "-Wall -Wno-error=deprecated-declarations -Wno-error=format-truncation"

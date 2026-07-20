@@ -44,7 +44,7 @@ if [ -f /sys/devices/soc0/hw_platform ]; then
     echo -n "subtypeid: $soc_subtypeid" > /dev/kmsg
 fi
 
-if [ "$soc_hwplatform" == "IDP" ] && [ "$soc_subtypeid" == "1" ]; then
+if [ "$soc_hwplatform" = "IDP" ] && [ "$soc_subtypeid" = "1" ]; then
 	echo "##########loading cnss2############"
 	modprobe cnss2 sdio_mode=1
 	echo "##########loading wlan driver############"
@@ -68,7 +68,7 @@ else
 		if (echo -n $LSPCI|grep 1102);then
 			echo "##########load qca6595#############" > /dev/kmsg
 			modprobe qca6595
-		elif ((echo -n $LSPCI|grep 003e) || (echo -n $LSPCI|grep QCA6174));then
+		elif (echo -n $LSPCI|grep 003e) || (echo -n $LSPCI|grep QCA6174);then
 			echo "##########load qca6574#############" > /dev/kmsg
 			modprobe qca6574
 		elif (echo -n $LSPCI|grep 1101);then
