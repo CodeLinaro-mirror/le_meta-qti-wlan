@@ -26,9 +26,7 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# Changes from Qualcomm Technologies, Inc. are provided under the following license:
-# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
-# SPDX-License-Identifier: BSD-3-Clause-Clear
+#
 
 
 
@@ -44,7 +42,7 @@ if [ -f /sys/devices/soc0/hw_platform ]; then
     echo -n "subtypeid: $soc_subtypeid" > /dev/kmsg
 fi
 
-if [ "$soc_hwplatform" = "IDP" ] && [ "$soc_subtypeid" = "1" ]; then
+if [ "$soc_hwplatform" == "IDP" ] && [ "$soc_subtypeid" == "1" ]; then
 	echo "##########loading cnss2############"
 	modprobe cnss2 sdio_mode=1
 	echo "##########loading wlan driver############"
@@ -68,7 +66,7 @@ else
 		if (echo -n $LSPCI|grep 1102);then
 			echo "##########load qca6595#############" > /dev/kmsg
 			modprobe qca6595
-		elif (echo -n $LSPCI|grep 003e) || (echo -n $LSPCI|grep QCA6174);then
+		elif ((echo -n $LSPCI|grep 003e) || (echo -n $LSPCI|grep QCA6174));then
 			echo "##########load qca6574#############" > /dev/kmsg
 			modprobe qca6574
 		elif (echo -n $LSPCI|grep 1101);then
@@ -80,9 +78,6 @@ else
 		elif (echo -n $LSPCI|grep 1107);then
 			echo "##########load qca6797#############" > /dev/kmsg
 			modprobe qca6797
-		elif (echo -n $LSPCI|grep 1112);then
-			echo "##########load wcn7760#############" > /dev/kmsg
-			modprobe wcn7760
 		else
 			echo "##########load default wlan########" > /dev/kmsg
 			modprobe wlan

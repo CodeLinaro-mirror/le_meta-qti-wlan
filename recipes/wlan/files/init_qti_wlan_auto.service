@@ -10,8 +10,5 @@ Type=simple
 RemainAfterExit=yes
 ExecStart=/usr/bin/init.qti.wlan_on.sh
 ExecStop=/usr/bin/init.qti.wlan_off.sh
-CapabilityBoundingSet=CAP_SYS_MODULE
-AmbientCapabilities=CAP_SYS_MODULE
-
 [Install]
 WantedBy=default.target

@@ -37,5 +37,25 @@ do_install:append () {
 
     install -d ${D}${sysconfdir}
     install -m 600 ${WORKDIR}/wpa_supplicant.conf-sane ${D}${sysconfdir}/wpa_supplicant.conf
+    install -d ${D}${includedir}/
+    install -d ${D}${includedir}/utils
+    install -d ${D}${includedir}/common
+    install -d ${D}${includedir}/drivers
+    install -d ${D}${includedir}/crypto
+    install -d ${D}${includedir}/eap_peer
+    install -d ${D}${includedir}/pasn
+    install -d ${D}${includedir}/rsn_supp
+    install -d ${D}${includedir}/ap
+    install -d ${D}${includedir}/radius
+    install -m 0644 ${S1}/src/drivers/*.h ${D}${includedir}/drivers/
+    install -m 0644 ${S1}/src/utils/*.h ${D}${includedir}/utils/
+    install -m 0644 ${S1}/src/utils/list.h ${D}${includedir}/common/
+    install -m 0644 ${S1}/src/common/*.h ${D}${includedir}/common/
+    install -m 0644 ${S1}/src/crypto/*.h ${D}${includedir}/crypto/
+    install -m 0644 ${S1}/src/eap_peer/*.h ${D}${includedir}/eap_peer/
+    install -m 0644 ${S1}/src/pasn/*.h ${D}${includedir}/pasn/
+    install -m 0644 ${S1}/src/rsn_supp/pmksa_cache.h ${D}${includedir}/rsn_supp/
+    install -m 0644 ${S1}/src/ap/pmksa_cache_auth.h ${D}${includedir}/ap/
+    install -m 0644 ${S1}/src/radius/radius.h ${D}${includedir}/radius/
 }
 

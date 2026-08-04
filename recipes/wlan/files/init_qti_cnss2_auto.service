@@ -34,8 +34,6 @@ Type=oneshot
 RemainAfterExit=yes
 ExecStart=init.qti.cnss2_on.sh cnss
 ExecStop=init.qti.cnss2_off.sh
-CapabilityBoundingSet=CAP_SYS_MODULE
-AmbientCapabilities=CAP_SYS_MODULE
 
 [Install]
 WantedBy=multi-user.target

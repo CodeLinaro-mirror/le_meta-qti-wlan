@@ -1,6 +1,4 @@
-WLAN_BB = 'autotools-brokensep module qperf'
-WLAN_BB:remove:sa535m = 'qperf'
-inherit ${WLAN_BB}
+inherit autotools-brokensep module qperf
 
 DESCRIPTION = "WLAN CLD3.0 high latency driver"
 PACKAGE_ARCH = "${MACHINE_ARCH}"

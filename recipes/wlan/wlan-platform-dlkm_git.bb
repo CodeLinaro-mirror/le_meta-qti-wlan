@@ -1,6 +1,5 @@
-CNSS_BB = 'autotools-brokensep module qperf'
-CNSS_BB:remove:sa535m = 'qperf'
-inherit ${CNSS_BB}
+
+inherit autotools-brokensep module qperf
 
 DESCRIPTION = "Build wlan platform drivers to kernel module"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
@@ -9,9 +8,13 @@ LICENSE = "${@bb.utils.contains('LAYERSERIES_COMPAT_core', 'dunfell',\
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/${LICENSE};md5=801f80980d171dd6425610833a22dbe6"
 SUMMARY = "Wlan platform drivers"
 _MODNAME = "wlan-platform-dlkm"
-FILES:${PN}     += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/*"
+FILES:${PN}     += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/cnss2.ko"
+FILES:${PN}     += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/cnss_nl.ko"
+FILES:${PN}     += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/cnss_utils.ko"
+FILES:${PN}     += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/wlan_firmware_service.ko"
+FILES:${PN}     += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/cnss_plat_ipc_qmi_svc.ko"
 FILES:${PN}     += "${includedir}/*"
-FILES:${PN}     += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/updates/*"
+FILES:${PN}     += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra/*"
 PROVIDES_NAME   = "kernel-module-${_MODNAME}"
 RPROVIDES:${PN} += "${PROVIDES_NAME}-${KERNEL_VERSION}"
 RPROVIDES:${PN} += "kernel-module-cnss2-${KERNEL_VERSION}"
@@ -34,30 +37,13 @@ WLAN_PLATFORM_CFG = " CONFIG_CNSS_OUT_OF_TREE=y \
 	CONFIG_MHI_BUF_LEN=8192 \
 	"
 
-WLAN_PLATFORM_CFG_SA535M = " CONFIG_CNSS_OUT_OF_TREE=y \
-	CONFIG_CNSS2=m \
-	USE_EXTERNAL_CONFIGS=y \
-	CONFIG_AUTO_PROJECT=y \
-	CONFIG_CNSS2_QMI=y \
-	CONFIG_CNSS2_DEBUG=y \
-	CONFIG_CNSS_QMI_SVC=m \
-	CONFIG_CNSS_GENL=m \
-	CONFIG_CNSS_UTILS=m \
-	CONFIG_CNSS2_ENUM_WITH_LOW_SPEED=y \
-	CONFIG_CNSS2_CONDITIONAL_POWEROFF=y \
-	CONFIG_MHI_BUF_LEN=8192 \
-	CONFIG_PINCTRL_MSM_NO_EXT=y \
-	CONFIG_QLI=y \
-	"
-
 EXTRA_OEMAKE:append = "${@bb.utils.contains('PREFERRED_VERSION_linux-msm', '5.15', '${WLAN_PLATFORM_CFG}', '', d)}"
-EXTRA_OEMAKE:append:sa535m = "${WLAN_PLATFORM_CFG_SA535M}"
 
 do_unpack[deptask] = "do_populate_sysroot"
 PR = "r8"
 
 DEPENDS = "virtual/kernel"
-DEPENDS += "${@bb.utils.contains_any('BASEMACHINE', 'sa525m sa510m sa535m', 'wlan-devicetree', '', d)}"
+DEPENDS += "${@bb.utils.contains_any('BASEMACHINE', 'sa525m sa510m', 'wlan-devicetree', '', d)}"
 
 MAKE_TARGETS = " modules"
 
@@ -121,17 +107,6 @@ do_install:sa525m() {
     install -m 0644 ${S}/inc/* ${D}${includedir}/
 }
 
-do_install:sa535m() {
-    module_do_install
-    install -d ${D}${includedir}
-    install -m 0644 ${S}/inc/* ${D}${includedir}/
-
-    install -d ${DEPLOY_DIR_IMAGE}/kernel_modules/wlan/
-    install -D -m 0644 ${B}/cnss2/*.ko ${DEPLOY_DIR_IMAGE}/kernel_modules/wlan/
-    install -D -m 0644 ${B}/cnss_genl/*.ko ${DEPLOY_DIR_IMAGE}/kernel_modules/wlan/
-    install -D -m 0644 ${B}/cnss_utils/*.ko ${DEPLOY_DIR_IMAGE}/kernel_modules/wlan/
-}
-
 do_install:sa510m() {
     install -d ${D}${includedir}
     CNSS2_STAGING=${@oe.utils.conditional('PERF_BUILD', '1', '${STAGING_DIR_TARGET}-perf', '${STAGING_DIR_TARGET}', d)}
@@ -163,9 +138,11 @@ do_install:append() {
     fi
 }
 
-do_module_signing:sa535m() {
-    bbnote "Signing ${PN} module"
-    ${STAGING_KERNEL_BUILDDIR}/scripts/sign-file sha512 ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.pem ${STAGING_KERNEL_BUILDDIR}/certs/signing_key.x509 ${PKGDEST}/${PN}/usr/lib/modules/${KERNEL_VERSION}/updates/cnss2/cnss2.ko
+do_deploy:sa525m() {
+    install -d ${DEPLOYDIR}/kernel_modules/wlan-platform-dlkm
+    install -D -m 0644 ${B}/cnss2/*.ko ${DEPLOYDIR}/kernel_modules/wlan-platform-dlkm/
+    install -D -m 0644 ${B}/cnss_genl/*.ko ${DEPLOYDIR}/kernel_modules/wlan-platform-dlkm/
+    install -D -m 0644 ${B}/cnss_utils/*.ko ${DEPLOYDIR}/kernel_modules/wlan-platform-dlkm/
 }
 
 do_module_signing() {

@@ -10,6 +10,7 @@ SRC_URI += "file://defconfig-qcacld"
 FILES:${PN} += "/usr/include/*"
 
 S = "${WORKDIR}/external/wpa_supplicant_8/wpa_supplicant"
+S1 = "${WORKDIR}/external/wpa_supplicant_8"
 
 do_configure() {
     sed -i -e 's/^CONFIG_EAP_PROXY=qmi/#CONFIG_EAP_PROXY=qmi/g' ${WORKDIR}/defconfig-qcacld
@@ -22,6 +23,5 @@ INCSUFFIX:automotive = "wpa-supplicant_auto"
 INCSUFFIX:auto = "wpa-supplicant_auto"
 INCSUFFIX:sa515m = "wpa-supplicant_auto"
 INCSUFFIX:sa525m = "wpa-supplicant_auto"
-INCSUFFIX:sa535m = "wpa-supplicant_auto"
 INCSUFFIX:sa510m = "wpa-supplicant_auto"
 include ${INCSUFFIX}.inc
