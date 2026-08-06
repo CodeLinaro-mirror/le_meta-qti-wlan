@@ -1,6 +1,7 @@
 SUMMARY = "Tools for the Linux Standard Wireless Extension Subsystem"
 HOMEPAGE = "https://hewlettpackard.github.io/wireless-tools/Tools.html"
 LICENSE = "GPLv2 & (LGPLv2.1 | MPL-1.1 | BSD)"
+LICENSE:seraph = "GPLv2 & (LGPLv2.1 | MPL-1.1)"
 LIC_FILES_CHKSUM = "file://COPYING;md5=94d55d512a9ba36caa9b7df079bae19f"
 SECTION = "base"
 
@@ -18,5 +19,13 @@ EXTRA_OEMAKE = "-e 'BUILD_SHARED=y' \
 do_install() {
 	oe_runmake PREFIX=${D} install-bin
 }
-
 FILES:${PN} = "/sbin"
+
+INSANE_SKIP:${PN}:seraph = "usrmerge"
+FILES:${PN}:seraph = "${sbindir}/iwlist \
+                      ${sbindir}/iwconfig \
+                      ${sbindir}/iwpriv \
+                      ${sbindir}/iwgetid \
+                      ${sbindir}/iwspy \
+                      ${sbindir}/iwevent \
+                      ${sbindir}/ifrename"

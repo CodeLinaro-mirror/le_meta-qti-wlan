@@ -30,6 +30,14 @@ SRC_URI:append:pineapple+= "file://neo/wlan-conf_systemd_tmpfiles.conf"
 SRC_URI:append:qcm2290-mtp+= "file://neo/wlan_daemon.service"
 SRC_URI:append:qcm2290-mtp+= "file://neo/wlan-conf_systemd_tmpfiles.conf"
 
+SRC_URI:append:seraph+= "file://seraph/dhcpcd.service"
+SRC_URI:append:seraph+= "file://seraph/wlan_daemon.service"
+SRC_URI:append:seraph+= "file://seraph/wpa_supplicant.service"
+SRC_URI:append:seraph+= "file://seraph/wlan-conf_systemd_tmpfiles.conf"
+SRC_URI:append:seraph+= "file://seraph/fi.w1.wpa_supplicant1.service"
+SRC_URI:append:seraph+= "file://seraph/dbus-wpa_supplicant.conf"
+SRC_URI:append:seraph+= "file://seraph/dbus-wpa_supplicant_testing.conf"
+
 # Update for each machine
 S = "${WORKDIR}/mdm-init/"
 
@@ -233,12 +241,38 @@ do_install:append:ar-sg1(){
 	fi
 }
 
+do_install:append:seraph(){
+       if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
+               #systemd-tmpfiles service for wlan-conf
+               install -d ${D}${sysconfdir}/tmpfiles.d
+               install -m 0644 ${WORKDIR}/seraph/wlan-conf_systemd_tmpfiles.conf \
+                       -D ${D}${sysconfdir}/tmpfiles.d/wlan-conf_systemd_tmpfiles.conf
+               install -d ${D}/etc/initscripts
+               cp ${D}/etc/init.d/wlan ${D}/etc/initscripts/wlan
+               install -d ${D}/etc/systemd/system/
+               install -d ${D}/etc/systemd/system/multi-user.target.wants/
+               install -m 0644 ${WORKDIR}/seraph/wlan_daemon.service -D ${D}/etc/systemd/system/wlan_daemon.service
+               ln -sf /etc/systemd/system/wlan_daemon.service ${D}/etc/systemd/system/multi-user.target.wants/wlan_daemon.service
+               install -m 0644 ${WORKDIR}/seraph/dhcpcd.service -D ${D}/etc/systemd/system/dhcpcd.service
+               ln -sf /etc/systemd/system/dhcpcd.service ${D}/etc/systemd/system/multi-user.target.wants/dhcpcd.service
+               install -m 0644 ${WORKDIR}/seraph/wpa_supplicant.service -D ${D}/etc/systemd/system/wpa_supplicant.service
+               ln -sf /etc/systemd/system/wpa_supplicant.service ${D}/etc/systemd/system/multi-user.target.wants/wpa_supplicant.service
+               install -m 0644 ${WORKDIR}/seraph/fi.w1.wpa_supplicant1.service -D ${D}/usr/share/dbus-1/system-services/fi.w1.wpa_supplicant1.service
+               install -m 0644 ${WORKDIR}/seraph/dbus-wpa_supplicant.conf -D ${D}/usr/share/dbus-1/system.d/dbus-wpa_supplicant.conf
+               install -m 0644 ${WORKDIR}/seraph/dbus-wpa_supplicant_testing.conf -D ${D}/etc/dbus-1/system.d/dbus-wpa_supplicant_testing.conf
+       fi
+}
+
 FILES:${PN} += "${userfsdatadir}/misc/wifi/*"
 FILES:${PN} += "${base_libdir}/firmware/wlan/qca_cld/*"
 FILES:${PN} += "/lib/firmware/wlan/qca_cld/* ${sysconfdir}/init.d/* "
 FILES:${PN}:append:neo += "/usr/share/dbus-1/system-services/*"
 FILES:${PN}:append:neo += "/usr/share/dbus-1/system.d/*"
 FILES:${PN}:append:neo += "/etc/dbus-1/system.d/*"
+
+FILES:${PN}:append:seraph += "/usr/share/dbus-1/system-services/*"
+FILES:${PN}:append:seraph += "/usr/share/dbus-1/system.d/*"
+FILES:${PN}:append:seraph += "/etc/dbus-1/system.d/*"
 
 BASEPRODUCT = "${@d.getVar('PRODUCT', False)}"
 

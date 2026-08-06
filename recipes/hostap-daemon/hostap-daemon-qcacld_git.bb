@@ -1,4 +1,4 @@
-inherit pkgconfig logging
+inherit pkgconfig ${@'logging' if d.getVar('DISTRO_CODENAME') in ['kirkstone', 'langdale', 'mickledore', 'nanbield'] else ''}
 
 include hostap-daemon.inc
 
@@ -18,6 +18,7 @@ DEPENDS = "pkgconfig libnl openssl wpa-supplicant-8-lib liblog"
 
 LDFLAGS +="-L${RECIPE_SYSROOT}/usr/lib -llog"
 CFLAGS:append:neo +="-DCONFIG_ANDROID_LOG"
+CFLAGS:append:seraph +="-DCONFIG_ANDROID_LOG"
 
 S = "${WORKDIR}/external/wpa_supplicant_8/hostapd/"
 PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"
@@ -52,6 +53,11 @@ do_configure:append:sdxlemur() {
 }
 
 do_configure:append:neo() {
+    echo "LIBS_c +=-llog" >> .config
+    echo "LIBS +=-llog" >> .config
+}
+
+do_configure:append:seraph() {
     echo "LIBS_c +=-llog" >> .config
     echo "LIBS +=-llog" >> .config
 }
