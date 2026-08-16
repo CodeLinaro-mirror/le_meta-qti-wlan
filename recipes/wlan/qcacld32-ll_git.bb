@@ -22,8 +22,8 @@ SRC_URI += "file://wlan/qca-wifi-host-cmn/"
 SRC_URI += "file://wlan/fw-api/"
 SRC_URI:append:automotive = " file://device/qcom/wlan/romelv/WCNSS_qcom_cfg.ini"
 
-S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn/"
-S = "${WORKDIR}/wlan/qcacld-3.0/"
+S1 = "${UNPACKDIR}/wlan/qca-wifi-host-cmn/"
+S = "${UNPACKDIR}/wlan/qcacld-3.0/"
 
 FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld"
 
@@ -73,10 +73,10 @@ do_install () {
 }
 
 do_install:append:automotive() {
-    install -D -m 0644 ${WORKDIR}/device/qcom/wlan/romelv/WCNSS_qcom_cfg.ini ${FIRMWARE_PATH}
+    install -D -m 0644 ${UNPACKDIR}/device/qcom/wlan/romelv/WCNSS_qcom_cfg.ini ${FIRMWARE_PATH}
     # Install systemd service file
     if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}; then
-        install -m 0644 ${WORKDIR}/init_qti_wlan.service -D ${D}${systemd_unitdir}/system/init_qti_wlan.service
+        install -m 0644 ${UNPACKDIR}/init_qti_wlan.service -D ${D}${systemd_unitdir}/system/init_qti_wlan.service
     fi
 }
 

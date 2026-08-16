@@ -30,8 +30,8 @@ SRC_URI += "file://wlan/fw-api/"
 SRC_URI:append = " file://device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6174.ini"
 SRC_URI:append = " file://device/qcom/wlan/sdx_auto/wlan_mac.bin"
 
-S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn/"
-S = "${WORKDIR}/wlan/qcacld-3.0/"
+S1 = "${UNPACKDIR}/wlan/qca-wifi-host-cmn/"
+S = "${UNPACKDIR}/wlan/qcacld-3.0/"
 
 FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld/${_MODNAME}"
 FIRMWARE_PATH:sa510m = "${D}/usr/lib/firmware/wlan/qca_cld/${_MODNAME}"
@@ -177,7 +177,7 @@ do_compile:prepend() {
 }
 do_compile:prepend:sa410m() {
     CMD="echo 8 >/sys/class/net/wlan0/queues/tx-0/xps_cpus;echo 8 >/sys/class/net/wlan0/queues/rx-0/rps_cpus"
-    sed -i -e "/Load wlanhost driver done/i${CMD}" ${WORKDIR}/init.qti.wlan_on.sh
+    sed -i -e "/Load wlanhost driver done/i${CMD}" ${UNPACKDIR}/init.qti.wlan_on.sh
 }
 
 # ------------------------------
@@ -196,7 +196,7 @@ do_compile:sa510m() {
     TARGET_BOARD_PLATFORM=${TARGET_BOARD_PLATFORM} \
     BUILD_CONFIG=${KERNEL_BUILD_CONFIG} \
     EXT_MODULES=${EXT_MODULES} \
-    ROOTDIR=${WORKDIR}/ \
+    ROOTDIR=${UNPACKDIR}/ \
     MODULE_OUT=${S} \
     OUT_DIR=${KERNEL_PREBUILT_PATH} \
     VARIANT=${variant}_defconfig \
@@ -224,14 +224,14 @@ do_install() {
 }
 
 do_install:append() {
-    install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6174.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
+    install -D -m 0644 ${UNPACKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6174.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
     chmod -R 0664 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
-    install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/wlan_mac.bin ${FIRMWARE_PATH}/wlan_mac.bin
+    install -D -m 0644 ${UNPACKDIR}/device/qcom/wlan/sdx_auto/wlan_mac.bin ${FIRMWARE_PATH}/wlan_mac.bin
     chmod -R 0664 ${FIRMWARE_PATH}/wlan_mac.bin
     install -d ${D}${bindir}
-    install -D -m 0555 ${WORKDIR}/init.qti.wlan_on.sh ${D}${bindir}/init.qti.wlan_on.sh
-    install -D -m 0555 ${WORKDIR}/init.qti.wlan_off.sh ${D}${bindir}/init.qti.wlan_off.sh
-    install -D -m 0555 ${WORKDIR}/wlan_sap_sta_setup.sh ${D}${bindir}/wlan_sap_sta_setup.sh
+    install -D -m 0555 ${UNPACKDIR}/init.qti.wlan_on.sh ${D}${bindir}/init.qti.wlan_on.sh
+    install -D -m 0555 ${UNPACKDIR}/init.qti.wlan_off.sh ${D}${bindir}/init.qti.wlan_off.sh
+    install -D -m 0555 ${UNPACKDIR}/wlan_sap_sta_setup.sh ${D}${bindir}/wlan_sap_sta_setup.sh
     if [ ${BASEMACHINE} != "sa510m" ]; then
         install -d ${D}/lib/firmware/${_MODNAME}/
         ln -sf /firmware/image/${FW_PATH_NAME}/bdwlan30.b00 ${D}/lib/firmware/${_MODNAME}/
@@ -248,17 +248,17 @@ do_install:append() {
     fi
     # Install systemd service file
     if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}; then
-        install -m 0644 ${WORKDIR}/init_qti_wlan_auto.service -D ${D}${systemd_unitdir}/system/init_qti_wlan_auto.service
+        install -m 0644 ${UNPACKDIR}/init_qti_wlan_auto.service -D ${D}${systemd_unitdir}/system/init_qti_wlan_auto.service
     fi
 }
 
 do_install:append:sa515m() {
-    install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6174.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
+    install -D -m 0644 ${UNPACKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6174.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
     chmod -R 0664 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
 }
 
 do_install:append:sa415m() {
-    install -D -m 0644 ${WORKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6174.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
+    install -D -m 0644 ${UNPACKDIR}/device/qcom/wlan/sdx_auto/WCNSS_qcom_cfg_qca6174.ini ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
     chmod -R 0664 ${FIRMWARE_PATH}/WCNSS_qcom_cfg.ini
 }
 
