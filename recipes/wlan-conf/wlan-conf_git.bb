@@ -295,6 +295,7 @@ EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'neo', '--enable-target-neo
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'kalama', '--enable-target-kalama=yes', '', d)}"
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'qrb5165', '--enable-target-qrb5165=yes', '', d)}"
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'pineapple', '--enable-target-pineapple=yes', '', d)}"
+EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'seraph', '--enable-target-seraph=yes', '', d)}"
 EXTRA_OECONF += "${@bb.utils.contains('BASEMACHINE', 'qcm2290-mtp', '--enable-target-qcm2290-mtp=yes', '', d)}"
 
 # Enable qsap-wlan in place of pronto-wlan for Drones

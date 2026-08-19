@@ -15,9 +15,14 @@ SRC_DIR = "${WORKSPACE}/wlan/utils/sigma-dut/"
 SRC_URI += "file://Makefile.patch"
 
 DEPENDS = "libnl"
+DEPENDS:append:ar-sg1 = " wifi-hal wpa-supplicant-qcacld openssl"
 
 CFLAGS += "-DLINUX_EMBEDDED"
 CFLAGS += "-I ${STAGING_INCDIR}/libnl3"
+
+CFLAGS:append:ar-sg1 = " -I ${WORKSPACE}/hardware/qcom/wlan/qcwcn/wifi_hal \
+                         -I ${WORKSPACE}/hardware/interfaces/wifi/legacy_headers/include/hardware_legacy"
+EXTRA_OEMAKE:append:ar-sg1 = " ENABLE_NAN=1"
 
 S = "${WORKDIR}/wlan/utils/sigma-dut"
 

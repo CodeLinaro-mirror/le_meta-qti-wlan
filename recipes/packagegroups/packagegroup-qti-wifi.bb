@@ -35,6 +35,8 @@ RDEPENDS:packagegroup-qti-wifi:append:qcs40x = "rfkill iperf2 iperf3"
 RDEPENDS:packagegroup-qti-wifi:append:pineapple = "rfkill dnsmasq iperf2"
 RDEPENDS:packagegroup-qti-wifi:append:qcm2290-mtp = "rfkill iperf2 iperf3"
 RDEPENDS:packagegroup-qti-wifi:append:seraph = "tcpdump rfkill dnsmasq dhcpcd iperf2 iperf3"
+RDEPENDS:packagegroup-qti-wifi:append:vienna = "wifi-hal"
+RDEPENDS:packagegroup-qti-wifi:append:ar-sg1 = " wifi-hal "
 
 RDEPENDS:packagegroup-qti-wifi = " \
         ${QCACLD32_LL} \
