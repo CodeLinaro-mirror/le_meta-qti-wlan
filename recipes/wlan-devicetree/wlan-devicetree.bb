@@ -59,6 +59,7 @@ do_compile:pebble() {
     MODULE_OUT=${S} \
     OUT_DIR=${WORKDIR}/out/${KERNEL_DEFCONFIG} \
     INPLACE_COMPILE=y \
+    TARGET_BOARD_PLATFORM=${TARGET_BOARD_PLATFORM} \
     ./build/build_module.sh dtbs
 }
 
