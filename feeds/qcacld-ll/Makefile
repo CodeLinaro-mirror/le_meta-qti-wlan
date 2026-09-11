@@ -34,6 +34,7 @@ TARGET_MAKEOPTS := CONFIG_ARCH_SDXBAAGHA=y \
 		   CONFIG_CNSS_ASYNC=y \
 		   CONFIG_CNSS_LOGGER=y \
 		   CONFIG_CLD_LL_CORE=y \
+		   CONFIG_VOS_MEM_PRE_ALLOC=y \
 		   CONFIG_CNSS_SDIO=n \
 		   CONFIG_CLD_HL_SDIO_CORE=n
 
@@ -53,6 +54,7 @@ TARGET_MAKEOPTS := CONFIG_ARCH_SDXBAAGHA=y \
 		   CONFIG_CNSS_PCI=n \
 		   CONFIG_CNSS_SDIO=y \
 		   CONFIG_CLD_HL_SDIO_CORE=y \
+		   CONFIG_VOS_MEM_PRE_ALLOC=y \
 		   MODNAME=wlan_sdio
 
 WLAN_PLATFORM_SYMBOLS = $(PKG_BUILD_DIR)/../wlan-cnss-sdio/Module.symvers
@@ -76,7 +78,7 @@ define KernelPackage/qcacld-ll-sdio
   SECTION:=Kernel Modules
   CATEGORY:=External Kernel Modules
   TITLE:=WLAN HOST SDIO DRIVER
-  DEPENDS := +kmod-wlan-cnss-sdio +kmod-wlan-cnss-crypto
+  DEPENDS := +kmod-qcacld-ll +kmod-wlan-cnss-sdio +kmod-wlan-cnss-crypto
   VARIANT:=sdio
 endef
 
@@ -108,8 +110,10 @@ endef
 
 define  KernelPackage/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/$(EXTRA_ADDR)/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/wlan_prealloc.ko $(1)/$(EXTRA_ADDR)/wlan_prealloc.ko
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/wlan.ko $(1)/$(EXTRA_ADDR)/wlan_rome.ko
 	$(INSTALL_DIR) $(TOPDIR)/bin/targets/$(COMPILE_MODE)/modules
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/wlan_prealloc.ko $(TOPDIR)/bin/targets/$(COMPILE_MODE)/modules/wlan_prealloc.ko
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/wlan.ko $(TOPDIR)/bin/targets/$(COMPILE_MODE)/modules/wlan_rome.ko
 endef
 
