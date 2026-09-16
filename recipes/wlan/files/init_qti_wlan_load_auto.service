@@ -1,0 +1,14 @@
+
+[Unit]
+Description=MODPROBE_WLAN_MODULE_LOAD
+After=firmware-links.service firmware.mount sysinit.target
+Conflicts=shutdown.target
+
+[Service]
+Type=simple
+#Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/init.qti.wlan_load.sh
+ExecStop=/usr/bin/init.qti.wlan_unload.sh
+[Install]
+WantedBy=default.target

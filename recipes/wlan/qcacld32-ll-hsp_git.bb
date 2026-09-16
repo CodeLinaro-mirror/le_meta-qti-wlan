@@ -131,13 +131,20 @@ SSTATE_DUPWHITELIST += "${STAGING_DIR}/${MACHINE}${includedir}/qcacld/wlan_nlink
 
 inherit systemd
 SRC_URI_append = " file://init_qti_wlan_auto.service"
-SYSTEMD_SERVICE_${PN} = "init_qti_wlan_auto.service"
+SYSTEMD_SERVICE_${PN} = "init_qti_wlan_auto.service init_qti_wlan_load_auto.service"
 SYSTEMD_AUTO_ENABLE_${PN} = "disable"
+
+SRC_URI_append = " file://init_qti_wlan_load_auto.service"
 
 SRC_URI_append = " file://init.qti.wlan_on.sh"
 SRC_URI_append = " file://init.qti.wlan_off.sh"
 FILES_${PN}     += "usr/bin/init.qti.wlan_on.sh"
 FILES_${PN}     += "usr/bin/init.qti.wlan_off.sh"
+
+SRC_URI_append = " file://init.qti.wlan_load.sh"
+SRC_URI_append = " file://init.qti.wlan_unload.sh"
+FILES_${PN}     += "usr/bin/init.qti.wlan_load.sh"
+FILES_${PN}     += "usr/bin/init.qti.wlan_unload.sh"
 
 do_install () {
     module_do_install
@@ -164,9 +171,12 @@ do_install_append() {
     install -d ${D}${bindir}
     install -D -m 0755 ${WORKDIR}/init.qti.wlan_on.sh ${D}${bindir}/init.qti.wlan_on.sh
     install -D -m 0755 ${WORKDIR}/init.qti.wlan_off.sh ${D}${bindir}/init.qti.wlan_off.sh
+    install -D -m 0755 ${WORKDIR}/init.qti.wlan_load.sh ${D}${bindir}/init.qti.wlan_load.sh
+    install -D -m 0755 ${WORKDIR}/init.qti.wlan_unload.sh ${D}${bindir}/init.qti.wlan_unload.sh
     # Install systemd service file
     if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}; then
         install -m 0644 ${WORKDIR}/init_qti_wlan_auto.service -D ${D}${systemd_unitdir}/system/init_qti_wlan_auto.service
+        install -m 0644 ${WORKDIR}/init_qti_wlan_load_auto.service -D ${D}${systemd_unitdir}/system/init_qti_wlan_load_auto.service
     fi
 }
 
