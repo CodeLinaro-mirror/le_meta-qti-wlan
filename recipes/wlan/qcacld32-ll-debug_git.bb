@@ -30,7 +30,7 @@ SRC_URI += "file://wlan_load.conf"
 SRC_URI += "file://wlan/platform/"
 
 S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn"
-S = "${WORKDIR}/wlan/qcacld-3.0"
+S = "${UNPACKDIR}/wlan/qcacld-3.0"
 FIRMWARE_PATH = "${D}/lib/firmware/wlan/qca_cld/${TARGET_WLAN_CHIP}"
 
 WLAN_CONFIG = "default"

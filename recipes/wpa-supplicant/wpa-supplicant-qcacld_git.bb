@@ -24,7 +24,7 @@ DEPENDS:append:qcm2290-mtp = " qmi-framework "
 
 FILES:${PN} += "/usr/include/*"
 
-S = "${WORKDIR}/external/wpa_supplicant_8/wpa_supplicant"
+S = "${UNPACKDIR}/external/wpa_supplicant_8/wpa_supplicant"
 PATCH_DIR = "${WORKDIR}/external/wpa_supplicant_8/"
 
 LDFLAGS:append:neo = " -Wl,--no-as-needed -L${RECIPE_SYSROOT}/usr/lib -llog"

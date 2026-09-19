@@ -32,7 +32,7 @@ SRC_URI += "file://wlan/platform/"
 SRC_URI += "file://qcacld-kbuild.patch"
 
 S1 = "${WORKDIR}/wlan/qca-wifi-host-cmn/"
-S = "${WORKDIR}/wlan/qcacld-3.0/"
+S = "${UNPACKDIR}/wlan/qcacld-3.0/"
 
 RPROVIDES:${PN} += "kernel-module-qca-cld3-peach-v2-${KERNEL_VERSION}"
 CLANG_BIN = "${WORKDIR}/recipe-sysroot-native/usr/bin/clang/bin"

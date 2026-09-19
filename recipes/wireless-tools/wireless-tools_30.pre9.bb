@@ -10,7 +10,7 @@ SRC_URI = "https://hewlettpackard.github.io/wireless-tools/wireless_tools.${PV}.
 SRC_URI[md5sum] = "ca91ba7c7eff9bfff6926b1a34a4697d"
 SRC_URI[sha256sum] = "abd9c5c98abf1fdd11892ac2f8a56737544fe101e1be27c6241a564948f34c63"
 
-S = "${WORKDIR}/wireless_tools.30"
+S = "${UNPACKDIR}/wireless_tools.30"
 
 EXTRA_OEMAKE = "-e 'BUILD_SHARED=y' \
 		'INSTALL_DIR=${D}${base_sbindir}' \

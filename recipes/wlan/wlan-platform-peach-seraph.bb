@@ -13,7 +13,7 @@ DEPENDS += "soc-modules"
 PROVIDES_NAME   = "wlan-platform"
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/platform/"
-S = "${WORKDIR}/wlan/platform"
+S = "${UNPACKDIR}/wlan/platform"
 
 RPROVIDES:${PN} += "kernel-module-cnss-nl-${KERNEL_VERSION}"
 RPROVIDES:${PN} += "kernel-module-cnss-plat-ipc-qmi-svc-${KERNEL_VERSION}"

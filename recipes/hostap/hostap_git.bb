@@ -21,7 +21,7 @@ DEPENDS = "openssl qmi"
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://external/hostap"
 
-S = "${WORKDIR}/external/hostap"
+S = "${UNPACKDIR}/external/hostap"
 
 SUPPLICANT_CONFIG = "${S}/wpa_supplicant/.config"
 HOSTAPD_CONFIG = "${S}/hostapd/.config"

@@ -39,7 +39,7 @@ SRC_URI:append:seraph+= "file://seraph/dbus-wpa_supplicant.conf"
 SRC_URI:append:seraph+= "file://seraph/dbus-wpa_supplicant_testing.conf"
 
 # Update for each machine
-S = "${WORKDIR}/mdm-init/"
+S = "${UNPACKDIR}/mdm-init/"
 
 do_install:append:mdm(){
 	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then

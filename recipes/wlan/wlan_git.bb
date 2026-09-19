@@ -17,7 +17,7 @@ DEPENDS = "virtual/kernel wireless-tools"
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan"
 
-S = "${WORKDIR}/wlan/host"
+S = "${UNPACKDIR}/wlan/host"
 
 ATH_BUILD_TYPE="mdm9x15"
 ATH_BUS_TYPE="SDIO"

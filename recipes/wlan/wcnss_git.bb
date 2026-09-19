@@ -11,7 +11,7 @@ SRC_URI += "file://device/qcom/wlan/${SOC_FAMILY}/WCNSS_qcom_cfg.ini"
 SRC_URI += "file://device/qcom/wlan/${SOC_FAMILY}/WCNSS_qcom_wlan_nv.bin"
 SRC_URI += "file://device/qcom/wlan/${SOC_FAMILY}/WCNSS_wlan_dictionary.dat"
 
-S = "${WORKDIR}/qcom-opensource/wlan/firmware_bin"
+S = "${UNPACKDIR}/qcom-opensource/wlan/firmware_bin"
 
 inherit systemd
 inherit update-rc.d

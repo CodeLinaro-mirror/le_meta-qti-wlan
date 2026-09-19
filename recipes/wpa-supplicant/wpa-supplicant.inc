@@ -14,7 +14,7 @@ DEPENDS = "openssl libnl"
 
 SRC_URI = "file://${WORKSPACE}/external/hostap"
 
-S = "${WORKDIR}/hostap/wpa_supplicant"
+S = "${UNPACKDIR}/hostap/wpa_supplicant"
 
 do_install() {
     if [ ${BASEMACHINE} == "sdxlemur" ]; then

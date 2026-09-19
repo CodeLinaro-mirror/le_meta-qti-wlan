@@ -19,7 +19,7 @@ DEPENDS = "libnl"
 CFLAGS += "-DLINUX_EMBEDDED"
 CFLAGS += "-I ${STAGING_INCDIR}/libnl3"
 
-S = "${WORKDIR}/wlan/utils/sigma-dut"
+S = "${UNPACKDIR}/wlan/utils/sigma-dut"
 
 do_patch() {
     cd ${S}

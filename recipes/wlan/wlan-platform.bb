@@ -10,7 +10,7 @@ do_unpack[deptask] = "do_populate_sysroot"
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://wlan/platform/"
 
-S = "${WORKDIR}/wlan/platform"
+S = "${UNPACKDIR}/wlan/platform"
 
 do_configure[depends] = "virtual/kernel:do_shared_workdir"
 

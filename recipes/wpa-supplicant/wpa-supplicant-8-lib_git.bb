@@ -20,7 +20,7 @@ SRC_URI += "file://misc/"
 
 PACKAGE_ARCH ?= "${MACHINE_ARCH}"
 
-S = "${WORKDIR}/wlan/qcwcn/wpa_supplicant_8_lib"
+S = "${UNPACKDIR}/wlan/qcwcn/wpa_supplicant_8_lib"
 
 PATCH_DIR = "${WORKDIR}/wlan/qcwcn/wpa_supplicant_8_lib"
 

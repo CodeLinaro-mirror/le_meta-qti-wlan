@@ -14,7 +14,7 @@ DEPENDS = "virtual/kernel wireless-tools"
 FILESPATH =+ "${WORKSPACE}:"
 SRC_URI = "file://qcom-opensource/wlan/prima"
 
-S = "${WORKDIR}/qcom-opensource/wlan/prima"
+S = "${UNPACKDIR}/qcom-opensource/wlan/prima"
 
 EXTRA_OEMAKE += "CONFIG_PRONTO_WLAN=m \
                  KERNEL_BUILD=0"

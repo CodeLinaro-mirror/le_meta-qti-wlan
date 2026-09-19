@@ -9,7 +9,7 @@ SRC_URI[md5sum] = "fd17ca2dd5f160a5d9e5fd3f8a69f416"
 SRC_URI[sha256sum] = "f167bbe947dd53bb9ebc0c1dcef5db6ad73ac1d6084f2c6f9376c5c360cc4d4e"
 
 DEPENDS = "libnl"
-S = "${WORKDIR}/iw-${PV}"
+S = "${UNPACKDIR}/iw-${PV}"
 
 TARGET_CFLAGS += "-fpie -Wall -Werror -Wno-error=sign-compare"
 TARGET_LDFLAGS += "-pie -L${STAGING_LIBDIR}"

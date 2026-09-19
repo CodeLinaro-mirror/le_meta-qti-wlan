@@ -14,7 +14,7 @@ SRC_URI = "git://git.codelinaro.org/clo/le/platform/external/rincat/RTL88x2BU-Li
     file://0001-adapt-makefile-to-support-KALAMA-Platform.patch \
     file://0001-adapt-upstream-driver-to-kp5.15.patch"
 
-S = "${WORKDIR}/git"
+S = "${UNPACKDIR}/git"
 
 KERNEL_VERSION = "${@get_kernelversion_file("${STAGING_KERNEL_BUILDDIR}")}"
 EXT_MODULES = "${@os.path.relpath("${S}", "${KERNEL_PLATFORM_PATH}")}"
