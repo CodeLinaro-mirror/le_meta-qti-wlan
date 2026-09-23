@@ -82,6 +82,7 @@ else
 endif
 
 COPY_PATCH_FILES := $(CP) ./files/$(TARGET_PATCH_PATH)/*.patch ./patches/
+CLEAN_PATCH_FILES := rm -f $(addprefix ./patches/,$(notdir $(wildcard ./files/$(TARGET_PATCH_PATH)/*.patch)))
 COPY_CONFIG_FILES := ${INSTALL_DATA} ./files/$(TARGET_PATCH_PATH)/defconfig-qcacld \
 			$(SUPPLICANT_CONFIG_FILE)
 
@@ -108,6 +109,7 @@ define Build/Prepare
 	${COPY_PATCH_FILES}
 	${TARGET_ADD_CONFIG}
 	$(Build/Patch)
+	${CLEAN_PATCH_FILES}
 endef
 
 TARGET_CPPFLAGS += -I$(STAGING_DIR)/usr/include/libnl3

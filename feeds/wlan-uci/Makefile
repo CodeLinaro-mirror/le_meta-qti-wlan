@@ -55,6 +55,7 @@ define Package/$(PKG_NAME)/install
 	$(CP) files/6g_wireless $(1)/etc/misc/wifi/
 	$(CP) files/sdxlemur/qcacfg80211.config $(1)/etc/config/qcacfg80211
 	$(INSTALL_BIN) files/ucitool $(1)/usr/sbin/
+	$(INSTALL_BIN) files/rotate-hostapd-log.sh $(1)/lib/wifi/
 ifeq ($(BOARD),sdx35)
 	mv $(1)/lib/wifi/qcacld32-modules $(1)/etc/misc/wifi/qcacld32-modules.hsp
 	$(CP) files/qcacld32-modules.rome $(1)/etc/misc/wifi/
