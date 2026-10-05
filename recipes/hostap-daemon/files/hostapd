@@ -18,4 +18,5 @@
 config hostapd 'log'
 	option log_folder_mode '0'
 	option log_level 'debug'
+	option show_keys '0'
 

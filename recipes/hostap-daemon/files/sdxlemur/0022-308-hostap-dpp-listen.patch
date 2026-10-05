@@ -1,4 +1,4 @@
-From 8fd80fd07fddfaaee6c5377a57325219ed329b1b Mon Sep 17 00:00:00 2001
+From 5c53fa7ce420341dcc26c94122113758e87fba82 Mon Sep 17 00:00:00 2001
 From: Xinyue Ling <xinyling@qti.qualcomm.com>
 Date: Tue, 30 Apr 2024 14:49:25 +0800
 Subject: [PATCH 22/40] 308-hostap-dpp-listen
@@ -6,13 +6,13 @@ Subject: [PATCH 22/40] 308-hostap-dpp-listen
 Change-Id: Ie0200db2db9d0ad44308a8223a2f8dfe335d89c3
 Signed-off-by: Chenming Huang <chenhuan@qti.qualcomm.com>
 ---
- src/ap/ap_drv_ops.h    | 20 ++++++++++++
- src/ap/dpp_hostapd.c   | 73 ++++++++++++++++++++++++++++++++++++------
+ src/ap/ap_drv_ops.h    | 20 +++++++++++
+ src/ap/dpp_hostapd.c   | 80 ++++++++++++++++++++++++++++++++++++------
  src/ap/dpp_hostapd.h   |  4 +++
- src/ap/drv_callbacks.c | 13 ++++++++
+ src/ap/drv_callbacks.c | 13 +++++++
  src/ap/hostapd.c       |  1 +
  src/ap/hostapd.h       |  2 ++
- 6 files changed, 103 insertions(+), 10 deletions(-)
+ 6 files changed, 110 insertions(+), 10 deletions(-)
 
 diff --git a/src/ap/ap_drv_ops.h b/src/ap/ap_drv_ops.h
 index 0bfc154647..a7b930a916 100644
@@ -44,7 +44,7 @@ index 0bfc154647..a7b930a916 100644
 +
  #endif /* AP_DRV_OPS */
 diff --git a/src/ap/dpp_hostapd.c b/src/ap/dpp_hostapd.c
-index afec15078c..9ad28923a9 100644
+index afec15078c..30cffd41b5 100644
 --- a/src/ap/dpp_hostapd.c
 +++ b/src/ap/dpp_hostapd.c
 @@ -491,6 +491,60 @@ static void hostapd_dpp_pkex_tx_status(struct hostapd_data *hapd, const u8 *dst,
@@ -166,6 +166,20 @@ index afec15078c..9ad28923a9 100644
  }
  
  
+@@ -3086,6 +3139,13 @@ void hostapd_dpp_rx_action(struct hostapd_data *hapd, const u8 *src,
+			MAC2STR(src), freq, type);
+		return;
+	}
++	if (hapd->iface->freq > 0 && hapd->iface->freq != freq) {
++		wpa_msg(hapd->msg_ctx, MSG_INFO, DPP_EVENT_RX "src=" MACSTR
++			" freq=%u type=%d ignore=frequency-mismatch",
++			MAC2STR(src), freq, type);
++		return;
++	}
++
+	wpa_msg(hapd->msg_ctx, MSG_INFO, DPP_EVENT_RX "src=" MACSTR
+		" freq=%u type=%d", MAC2STR(src), freq, type);
+
 diff --git a/src/ap/dpp_hostapd.h b/src/ap/dpp_hostapd.h
 index 6652791ffc..328351ef8f 100644
 --- a/src/ap/dpp_hostapd.h

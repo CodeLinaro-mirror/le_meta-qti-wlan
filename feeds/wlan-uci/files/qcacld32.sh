@@ -684,14 +684,14 @@ action_vif() {
 	case "$action" in
 		start)
 			update_backhaul_bss_info
-			if [ $(echo $device | grep -c "$mld_prefix") -eq 1 ]; then
+			if [[ "$device" == "$mld_prefix"* ]]; then
 				start_mld_ap $device
 			else
 				start_vifs_qcacld32 "$device" "$vif" ""
 			fi
 		;;
 		stop)
-			if [ $(echo $device | grep -c "$mld_prefix") -eq 1 ]; then
+			if [[ "$device" == "$mld_prefix"* ]]; then
 				stop_mld_ap $device
 			else
 				config_get ifname "$vif" ifname
@@ -708,6 +708,9 @@ action_vif() {
 					;;
 					*) ;;
 				esac
+				if [ $yocto_build -eq 1 ]; then
+					ifconfig "$ifname" down
+				fi
 			fi
 		;;
 		*) ;;
@@ -736,7 +739,7 @@ reconf_qcacld32() {
 
 assign_vif_ifname() {
 	local device="$1"
-	local disabled ifname
+	local disabled ifname mld
 	local processed_vifs=""
 	local unused_ifnames
 	local unused_ifcount=0
@@ -772,6 +775,7 @@ assign_vif_ifname() {
 
 		# Update unused wlan names based on UCI config
 		config_get ifname "$vif" ifname
+		config_get mld "$vif" mld
 		if [ -n "$ifname" ] && [ ${ifname//[0-9]} != ${wlanif_prefix} ]; then
 			# Reset invalid ifnames to empty (i.e. option ifname 'cfgxxxx')
 			# it will auto reassigned a name from unused wlan names later.
@@ -789,7 +793,9 @@ assign_vif_ifname() {
 					else
 						qlog_cmd "assign_vif_ifname $vif manual-used $ifname"
 						uci set wireless.${vif}.ifname=$ifname
-						uci rename wireless.${vif}=$ifname
+						if [ -z "$mld" ]; then
+							uci rename wireless.${vif}=$ifname
+						fi
 						uci commit wireless
 						config_load wireless
 					fi
@@ -805,6 +811,7 @@ assign_vif_ifname() {
 		[ $disabled = 0 ] || continue
 
 		config_get ifname "$vif" ifname
+		config_get mld "$vif" mld
 		# /sbin/wifi appends one duplicated vif, so remove it here
 		if list_contains processed_vifs $vif; then
 			qlog_cmd "assign_vif_ifname $vif [$ifname] already processed -- skip"
@@ -820,7 +827,9 @@ assign_vif_ifname() {
 				if [ $auto_assigned -eq 0 ]; then
 					config_set "$vif" ifname $unused_name
 					uci set wireless.${vif}.ifname=$unused_name
-					uci rename wireless.${vif}=$unused_name
+					if [ -z "$mld" ]; then
+						uci rename wireless.${vif}=$unused_name
+					fi
 					uci commit wireless
 					config_load wireless
 					qlog_cmd "assign_vif_ifname $vif auto-assign $unused_name"
@@ -1075,7 +1084,8 @@ multi_radio_wifi_updown() {
 	local is_last_vif=0
 	local arg_vif post_arg_vif
 	local ezmesh_enable="$(get_ezmesh_enable)"
-	local update_fronthual_config=0 MapBSSType fh_ifname
+	local start_fronthaul=0
+	local MapBSSType fh_ifname bh_ifname
 
 	config_load wireless
 
@@ -1089,7 +1099,7 @@ multi_radio_wifi_updown() {
 	while [ $device_idx -le ${#} ]; do
 		eval "device=\$${device_idx}";
 
-		if [ $(echo $device | grep -c "$mld_prefix") -eq 1 ]; then
+		if [[ "$device" == "$mld_prefix"* ]]; then
 			action_vif $action $device
 			device_idx=$(($device_idx + 1))
 			vif_idx=$(($vif_idx + 1))
@@ -1118,11 +1128,13 @@ multi_radio_wifi_updown() {
 					action_vif $action $device $vif
 
 					config_get MapBSSType "$vif" MapBSSType
-					if [ "$action" = "start" -a \
-						$(($((MapBSSType&64)) >> 6)) -eq 1 ]; then
+					if [ $(($((MapBSSType&64)) >> 6)) -eq 1 ]; then
 						# ucitool get_iface will return fronthual ifname
 						fh_ifname=$(ucitool get_iface $device)
-						update_fronthual_config=1
+						bh_ifname=$ifname
+						if [ "$action" = "start" ]; then
+							start_fronthaul=1
+						fi
 					fi
 					break
 				fi
@@ -1131,20 +1143,22 @@ multi_radio_wifi_updown() {
 			# update multi_ap_backhaul_ssid and
 			# multi_ap_backhaul_wpa_passphrase in fronthual
 			# hostapd conf
-			if [ $update_fronthual_config -eq 1 ]; then
+			if [ $start_fronthaul -eq 1 ]; then
 				config_get vifs "$device" vifs
 				for vif in $vifs; do
 					config_get ifname "$vif" ifname
 					if [ "$fh_ifname" = "$ifname" ]; then
-						action_vif $action $device $vif
-						update_fronthual_config=0
+						action_vif "start" $device $vif
 						if [ $yocto_build -eq 1 ]; then
-							wpa_cli -g ${wlan_module_path}/${hostapd_global_ctrl_interface} raw REMOVE \
-								$fh_ifname &> /dev/null
+							hostapd_teardown_vif $fh_ifname
 							wpa_cli -g ${wlan_module_path}/${hostapd_global_ctrl_interface} raw ADD \
 								bss_config=$fh_ifname:${wlan_module_path}/hostapd-$fh_ifname.conf &> /dev/null
 							retry_cmd vif_is_started "$fh_ifname"
+							wpa_cli -g ${wlan_module_path}/${hostapd_global_ctrl_interface} raw ADD \
+								bss_config=$bh_ifname:${wlan_module_path}/hostapd-$bh_ifname.conf &> /dev/null
+							retry_cmd vif_is_started "$bh_ifname"
 						fi
+						start_fronthaul=0
 						break
 					fi
 				done

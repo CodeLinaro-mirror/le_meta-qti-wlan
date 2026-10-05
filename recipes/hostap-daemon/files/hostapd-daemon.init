@@ -59,6 +59,7 @@ start_service() {
 			config_load "${SVC_NAME}"
 			config_get log_level log log_level "info"
 			config_get log_folder_mode log log_folder_mode 0
+			config_get show_keys log show_keys 0
 
 			if [ "$log_folder_mode" = "1" ];then
 				echo "$PKG_NAME: store log in /data/vendor/wifi/$SVC_NAME-$IFNAME.log"
@@ -106,6 +107,10 @@ start_service() {
 				esac
 				# enable timestamp
 				procd_append_param command -t
+				# show keys
+				if [ $show_keys -eq 1 ]; then
+					procd_append_param command -K
+				fi
 			fi
 
 			# set the config file

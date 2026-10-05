@@ -12,10 +12,6 @@ else
   COMPILE_MODE :=debug
 endif
 
-ifeq ($(DUMP)$(PKG_VERSION),)
-  PKG_VERSION:=$(shell git ls-remote $(PKG_SOURCE_URL) $(PKG_BRANCH) | cut -b -7)
-endif
-
 include $(INCLUDE_DIR)/package.mk
 
 EXTRA_ADDR :=lib/modules/$(LINUX_VERSION)-${COMPILE_MODE}/extra
@@ -25,13 +21,12 @@ else
 KERNEL_PATH:=$(TOPDIR)/src/kernel-$(LINUX_VERSION)/kernel_platform/msm-kernel
 endif
 
+LOCAL_SRC:=$(TOPDIR)/src/wlan/qca-ezmesh/qca-hyfi-bridge/*
 ifeq ($(BOARD),sdx85)
-	LOCAL_SRC:=$(TOPDIR)/src/wlan/qca-ezmesh/qca-hyfi-bridge/*
 	ENABLE_BAZEL=y
 	BAZEL_FILES=$(TOPDIR)/owrt-qti-wlan/feeds/hyfi/qca-hyfi-bridging/qca-hyfi-bridge-mcc/files/*.b*z*l
 	EMESH_SP_HEADERS=$(TOPDIR)/src/wlan/qca-ezmesh/emesh-sp/sp_api.h
 else
-	LOCAL_SRC:=$(TOPDIR)/src/ipq/qca-hyfi-bridge/*
 	ENABLE_BAZEL:=n
 	BAZEL_FILES:=
 	EMESH_SP_HEADERS:=

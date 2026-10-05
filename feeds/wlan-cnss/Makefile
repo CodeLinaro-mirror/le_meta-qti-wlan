@@ -231,9 +231,10 @@ endif
 	$(INSTALL_DIR) $(TOPDIR)/bin/targets/$(COMPILE_MODE)/modules
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(INSTALL_DIR_CNSS)/cnss2.ko $(TOPDIR)/bin/targets/$(COMPILE_MODE)/modules/
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_DIR) $(1)/etc/initscripts
 	$(INSTALL_BIN) ./files/wlan-cnss.init $(1)/etc/init.d/
-	$(INSTALL_BIN) ./files/start_wlan_cnss_le $(1)/etc/initscripts/
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) ./files/start_wlan_cnss_le $(1)/usr/bin/
+
 endef
 
 define KernelPackage/wlan-cnss-legacy/install

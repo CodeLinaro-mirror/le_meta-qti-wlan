@@ -49,6 +49,10 @@ TARGET_PATCH_EXIST := $(shell if [ -n "$(TARGET_LOCAL_NAME)" ]; then \
 ifeq ($(TARGET_PATCH_EXIST), yes)
 	TARGET_PATCH_PATH := $(TARGET_LOCAL_NAME)
 	COPY_PATCH_FILES := $(CP) ./files/$(TARGET_PATCH_PATH)/*.patch ./patches/
+	CLEAN_PATCH_FILES := rm -f $(addprefix ./patches/,$(notdir $(wildcard ./files/$(TARGET_LOCAL_NAME)/*.patch)))
+else
+	COPY_PATCH_FILES :=
+	CLEAN_PATCH_FILES :=
 endif
 
 define Build/Prepare
@@ -60,6 +64,7 @@ define Build/Prepare
 	mkdir patches
 	${COPY_PATCH_FILES}
 	$(Build/Patch)
+	${CLEAN_PATCH_FILES}
 endef
 
 define Build/InstallDev
