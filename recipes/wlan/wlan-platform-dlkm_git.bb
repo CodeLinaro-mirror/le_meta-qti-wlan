@@ -1,6 +1,6 @@
 CNSS_BB = 'autotools-brokensep module'
 CNSS_BB:remove:sa535m = 'qperf'
-inherit ${CNSS_BB}
+inherit ${CNSS_BB} deploy
 
 DESCRIPTION = "Build wlan platform drivers to kernel module"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
@@ -195,3 +195,15 @@ do_module_signing() {
 do_configure[noexec] = "1"
 
 addtask module_signing after do_package before do_package_qa do_package_write_ipk
+
+# Deploy unstripped kernel modules into ${DEPLOYDIR}/kernel_modules/${PN} for debugging purposes
+do_deploy() {
+    install -d ${DEPLOYDIR}/kernel_modules/${PN}
+    cd ${S}
+    for mod in *.ko; do
+        if [ -f $mod ]; then
+            install -m 0644 $mod ${DEPLOYDIR}/kernel_modules/${PN}
+        fi
+    done
+}
+addtask deploy after do_install before do_module_signing
