@@ -2132,7 +2132,7 @@ hostapd_setup_vif() {
 				nl_hwmode=a
 				;;
 			*b:*)
-				nl_hwmode=g
+				nl_hwmode=b
 				;;
 			*)
 				;;
@@ -2150,6 +2150,7 @@ hostapd_setup_vif() {
 		case "$nl_hwmode" in
 			*g) hwmode=g;;
 			*a) hwmode=a;;
+			*b) hwmode=b;;
 		esac
 
 		# set hw_mode=any in hostapd.conf
