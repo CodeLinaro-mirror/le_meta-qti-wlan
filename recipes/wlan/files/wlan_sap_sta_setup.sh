@@ -11,7 +11,24 @@
 #  - Step 2: Show current UP interfaces (wlan0..wlan4) mapped to STA/SAP roles
 #  - Step 3: Bring up SAP/STA per CLI inputs (continues on failures)
 #  - Stop specific interfaces via -stop SAPx,STAy (no driver reload)
-#  - v6: OWE (Opportunistic Wireless Encryption) security mode for SAP and STA
+#  - Security modes: OPEN / WPA2 / WPA3 / OWE for SAP and STA
+#  - 802.11be (Wi-Fi 7) support: SLO and MLO (HMT chip only)
+#  - Bandwidth control: 20/40/80/160/320MHz per band (chip-clamped)
+#  - Fast channel switch via hostapd_cli chan_switch (no driver reload)
+#  - Configurable bring-up order via -bring_up_order
+#  - Country code selection via -country (default: US)
+#  - ACS completion wait: polls iw until channel is selected before table display
+#  - Debug mode via -d flag
+#
+# Version changelog:
+#  v1: Initial SAP1/SAP2 bring-up with hostapd (2G/5G, WPA2)
+#  v2: Added STA1/STA2 support via wpa_supplicant
+#  v3: Added SAP3, chip auto-detection (lsmod + modprobe fallback)
+#  v4: Added 6G support (HSP/HMT), bandwidth control (80/160MHz), WPA3
+#  v5: Added 802.11be SLO/MLO support (HMT), fast chan_switch, bring_up_order
+#  v6: Added OWE security mode for SAP and STA
+#  v7: Fixed 6G default channel (1->5, first PSC); added -country CLI param;
+#      ACS wait loop in sap_start() to ensure table shows channel/freq/width
 #
 # Mappings (hardcoded):
 #   STA1=wlan0, STA2=wlan4
@@ -27,6 +44,9 @@
 #   hostapd:       /data/hostapd_<iface>.conf       (e.g., /data/hostapd_wlan1.conf)
 #   wpa_supplicant:/data/wpa_supplicant_<iface>.conf (e.g., /data/wpa_supplicant_wlan0.conf)
 # ============================================================
+
+SCRIPT_VERSION="7"
+SCRIPT_CHANGES="v7: Fixed 6G default channel (1->5, first PSC); added -country CLI param; ACS wait loop in sap_start() to ensure table shows channel/freq/width"
 
 # -------- Logging --------
 DEBUG=0   # set to 1 via -d flag; enables command traces and verbose daemon output
@@ -741,6 +761,9 @@ resolve_bw_params() {
     # ── Clamp requested BW to chip max ─────────────────────────────────────
     if [ "$_rp_bw" -gt "$_rp_max" ] 2>/dev/null; then
         warn "resolve_bw_params: ${_rp_chip} ${_rp_band} max BW=${_rp_max}MHz — clamping ${_rp_bw}MHz -> ${_rp_max}MHz"
+        if [ "$_rp_bw" -eq 320 ] && [ "$_rp_band" = "6g" ] && [ -z "$_rp_11be" ]; then
+            warn "resolve_bw_params: 320MHz on 6G requires -SAPx_11be SLO (or MLO) — add it to enable 320MHz; bringing up at 160MHz"
+        fi
         _RBW_BW="$_rp_max"
     else
         _RBW_BW="$_rp_bw"
@@ -1134,10 +1157,10 @@ sap_start() {
         fi
         USE_ACS=0
     elif [ -n "$ELEVEN_BE_IN" ] && [ "$BAND_lc" = "6g" ]; then
-        # 11be on 6G requires a fixed channel; default to PSC channel 1
-        CHANNEL=1
+        # 11be on 6G requires a fixed channel; default to PSC channel 5 (first PSC on 6GHz)
+        CHANNEL=5
         USE_ACS=0
-        warn "$SAP_NAME: no -SAP_channel given for 6G+11be — defaulting to channel=1 (PSC)"
+        warn "$SAP_NAME: no -SAP_channel given for 6G+11be — defaulting to channel=5 (PSC)"
     else
         CHANNEL=0
         USE_ACS=1
@@ -1223,8 +1246,6 @@ sap_start() {
         ;;
     esac
     info "$SAP_NAME: band=$BAND_lc bw=${BW_FINAL}MHz channel=${CHANNEL} (ACS=$([ $USE_ACS -eq 1 ] && echo y || echo n)) security=$SEC${ELEVEN_BE_IN:+ 11be=$ELEVEN_BE_IN}"
-    # ENV overrides
-    COUNTRY="${COUNTRY:-US}"
     SSID="$SSID_IN"
     [ -z "$SSID" ] && SSID="QSoftAP_${SAP_NAME}_${BAND_lc}"
     CONF="/data/hostapd_${IFACE}.conf"
@@ -1264,6 +1285,24 @@ sap_start() {
     else
         err "FAILURE: $SAP_NAME failed — $IFACE not present"
         return 1
+    fi
+    # When ACS is active, wait for hostapd to finish channel selection before returning.
+    # Without this, the final status table reads iw before ACS completes and shows '-' for
+    # channel/freq/width/ssid.
+    if [ "$USE_ACS" -eq 1 ] && command -v iw >/dev/null 2>&1; then
+        info "$SAP_NAME: ACS in progress — waiting for channel selection (up to 15s)"
+        _acs_try=0
+        while [ "$_acs_try" -lt 15 ]; do
+            _acs_ch=$(iw dev "$IFACE" info 2>/dev/null | sed -n 's/.*channel \([0-9]*\) .*/\1/p' | head -n1)
+            [ -n "$_acs_ch" ] && [ "$_acs_ch" -gt 0 ] 2>/dev/null && break
+            _acs_try=$((_acs_try + 1))
+            sleep 1
+        done
+        if [ -n "$_acs_ch" ] && [ "$_acs_ch" -gt 0 ] 2>/dev/null; then
+            info "$SAP_NAME: ACS selected channel $_acs_ch"
+        else
+            warn "$SAP_NAME: ACS did not complete within 15s — table may show '-' for channel/freq/width"
+        fi
     fi
     return 0
 }
@@ -1318,7 +1357,6 @@ sap_start_mlo() {
     fi
     SSID="$SSID_IN"
     [ -z "$SSID" ] && SSID="QSoftAP_${SAP_NAME}_MLO"
-    COUNTRY="${COUNTRY:-US}"
     mkdir -p /data
     stop_sap "$SAP_NAME"
     info "$SAP_NAME: ensuring interface $IFACE exists"
@@ -1345,9 +1383,9 @@ sap_start_mlo() {
             fi
             _ml_acs=0
         elif [ "$_ml_band" = "6g" ]; then
-            # MLO 6G link requires a fixed channel; default to PSC channel 1
-            _ml_ch=1; _ml_acs=0
-            warn "$SAP_NAME: no channel given for MLO 6G link — defaulting to channel=1 (PSC)"
+            # MLO 6G link requires a fixed channel; default to PSC channel 5 (first PSC on 6GHz)
+            _ml_ch=5; _ml_acs=0
+            warn "$SAP_NAME: no channel given for MLO 6G link — defaulting to channel=5 (PSC)"
         else
             _ml_ch=0; _ml_acs=1
         fi
@@ -2032,20 +2070,23 @@ Notes:
       either for ACS on that link. Only one SAP should run MLO at a time, since the
       MLO config filenames are band-keyed (not interface-keyed).
     6G+11be (SLO or MLO): -SAPx_channel / -SAPx_channel2 are honoured for the 6G link.
-      If no channel is given, defaults to PSC channel=1. The channel is always passed
-      through resolve_6g_chan() to ensure it satisfies hostapd CR-3161197.
+      If no channel is given, defaults to PSC channel=5 (first PSC on 6GHz). The channel
+      is always passed through resolve_6g_chan() to ensure it satisfies hostapd CR-3161197.
 - Debug mode (-d flag):
     Without -d: only [INFO]/[WARN]/[ERROR] messages are shown; daemon output
       (hostapd, wpa_supplicant, wpa_cli) is suppressed.
     With -d: all command traces (+ ...) and full daemon stdout/stderr are printed.
-- Environment overrides for SAP:
-    COUNTRY=US
+- Country code (optional, default: US):
+    -country <CC>   two-letter ISO 3166-1 country code, e.g. -country IN, -country DE
+- Version info:
+    --version       print script version and latest changelog entry, then exit
 EOF
 }
 
 # Defaults
 RELOAD_DRIVER="n"
 UNLOAD_DRIVER="n"
+COUNTRY="US"
 SAP_LIST=""
 STA_LIST=""
 STOP_LIST=""
@@ -2064,6 +2105,7 @@ while [ "$#" -gt 0 ]; do
   case "$1" in
     -reload_driver) RELOAD_DRIVER="$2"; shift 2;;
     -unload_driver) UNLOAD_DRIVER="$2"; shift 2;;
+    -country)       COUNTRY="$2";       shift 2;;
     -SAP_interfaces) SAP_LIST="$2"; shift 2;;
     -STA_interfaces) STA_LIST="$2"; shift 2;;
 
@@ -2113,6 +2155,7 @@ while [ "$#" -gt 0 ]; do
     -bring_up_order) BRING_UP_ORDER="$2"; shift 2;;
     -d) DEBUG=1; shift;;
     -h|--help) usage; exit 0;;
+    --version) echo "wlan_sap_sta_setup v${SCRIPT_VERSION}"; echo "$SCRIPT_CHANGES"; exit 0;;
     *) err "Unknown option: $1"; usage; exit 2;;
   esac
 done
